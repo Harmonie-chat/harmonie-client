@@ -1,0 +1,53 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Node
+node_modules/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Build outputs
+dist/
+build/
+coverage/
+
+# Vite
+vite.config.ts.timestamp-*
+
+# Playwright
+playwright-report/
+test-results/
+apps/harmonie-web/tests/.last-run.json
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Local caches
+.cache/
+.temp/
+tmp/
+
+# App specific
+apps/harmonie-web/node_modules/
+apps/harmonie-web/dist/
+apps/harmonie-web/playwright-report/
+apps/harmonie-web/test-results/
+
+# Agents
+.claude

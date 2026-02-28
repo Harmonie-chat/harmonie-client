@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harmonie — 05 Modal Invitation</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sage: #B8CCBC; --sage-light: #D4E4D7; --sage-dark: #8AAD90;
+    --lavender-light: #E2DCEF; --peach-light: #FAE4D8; --butter-light: #FAF4DC;
+    --cream: #FAF7F2; --warm-white: #FDFBF8;
+    --text-dark: #3D3530; --text-mid: #6B5F58; --text-soft: #9A8E88; --text-faint: #C8BFB8;
+    --border: rgba(61,53,48,0.08);
+    --shadow-lg: 0 8px 40px rgba(61,53,48,0.18);
+    --radius-sm: 8px; --radius-md: 14px; --radius-lg: 22px;
+    --font-display: 'Lora', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-body);
+    background: rgba(61,53,48,0.15);
+    /* Simule un fond flouté de l'app */
+    background-image:
+      radial-gradient(ellipse 60% 50% at 20% 30%, var(--sage-light) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 60% at 80% 70%, var(--lavender-light) 0%, transparent 60%);
+    background-color: #E8E4DF;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh;
+  }
+
+  .modal {
+    background: var(--warm-white);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    width: 400px;
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Breadcrumb serveur > guilde */
+  .breadcrumb {
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 18px;
+  }
+  .bc-server {
+    display: flex; align-items: center; gap: 5px;
+    background: var(--sage-light); border-radius: 100px;
+    padding: 4px 12px 4px 8px;
+  }
+  .bc-server span:last-child { font-size: 11px; font-weight: 600; color: var(--sage-dark); }
+  .bc-arrow { font-size: 13px; color: var(--text-faint); }
+  .bc-guild {
+    display: flex; align-items: center; gap: 5px;
+    background: var(--cream); border: 1px solid var(--border);
+    border-radius: 100px; padding: 4px 12px 4px 8px;
+  }
+  .bc-guild span:last-child { font-size: 11px; font-weight: 600; color: var(--text-mid); }
+
+  .modal-title { font-family: var(--font-display); font-size: 21px; font-weight: 600; color: var(--text-dark); margin-bottom: 4px; }
+  .modal-sub { font-size: 13px; color: var(--text-soft); margin-bottom: 20px; }
+
+  /* Invite link */
+  .link-box {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--cream); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 9px 12px;
+    margin-bottom: 8px;
+  }
+  .link-box span {
+    flex: 1; font-size: 12px; font-family: monospace;
+    color: var(--text-mid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .btn-copy {
+    background: var(--sage-light); color: var(--sage-dark);
+    border: none; border-radius: 6px; padding: 6px 14px;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    font-family: var(--font-body); white-space: nowrap;
+  }
+  .btn-copy:hover { background: var(--sage); }
+
+  .link-meta {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; color: var(--text-soft); margin-bottom: 18px;
+  }
+
+  /* Warning scope */
+  .scope-note {
+    display: flex; gap: 8px; align-items: flex-start;
+    background: var(--butter-light); border: 1px solid #F0E4B8;
+    border-radius: var(--radius-sm); padding: 10px 12px;
+    margin-bottom: 18px; font-size: 12px; color: #7A6820; line-height: 1.5;
+  }
+
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 11px; color: var(--text-soft); margin-bottom: 14px;
+  }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* Members */
+  .member-item {
+    display: flex; align-items: center; gap: 10px; padding: 6px 0;
+  }
+  .m-avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0;
+  }
+  .m-name { flex: 1; font-size: 14px; color: var(--text-dark); }
+  .tag {
+    font-size: 10px; padding: 2px 8px; border-radius: 100px; font-weight: 500;
+  }
+  .tag-sage { background: var(--sage-light); color: var(--sage-dark); }
+  .tag-lav { background: var(--lavender-light); color: #7B6FA0; }
+</style>
+</head>
+<body>
+<div class="modal">
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <div class="bc-server">
+      <span>🌿</span>
+      <span>serre.harmonie.app</span>
+    </div>
+    <span class="bc-arrow">›</span>
+    <div class="bc-guild">
+      <span>🌱</span>
+      <span>Jardinage</span>
+    </div>
+  </div>
+
+  <div class="modal-title">Inviter dans la guilde</div>
+  <div class="modal-sub">Partagez ce lien avec les personnes à inviter</div>
+
+  <div class="link-box">
+    <span>serre.harmonie.app/invite/jardinage/abc123xyz</span>
+    <button class="btn-copy">Copier</button>
+  </div>
+
+  <div class="link-meta">
+    <span>⏱</span>
+    <span>Expire dans 7 jours · Utilisation illimitée</span>
+  </div>
+
+  <div class="scope-note">
+    <span>⚠️</span>
+    <span>Ce lien est valable <strong>uniquement sur serre.harmonie.app</strong>. Il n'est pas utilisable sur un autre serveur.</span>
+  </div>
+
+  <div class="divider">membres actuels</div>
+
+  <div class="member-item">
+    <div class="m-avatar" style="background:var(--sage-light);">🌸</div>
+    <div class="m-name">Alice (vous)</div>
+    <span class="tag tag-lav">Admin</span>
+  </div>
+  <div class="member-item">
+    <div class="m-avatar" style="background:var(--lavender-light);">🌙</div>
+    <div class="m-name">Bastien</div>
+    <span class="tag tag-sage">Membre</span>
+  </div>
+  <div class="member-item">
+    <div class="m-avatar" style="background:var(--peach-light);">🌻</div>
+    <div class="m-name">Chloé</div>
+    <span class="tag tag-sage">Membre</span>
+  </div>
+  <div class="member-item">
+    <div class="m-avatar" style="background:var(--butter-light);">🍀</div>
+    <div class="m-name">Marc</div>
+    <span class="tag tag-sage">Membre</span>
+  </div>
+
+</div>
+</body>
+</html>

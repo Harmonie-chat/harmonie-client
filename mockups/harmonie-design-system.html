@@ -1,0 +1,1917 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harmonie — Design System</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+/* =====================================================================
+   DESIGN TOKENS — LIGHT
+===================================================================== */
+[data-theme="light"] {
+  --sage:            #B8CCBC;
+  --sage-light:      #D4E4D7;
+  --sage-dark:       #8AAD90;
+  --lavender:        #C8C0DC;
+  --lavender-light:  #E2DCEF;
+  --peach:           #F0C8B4;
+  --peach-light:     #FAE4D8;
+  --butter:          #F0E4B8;
+  --butter-light:    #FAF4DC;
+  --rose:            #E8C0C0;
+  --rose-light:      #FAE8E8;
+  --sky-light:       #D4E8F4;
+
+  --bg:              #F5F0EB;
+  --surface-1:       #FDFBF8;
+  --surface-2:       #FAF7F2;
+  --surface-3:       #D4E4D7;
+  --surface-hover:   #EEE9E2;
+  --surface-active:  #D4E4D7;
+
+  --text-1:          #3D3530;
+  --text-2:          #6B5F58;
+  --text-3:          #9A8E88;
+  --text-4:          #C8BFB8;
+
+  --border:          rgba(61,53,48,0.08);
+  --border-strong:   rgba(61,53,48,0.14);
+
+  --shadow-sm:       0 1px 4px rgba(61,53,48,0.07);
+  --shadow-md:       0 4px 16px rgba(61,53,48,0.10);
+  --shadow-lg:       0 8px 32px rgba(61,53,48,0.13);
+
+  --accent:          var(--sage-dark);
+  --accent-text:     #fff;
+  --accent-subtle:   var(--sage-light);
+
+  --code-bg:         #EDE8E0;
+  --code-text:       #7B6FA0;
+
+  /* Couleurs assignées par serveur — light */
+  --server-serre:    #8AAD90;
+  --server-nuit:     #9B8EC4;
+  --server-musique:  #C48A72;
+  --server-gamers:   #6A9EC0;
+}
+
+/* =====================================================================
+   DESIGN TOKENS — DARK
+===================================================================== */
+[data-theme="dark"] {
+  --sage:            #7A9E82;
+  --sage-light:      #2E4232;
+  --sage-dark:       #96C49E;
+  --lavender:        #9A90B8;
+  --lavender-light:  #2C2840;
+  --peach:           #C8987A;
+  --peach-light:     #3A2820;
+  --butter:          #C8B060;
+  --butter-light:    #2E2810;
+  --rose:            #C89090;
+  --rose-light:      #3A2020;
+  --sky-light:       #1C2E3A;
+
+  --bg:              #1A1714;
+  --surface-1:       #211E1A;
+  --surface-2:       #272320;
+  --surface-3:       #2E2A26;
+  --surface-hover:   #342F2A;
+  --surface-active:  #2E4232;
+
+  --text-1:          #EDE8E0;
+  --text-2:          #C8C0B8;
+  --text-3:          #9A908A;
+  --text-4:          #6E6560;
+
+  --border:          rgba(255,240,220,0.07);
+  --border-strong:   rgba(255,240,220,0.13);
+
+  --shadow-sm:       0 1px 4px rgba(0,0,0,0.25);
+  --shadow-md:       0 4px 16px rgba(0,0,0,0.35);
+  --shadow-lg:       0 8px 32px rgba(0,0,0,0.50);
+
+  --accent:          var(--sage-dark);
+  --accent-text:     #1A2E1E;
+  --accent-subtle:   var(--sage-light);
+
+  --code-bg:         #2A2620;
+  --code-text:       #A090D0;
+
+  /* Couleurs assignées par serveur — dark */
+  --server-serre:    #7AAE86;
+  --server-nuit:     #8E82BA;
+  --server-musique:  #B87E66;
+  --server-gamers:   #5E92B2;
+}
+
+/* =====================================================================
+   GLOBAL
+===================================================================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text-1);
+  line-height: 1.6;
+  transition: background 0.25s, color 0.25s;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+code, .mono {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.85em;
+  background: var(--code-bg);
+  color: var(--code-text);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+/* =====================================================================
+   LAYOUT
+===================================================================== */
+.ds-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 100vh;
+}
+
+/* NAV */
+.ds-nav {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  background: var(--surface-1);
+  border-right: 1px solid var(--border);
+  padding: 0 0 32px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ds-nav-header {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.ds-nav-logo {
+  font-family: 'Lora', Georgia, serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-1);
+  margin-bottom: 2px;
+}
+.ds-nav-logo em { font-style: italic; color: var(--sage-dark); }
+.ds-nav-version {
+  font-size: 10px;
+  color: var(--text-3);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* Theme toggle */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-3);
+  transition: color 0.15s;
+  user-select: none;
+}
+.theme-toggle:hover { color: var(--text-1); }
+.toggle-track {
+  width: 36px; height: 20px;
+  border-radius: 100px;
+  background: var(--sage-dark);
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.toggle-thumb {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  transition: left 0.2s;
+}
+[data-theme="dark"] .toggle-thumb { left: 18px; }
+
+.ds-nav-section { padding: 16px 12px 4px 20px; }
+.ds-nav-section-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-4);
+  margin-bottom: 4px;
+}
+.ds-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-2);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.12s, color 0.12s;
+  margin-bottom: 1px;
+}
+.ds-nav-item:hover { background: var(--surface-hover); color: var(--text-1); }
+.ds-nav-item.active { background: var(--surface-active); color: var(--text-1); font-weight: 500; }
+.ds-nav-item .nav-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* MAIN */
+.ds-main {
+  padding: 48px 56px;
+  max-width: 1100px;
+}
+
+/* SECTION */
+.ds-section {
+  margin-bottom: 72px;
+  scroll-margin-top: 24px;
+}
+.ds-section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 32px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.ds-section-layer {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-3);
+}
+.ds-section-title {
+  font-family: 'Lora', Georgia, serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+.ds-section-desc {
+  font-size: 13px;
+  color: var(--text-3);
+  margin-left: auto;
+}
+
+/* COMPONENT BLOCK */
+.ds-block {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.ds-block-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface-2);
+}
+.ds-block-name { font-size: 13px; font-weight: 600; color: var(--text-1); }
+.ds-block-path { font-size: 11px; color: var(--text-3); }
+.ds-block-body {
+  padding: 28px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+}
+.ds-block-body.column { flex-direction: column; }
+.ds-block-body.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.ds-block-body.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+/* VARIANT LABEL */
+.ds-variant {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ds-variant-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-4);
+}
+
+/* PROPS TABLE */
+.props-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin-top: 4px;
+}
+.props-table th {
+  text-align: left;
+  padding: 8px 12px;
+  background: var(--surface-2);
+  color: var(--text-3);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--border);
+}
+.props-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-2);
+  vertical-align: top;
+  line-height: 1.5;
+}
+.props-table tr:last-child td { border-bottom: none; }
+.prop-required { color: #E87070; font-weight: 600; font-size: 10px; }
+.prop-optional { color: var(--text-4); font-size: 10px; }
+
+/* TOKEN ROW */
+.token-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.token-row:last-child { border-bottom: none; }
+.token-swatch {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  flex-shrink: 0;
+}
+.token-name { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--code-text); min-width: 180px; }
+.token-value { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-3); min-width: 100px; }
+.token-usage { color: var(--text-3); font-size: 11px; }
+
+/* =====================================================================
+   UI PRIMITIVES — actual component styles
+===================================================================== */
+
+/* BUTTON */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  border-radius: 8px;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s, background 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+  line-height: 1;
+}
+.btn:hover { opacity: 0.88; transform: translateY(-1px); }
+.btn:active { transform: translateY(0); opacity: 1; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.btn-sm   { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+.btn-md   { padding: 10px 18px; font-size: 14px; }
+.btn-lg   { padding: 13px 24px; font-size: 15px; border-radius: 10px; }
+
+.btn-primary   { background: var(--sage-dark); color: var(--accent-text); }
+.btn-secondary { background: var(--sage-light); color: var(--sage-dark); border: 1px solid var(--sage); }
+.btn-ghost     { background: transparent; color: var(--text-2); border: 1px solid var(--border-strong); }
+.btn-ghost:hover { background: var(--surface-hover); opacity: 1; }
+.btn-danger    { background: var(--rose-light); color: #A05050; border: 1px solid var(--rose); }
+[data-theme="dark"] .btn-danger { background: var(--rose-light); color: var(--rose); }
+.btn-icon      { padding: 8px; border-radius: 8px; background: transparent; color: var(--text-3); border: none; }
+.btn-icon:hover { background: var(--surface-hover); color: var(--text-1); opacity: 1; transform: none; }
+.btn-icon.sm   { padding: 5px; border-radius: 6px; }
+
+/* INPUT */
+.input-wrap { display: flex; flex-direction: column; gap: 5px; }
+.input-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  letter-spacing: 0.3px;
+}
+.input {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--text-1);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.input::placeholder { color: var(--text-4); }
+.input:focus { border-color: var(--sage-dark); box-shadow: 0 0 0 3px rgba(138,173,144,0.18); }
+[data-theme="dark"] .input:focus { box-shadow: 0 0 0 3px rgba(150,196,158,0.12); }
+.input.error  { border-color: var(--rose); box-shadow: 0 0 0 3px rgba(232,144,144,0.15); }
+.input.sm     { padding: 7px 10px; font-size: 13px; }
+.input-hint   { font-size: 11px; color: var(--text-3); }
+.input-hint.error { color: #C05050; }
+[data-theme="dark"] .input-hint.error { color: var(--rose); }
+
+/* TAG / BADGE */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+.tag-sage    { background: var(--sage-light);    color: var(--sage-dark); }
+.tag-lav     { background: var(--lavender-light); color: #7B6FA0; }
+.tag-peach   { background: var(--peach-light);   color: #B07060; }
+.tag-butter  { background: var(--butter-light);  color: #9A8030; }
+.tag-rose    { background: var(--rose-light);    color: #A05050; }
+[data-theme="dark"] .tag-lav   { color: #A090D0; }
+[data-theme="dark"] .tag-peach { color: var(--peach); }
+[data-theme="dark"] .tag-butter { color: var(--butter); }
+[data-theme="dark"] .tag-rose  { color: var(--rose); }
+.tag.lg { font-size: 12px; padding: 4px 12px; }
+.tag.sm { font-size: 10px; padding: 2px 8px; }
+
+/* AVATAR */
+.avatar {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  position: relative;
+}
+.avatar.xs { width: 24px; height: 24px; font-size: 11px; }
+.avatar.sm { width: 32px; height: 32px; font-size: 14px; }
+.avatar.md { width: 40px; height: 40px; font-size: 18px; }
+.avatar.lg { width: 52px; height: 52px; font-size: 22px; }
+.avatar.xl { width: 64px; height: 64px; font-size: 28px; }
+
+.avatar-status {
+  position: absolute;
+  bottom: 0; right: 0;
+  border-radius: 50%;
+  border: 2px solid var(--surface-1);
+}
+.avatar.xs .avatar-status { width: 8px;  height: 8px;  border-width: 1.5px; }
+.avatar.sm .avatar-status { width: 10px; height: 10px; }
+.avatar.md .avatar-status { width: 12px; height: 12px; }
+.avatar.lg .avatar-status { width: 14px; height: 14px; }
+.status-online  { background: #72B882; }
+.status-away    { background: #C8B060; }
+.status-dnd     { background: #C07070; }
+.status-offline { background: var(--text-4); }
+
+/* TOGGLE */
+.toggle-wrap { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+.toggle-track-ui {
+  width: 40px; height: 22px;
+  border-radius: 100px;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.toggle-track-ui.on  { background: var(--sage-dark); }
+.toggle-track-ui.off { background: var(--text-4); }
+.toggle-thumb-ui {
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  transition: left 0.18s;
+}
+.toggle-track-ui.on .toggle-thumb-ui { left: 21px; }
+.toggle-label-ui { font-size: 14px; color: var(--text-1); }
+.toggle-sub { font-size: 11px; color: var(--text-3); }
+
+/* STATUS DOT */
+.status-dot-ui {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* DIVIDER */
+.divider-ui {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-3);
+  width: 100%;
+}
+.divider-ui::before, .divider-ui::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-strong);
+}
+
+/* TOOLTIP */
+.tooltip-wrap { position: relative; display: inline-flex; }
+.tooltip-target { cursor: default; }
+.tooltip-box {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text-1);
+  color: var(--bg);
+  font-size: 11px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 10;
+}
+.tooltip-box::after {
+  content: '';
+  position: absolute;
+  top: 100%; left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--text-1);
+}
+.tooltip-wrap:hover .tooltip-box { opacity: 1; }
+
+/* NOTIF BADGE */
+.badge-wrap { position: relative; display: inline-flex; }
+.badge-count {
+  position: absolute;
+  top: -4px; right: -4px;
+  background: #D05050;
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  min-width: 16px; height: 16px;
+  border-radius: 100px;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--surface-1);
+  padding: 0 3px;
+  line-height: 1;
+}
+
+/* SERVER AVATAR (rail) */
+.server-av {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  cursor: pointer;
+  transition: border-radius 0.2s;
+  flex-shrink: 0;
+}
+.server-av:hover { border-radius: 12px; }
+.server-av.active { border-radius: 12px; outline: 2px solid var(--sage-dark); outline-offset: 2px; }
+
+/* =====================================================================
+   MOLECULES
+===================================================================== */
+
+/* CHANNEL ITEM */
+.ch-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-2);
+  font-size: 14px;
+  transition: background 0.12s, color 0.12s;
+  user-select: none;
+}
+.ch-item:hover { background: var(--surface-hover); color: var(--text-1); }
+.ch-item.active { background: var(--surface-active); color: var(--text-1); font-weight: 500; }
+.ch-item.muted  { opacity: 0.5; }
+.ch-item .ch-icon { font-size: 13px; opacity: 0.65; flex-shrink: 0; }
+.ch-item .ch-name { flex: 1; }
+.ch-item .ch-badge {
+  background: var(--sage-dark); color: var(--accent-text);
+  font-size: 9px; font-weight: 700;
+  padding: 1px 5px; border-radius: 100px;
+}
+
+/* MESSAGE BUBBLE */
+.msg-group {
+  display: flex;
+  gap: 12px;
+  max-width: 560px;
+}
+.msg-group.own { flex-direction: row-reverse; }
+.msg-av-wrap { flex-shrink: 0; }
+.msg-body { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.msg-group.own .msg-body { align-items: flex-end; }
+.msg-meta { display: flex; align-items: baseline; gap: 8px; }
+.msg-group.own .msg-meta { flex-direction: row-reverse; }
+.msg-author { font-size: 13px; font-weight: 600; color: var(--text-1); }
+.msg-timestamp { font-size: 11px; color: var(--text-3); }
+.msg-bubble {
+  display: inline-block;
+  padding: 9px 14px;
+  font-size: 14px;
+  color: var(--text-1);
+  line-height: 1.55;
+  max-width: 420px;
+  background: var(--lavender-light);
+  border-radius: 4px 18px 18px 18px;
+  border: 1px solid var(--border);
+}
+.msg-bubble.own {
+  background: var(--sage-light);
+  border-radius: 18px 4px 18px 18px;
+}
+.msg-bubble.system {
+  background: var(--butter-light);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text-2);
+  border-color: var(--butter);
+}
+.msg-reactions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+.reaction-pill {
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 100px;
+  padding: 2px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.reaction-pill:hover { border-color: var(--sage-dark); background: var(--sage-light); }
+.reaction-pill.active { background: var(--sage-light); border-color: var(--sage-dark); }
+
+/* TYPING INDICATOR */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 12px;
+}
+.typing-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--text-3);
+  animation: typing-bounce 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-5px); opacity: 1; }
+}
+.typing-text { font-size: 12px; color: var(--text-3); margin-left: 4px; font-style: italic; }
+
+/* USER PANEL */
+.user-panel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface-3);
+  border-top: 1px solid var(--border);
+}
+.user-panel-info { flex: 1; min-width: 0; }
+.user-panel-name { font-size: 13px; font-weight: 600; color: var(--text-1); }
+.user-panel-status { font-size: 11px; color: var(--text-3); }
+.user-panel-actions { display: flex; gap: 2px; }
+
+/* SERVER BANNER */
+.server-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--sage-dark);
+  color: rgba(255,255,255,0.9);
+}
+[data-theme="dark"] .server-banner { background: rgba(150,196,158,0.14); }
+.server-banner-icon {
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.22);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; flex-shrink: 0;
+}
+[data-theme="dark"] .server-banner-icon { background: rgba(150,196,158,0.18); }
+.server-banner-url {
+  flex: 1;
+  font-size: 11px; font-weight: 600;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+[data-theme="dark"] .server-banner-url { color: var(--sage-dark); }
+.server-banner-pill {
+  font-size: 9px;
+  background: rgba(255,255,255,0.18);
+  padding: 2px 8px;
+  border-radius: 100px;
+  flex-shrink: 0;
+}
+[data-theme="dark"] .server-banner-pill { background: rgba(150,196,158,0.15); color: var(--sage-dark); }
+
+/* GUILD SWITCHER ITEM */
+.guild-switch-item {
+  position: relative;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.12s;
+  flex-shrink: 0;
+}
+.guild-switch-item:hover { transform: scale(1.08); }
+.guild-switch-icon {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  transition: border-radius 0.15s, box-shadow 0.15s;
+}
+.guild-switch-item:hover .guild-switch-icon,
+.guild-switch-item.active .guild-switch-icon {
+  border-radius: 11px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Tooltip guild switcher */
+.guild-switch-item .sw-tooltip {
+  position: absolute;
+  left: calc(100% + 12px); top: 50%;
+  transform: translateY(-50%);
+  background: var(--text-1); color: var(--surface-1);
+  padding: 4px 10px;
+  border-radius: 7px;
+  font-size: 12px; font-weight: 500;
+  white-space: nowrap;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.15s;
+  box-shadow: var(--shadow-md);
+  z-index: 100;
+}
+.guild-switch-item .sw-tooltip::before {
+  content: '';
+  position: absolute; right: 100%; top: 50%;
+  transform: translateY(-50%);
+  border: 5px solid transparent;
+  border-right-color: var(--text-1);
+}
+.guild-switch-item:hover .sw-tooltip { opacity: 1; }
+
+/* Notification badge */
+.notif-badge {
+  position: absolute; top: -2px; right: -2px;
+  background: #E05252; color: #fff;
+  font-size: 9px; font-weight: 700; line-height: 1;
+  min-width: 15px; height: 15px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 3px;
+  border: 2px solid var(--surface-1);
+  z-index: 1;
+}
+
+/* GUILD CARD */
+.guild-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.guild-card:hover { border-color: var(--sage); box-shadow: var(--shadow-md); }
+.guild-card-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.guild-card-name { font-size: 14px; font-weight: 500; color: var(--text-1); }
+.guild-card-meta { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+
+/* BREADCRUMB SERVER > GUILD */
+.bc {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bc-server-chip {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--sage-light);
+  border-radius: 100px;
+  padding: 4px 10px 4px 7px;
+}
+.bc-server-chip span:last-child { font-size: 11px; font-weight: 600; color: var(--sage-dark); }
+.bc-arrow { font-size: 12px; color: var(--text-4); }
+.bc-guild-chip {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 100px;
+  padding: 4px 10px 4px 7px;
+}
+.bc-guild-chip span:last-child { font-size: 11px; font-weight: 600; color: var(--text-2); }
+
+/* INVITE LINK BOX */
+.invite-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 9px 12px;
+}
+.invite-box-url {
+  flex: 1;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--text-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.invite-copy-btn {
+  background: var(--sage-light); color: var(--sage-dark);
+  border: none; border-radius: 6px;
+  padding: 5px 12px; font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  white-space: nowrap; flex-shrink: 0;
+  transition: background 0.12s;
+}
+.invite-copy-btn:hover { background: var(--sage); }
+
+/* VOICE TILE */
+.voice-tile {
+  width: 116px;
+  background: var(--surface-1);
+  border: 2px solid var(--border-strong);
+  border-radius: 14px;
+  padding: 18px 14px 14px;
+  text-align: center;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.voice-tile.speaking {
+  border-color: var(--sage-dark);
+  box-shadow: 0 0 0 3px rgba(138,173,144,0.2);
+}
+[data-theme="dark"] .voice-tile.speaking { box-shadow: 0 0 0 3px rgba(150,196,158,0.12); }
+.voice-tile-av { width: 50px; height: 50px; border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+.voice-tile-name { font-size: 13px; font-weight: 500; color: var(--text-1); }
+.voice-tile-state { font-size: 12px; color: var(--text-3); margin-top: 3px; }
+.voice-tile-state.muted { color: var(--rose); }
+.voice-tile-state.speaking-anim { color: var(--sage-dark); }
+
+/* VOICE CONTROLS */
+.voice-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.vc-btn {
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; font-size: 18px;
+  transition: transform 0.12s, opacity 0.12s;
+}
+.vc-btn:hover { transform: scale(1.08); }
+.vc-btn.md { width: 44px; height: 44px; }
+.vc-btn.lg { width: 52px; height: 52px; font-size: 22px; }
+.vc-btn.normal { background: var(--surface-1); border: 1px solid var(--border-strong); }
+.vc-btn.muted  { background: var(--rose-light); border: 1px solid var(--rose); }
+[data-theme="dark"] .vc-btn.normal { background: var(--surface-2); }
+.vc-btn.danger { background: #D05050; color: white; }
+
+/* CHAT INPUT */
+.chat-input-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 10px 14px;
+  transition: border-color 0.15s;
+}
+.chat-input-box:focus-within { border-color: var(--sage-dark); }
+.chat-input-field {
+  flex: 1; border: none; background: transparent;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px; color: var(--text-1); outline: none;
+}
+.chat-input-field::placeholder { color: var(--text-4); }
+.chat-send-btn {
+  width: 30px; height: 30px;
+  background: var(--sage-dark); color: var(--accent-text);
+  border: none; border-radius: 7px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* =====================================================================
+   TYPOGRAPHY DISPLAY
+===================================================================== */
+.type-specimen { display: flex; flex-direction: column; gap: 0; }
+.type-row {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+.type-row:last-child { border-bottom: none; }
+.type-meta { width: 120px; flex-shrink: 0; }
+.type-meta-name { font-size: 11px; font-weight: 600; color: var(--text-2); }
+.type-meta-spec { font-size: 10px; color: var(--text-4); font-family: 'DM Mono', monospace; margin-top: 2px; }
+.type-sample { flex: 1; }
+
+/* =====================================================================
+   PAGE CHROME
+===================================================================== */
+.ds-page-title {
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.ds-page-title h1 {
+  font-family: 'Lora', Georgia, serif;
+  font-size: 36px;
+  font-weight: 600;
+  color: var(--text-1);
+  margin-bottom: 6px;
+}
+.ds-page-title h1 em { font-style: italic; color: var(--sage-dark); }
+.ds-page-title p { font-size: 14px; color: var(--text-3); max-width: 480px; line-height: 1.7; }
+
+.ds-intro-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 48px;
+}
+.ds-intro-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+.ds-intro-card-num { font-family: 'Lora', Georgia, serif; font-size: 28px; font-weight: 600; color: var(--sage-dark); line-height: 1; margin-bottom: 6px; }
+.ds-intro-card-label { font-size: 13px; font-weight: 500; color: var(--text-1); }
+.ds-intro-card-desc { font-size: 12px; color: var(--text-3); margin-top: 3px; }
+
+</style>
+</head>
+<body>
+
+<div class="ds-layout">
+
+  <!-- ── NAV ── -->
+  <nav class="ds-nav">
+    <div class="ds-nav-header">
+      <div class="ds-nav-logo"><em>Harmonie</em></div>
+      <div class="ds-nav-version">Design System · v1.0</div>
+    </div>
+
+    <div class="theme-toggle" onclick="toggleTheme()">
+      <div class="toggle-track">
+        <div class="toggle-thumb"></div>
+      </div>
+      <span id="theme-label">Mode sombre</span>
+    </div>
+
+    <div class="ds-nav-section">
+      <div class="ds-nav-section-label">Fondations</div>
+      <a href="#tokens" class="ds-nav-item"><span class="nav-dot" style="background:#8AAD90;"></span>Tokens</a>
+      <a href="#typography" class="ds-nav-item"><span class="nav-dot" style="background:#C8C0DC;"></span>Typographie</a>
+      <a href="#colors" class="ds-nav-item"><span class="nav-dot" style="background:#F0C8B4;"></span>Couleurs</a>
+    </div>
+
+    <div class="ds-nav-section">
+      <div class="ds-nav-section-label">ui/ — Primitives</div>
+      <a href="#button" class="ds-nav-item"><span class="nav-dot" style="background:#8AAD90;"></span>Button</a>
+      <a href="#input" class="ds-nav-item"><span class="nav-dot" style="background:#C8C0DC;"></span>Input</a>
+      <a href="#tag" class="ds-nav-item"><span class="nav-dot" style="background:#F0E4B8;"></span>Tag / Badge</a>
+      <a href="#avatar" class="ds-nav-item"><span class="nav-dot" style="background:#F0C8B4;"></span>Avatar</a>
+      <a href="#toggle" class="ds-nav-item"><span class="nav-dot" style="background:#8AAD90;"></span>Toggle</a>
+      <a href="#misc" class="ds-nav-item"><span class="nav-dot" style="background:#E8C0C0;"></span>Tooltip · Divider · Dot</a>
+    </div>
+
+    <div class="ds-nav-section">
+      <div class="ds-nav-section-label">features/ — Molecules</div>
+      <a href="#channel-item" class="ds-nav-item"><span class="nav-dot" style="background:#B8CCBC;"></span>ChannelItem</a>
+      <a href="#message" class="ds-nav-item"><span class="nav-dot" style="background:#C8C0DC;"></span>MessageBubble</a>
+      <a href="#user-panel" class="ds-nav-item"><span class="nav-dot" style="background:#F0C8B4;"></span>UserPanel</a>
+      <a href="#server-banner" class="ds-nav-item"><span class="nav-dot" style="background:#8AAD90;"></span>ServerBanner</a>
+      <a href="#guild-switch" class="ds-nav-item"><span class="nav-dot" style="background:#8AAD90;"></span>GuildSwitcher</a>
+      <a href="#guild-card" class="ds-nav-item"><span class="nav-dot" style="background:#F0E4B8;"></span>GuildCard</a>
+      <a href="#breadcrumb" class="ds-nav-item"><span class="nav-dot" style="background:#B8CCBC;"></span>Breadcrumb</a>
+      <a href="#invite" class="ds-nav-item"><span class="nav-dot" style="background:#C8C0DC;"></span>InviteLink</a>
+      <a href="#voice-tile" class="ds-nav-item"><span class="nav-dot" style="background:#8AAD90;"></span>VoiceTile</a>
+      <a href="#chat-input" class="ds-nav-item"><span class="nav-dot" style="background:#8AAD90;"></span>ChatInput</a>
+    </div>
+  </nav>
+
+  <!-- ── MAIN ── -->
+  <main class="ds-main">
+
+    <div class="ds-page-title">
+      <h1><em>Harmonie</em> Design System</h1>
+      <p>Composants UI organisés en <code>ui/</code> (primitives sans logique) et <code>features/</code> (molécules avec contexte métier). Toggle light/dark en haut à gauche.</p>
+    </div>
+
+    <div class="ds-intro-grid">
+      <div class="ds-intro-card">
+        <div class="ds-intro-card-num">10</div>
+        <div class="ds-intro-card-label">Primitives ui/</div>
+        <div class="ds-intro-card-desc">Button, Input, Tag, Avatar, Toggle…</div>
+      </div>
+      <div class="ds-intro-card">
+        <div class="ds-intro-card-num">10</div>
+        <div class="ds-intro-card-label">Molecules features/</div>
+        <div class="ds-intro-card-desc">ChannelItem, Message, VoiceTile…</div>
+      </div>
+      <div class="ds-intro-card">
+        <div class="ds-intro-card-num">2</div>
+        <div class="ds-intro-card-label">Thèmes</div>
+        <div class="ds-intro-card-desc">Light pastel · Dark brun chaud</div>
+      </div>
+    </div>
+
+    <!-- ===================== TOKENS ===================== -->
+    <div class="ds-section" id="tokens">
+      <div class="ds-section-header">
+        <span class="ds-section-layer">Fondations</span>
+        <h2 class="ds-section-title">Tokens</h2>
+        <span class="ds-section-desc">src/styles/tokens.css</span>
+      </div>
+
+      <div class="ds-block">
+        <div class="ds-block-header">
+          <span class="ds-block-name">Spacing</span>
+          <code class="ds-block-path">--space-*</code>
+        </div>
+        <div class="ds-block-body column" style="padding:0;">
+          <div class="token-row"><div class="token-swatch" style="width:4px;height:28px;border-radius:2px;background:var(--sage-dark);"></div><span class="token-name">--space-xs</span><span class="token-value">4px</span><span class="token-usage">Gaps fins, icônes</span></div>
+          <div class="token-row"><div class="token-swatch" style="width:8px;height:28px;border-radius:2px;background:var(--sage-dark);"></div><span class="token-name">--space-sm</span><span class="token-value">8px</span><span class="token-usage">Padding items sidebar</span></div>
+          <div class="token-row"><div class="token-swatch" style="width:16px;height:28px;border-radius:2px;background:var(--sage-dark);"></div><span class="token-name">--space-md</span><span class="token-value">16px</span><span class="token-usage">Padding cards, sections</span></div>
+          <div class="token-row"><div class="token-swatch" style="width:24px;height:28px;border-radius:2px;background:var(--sage-dark);"></div><span class="token-name">--space-lg</span><span class="token-value">24px</span><span class="token-usage">Espacement sections</span></div>
+          <div class="token-row"><div class="token-swatch" style="width:40px;height:28px;border-radius:2px;background:var(--sage-dark);"></div><span class="token-name">--space-xl</span><span class="token-value">40px</span><span class="token-usage">Padding pages</span></div>
+          <div class="token-row"><div class="token-swatch" style="width:64px;height:28px;border-radius:2px;background:var(--sage-dark);"></div><span class="token-name">--space-2xl</span><span class="token-value">64px</span><span class="token-usage">Hero / covers</span></div>
+        </div>
+      </div>
+
+      <div class="ds-block">
+        <div class="ds-block-header">
+          <span class="ds-block-name">Border Radius</span>
+          <code class="ds-block-path">--radius-*</code>
+        </div>
+        <div class="ds-block-body" style="align-items:center;">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+            <div style="width:40px;height:40px;border-radius:4px;background:var(--sage-light);border:1px solid var(--sage-dark);"></div>
+            <code>xs · 4px</code>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+            <div style="width:40px;height:40px;border-radius:8px;background:var(--sage-light);border:1px solid var(--sage-dark);"></div>
+            <code>sm · 8px</code>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+            <div style="width:40px;height:40px;border-radius:14px;background:var(--sage-light);border:1px solid var(--sage-dark);"></div>
+            <code>md · 14px</code>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+            <div style="width:40px;height:40px;border-radius:22px;background:var(--sage-light);border:1px solid var(--sage-dark);"></div>
+            <code>lg · 22px</code>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+            <div style="width:40px;height:40px;border-radius:999px;background:var(--sage-light);border:1px solid var(--sage-dark);"></div>
+            <code>full</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== TYPOGRAPHY ===================== -->
+    <div class="ds-section" id="typography">
+      <div class="ds-section-header">
+        <span class="ds-section-layer">Fondations</span>
+        <h2 class="ds-section-title">Typographie</h2>
+        <span class="ds-section-desc">Lora + DM Sans + DM Mono</span>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-body column" style="padding: 8px 0;">
+          <div class="type-specimen">
+            <div class="type-row">
+              <div class="type-meta"><div class="type-meta-name">Display</div><div class="type-meta-spec">Lora 600 · 52px · ls -2px</div></div>
+              <div class="type-sample" style="font-family:'Lora',serif;font-size:52px;font-weight:600;line-height:1.1;letter-spacing:-2px;color:var(--text-1);">Mes <em style="font-style:italic;color:var(--sage-dark);">Guildes</em></div>
+            </div>
+            <div class="type-row">
+              <div class="type-meta"><div class="type-meta-name">Heading 1</div><div class="type-meta-spec">Lora 600 · 28px</div></div>
+              <div class="type-sample" style="font-family:'Lora',serif;font-size:28px;font-weight:600;color:var(--text-1);">Bienvenue dans la guilde</div>
+            </div>
+            <div class="type-row">
+              <div class="type-meta"><div class="type-meta-name">Heading 2</div><div class="type-meta-spec">Lora 600 · 20px</div></div>
+              <div class="type-sample" style="font-family:'Lora',serif;font-size:20px;font-weight:600;color:var(--text-1);">Channels Texte</div>
+            </div>
+            <div class="type-row">
+              <div class="type-meta"><div class="type-meta-name">UI Bold</div><div class="type-meta-spec">DM Sans 600 · 16px</div></div>
+              <div class="type-sample" style="font-size:16px;font-weight:600;color:var(--text-1);"># général</div>
+            </div>
+            <div class="type-row">
+              <div class="type-meta"><div class="type-meta-name">Body</div><div class="type-meta-spec">DM Sans 400 · 14px · lh 1.55</div></div>
+              <div class="type-sample" style="font-size:14px;color:var(--text-2);line-height:1.55;max-width:400px;">Salut tout le monde ! On se retrouve ce soir pour la session ? Je suis là dès 19h, on continue le donjon d'hier ?</div>
+            </div>
+            <div class="type-row">
+              <div class="type-meta"><div class="type-meta-name">Label</div><div class="type-meta-spec">DM Sans 600 · 11px · CAPS · ls 1.5</div></div>
+              <div class="type-sample" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-3);">Channels Vocaux</div>
+            </div>
+            <div class="type-row">
+              <div class="type-meta"><div class="type-meta-name">Caption</div><div class="type-meta-spec">DM Sans 400 · 11px</div></div>
+              <div class="type-sample" style="font-size:11px;color:var(--text-3);">Aujourd'hui à 14:32 · 3 membres en ligne</div>
+            </div>
+            <div class="type-row">
+              <div class="type-meta"><div class="type-meta-name">Code / Mono</div><div class="type-meta-spec">DM Mono 400 · 12px</div></div>
+              <div class="type-sample"><code style="font-size:12px;">serre.harmonie.app/invite/abc123</code></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== COLORS ===================== -->
+    <div class="ds-section" id="colors">
+      <div class="ds-section-header">
+        <span class="ds-section-layer">Fondations</span>
+        <h2 class="ds-section-title">Couleurs</h2>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Palette sémantique</span><span class="ds-block-path">s'adapte au thème actif</span></div>
+        <div class="ds-block-body column" style="padding:0;">
+          <div class="token-row"><div class="token-swatch" style="background:var(--sage-dark);"></div><span class="token-name">--sage-dark</span><span class="token-value" id="c-sage-dark"></span><span class="token-usage">Accent principal · CTA · Active states</span></div>
+          <div class="token-row"><div class="token-swatch" style="background:var(--sage-light);"></div><span class="token-name">--sage-light</span><span class="token-value" id="c-sage-light"></span><span class="token-usage">Surfaces actives · Bulles "own"</span></div>
+          <div class="token-row"><div class="token-swatch" style="background:var(--lavender-light);"></div><span class="token-name">--lavender-light</span><span class="token-value" id="c-lav"></span><span class="token-usage">Bulles messages reçus</span></div>
+          <div class="token-row"><div class="token-swatch" style="background:var(--peach-light);"></div><span class="token-name">--peach-light</span><span class="token-value" id="c-peach"></span><span class="token-usage">Avatars · Accents chauds</span></div>
+          <div class="token-row"><div class="token-swatch" style="background:var(--butter-light);"></div><span class="token-name">--butter-light</span><span class="token-value" id="c-butter"></span><span class="token-usage">Warnings · Messages système</span></div>
+          <div class="token-row"><div class="token-swatch" style="background:var(--rose-light);"></div><span class="token-name">--rose-light</span><span class="token-value" id="c-rose"></span><span class="token-usage">Danger · Mute · Erreurs</span></div>
+          <div class="token-row"><div class="token-swatch" style="background:var(--surface-1);border:1px solid var(--border-strong);"></div><span class="token-name">--surface-1</span><span class="token-value" id="c-s1"></span><span class="token-usage">Surface principale · Sidebar</span></div>
+          <div class="token-row"><div class="token-swatch" style="background:var(--surface-2);border:1px solid var(--border-strong);"></div><span class="token-name">--surface-2</span><span class="token-value" id="c-s2"></span><span class="token-usage">Surface secondaire · Chat</span></div>
+          <div class="token-row"><div class="token-swatch" style="background:var(--surface-3);border:1px solid var(--border-strong);"></div><span class="token-name">--surface-3</span><span class="token-value" id="c-s3"></span><span class="token-usage">Surface tertiaire · Rail · User panel</span></div>
+          <div class="token-row"><div class="token-swatch" style="background:var(--text-1);"></div><span class="token-name">--text-1</span><span class="token-value" id="c-t1"></span><span class="token-usage">Texte principal</span></div>
+          <div class="token-row"><div class="token-swatch" style="background:var(--text-3);"></div><span class="token-name">--text-3</span><span class="token-value" id="c-t3"></span><span class="token-usage">Texte tertiaire · Labels · Meta</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== BUTTON ===================== -->
+    <div class="ds-section" id="button">
+      <div class="ds-section-header">
+        <span class="ds-section-layer">ui/</span>
+        <h2 class="ds-section-title">Button</h2>
+        <span class="ds-section-desc">src/ui/Button.tsx</span>
+      </div>
+
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Variants</span></div>
+        <div class="ds-block-body">
+          <div class="ds-variant">
+            <div class="ds-variant-label">Primary</div>
+            <button class="btn btn-primary btn-md">Rejoindre</button>
+          </div>
+          <div class="ds-variant">
+            <div class="ds-variant-label">Secondary</div>
+            <button class="btn btn-secondary btn-md">Annuler</button>
+          </div>
+          <div class="ds-variant">
+            <div class="ds-variant-label">Ghost</div>
+            <button class="btn btn-ghost btn-md">Voir plus</button>
+          </div>
+          <div class="ds-variant">
+            <div class="ds-variant-label">Danger</div>
+            <button class="btn btn-danger btn-md">Quitter</button>
+          </div>
+          <div class="ds-variant">
+            <div class="ds-variant-label">Disabled</div>
+            <button class="btn btn-primary btn-md" disabled>Envoyer</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Tailles</span></div>
+        <div class="ds-block-body" style="align-items:center;">
+          <div class="ds-variant"><div class="ds-variant-label">sm</div><button class="btn btn-primary btn-sm">Copier</button></div>
+          <div class="ds-variant"><div class="ds-variant-label">md</div><button class="btn btn-primary btn-md">Rejoindre</button></div>
+          <div class="ds-variant"><div class="ds-variant-label">lg</div><button class="btn btn-primary btn-lg">Créer la guilde</button></div>
+        </div>
+      </div>
+
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Icon buttons</span></div>
+        <div class="ds-block-body" style="align-items:center;">
+          <div class="ds-variant"><div class="ds-variant-label">Normal</div><button class="btn btn-icon">🔍</button></div>
+          <div class="ds-variant"><div class="ds-variant-label">Active</div><button class="btn btn-icon" style="background:var(--surface-hover);">📌</button></div>
+          <div class="ds-variant"><div class="ds-variant-label">Sm</div><button class="btn btn-icon sm">⚙️</button></div>
+        </div>
+      </div>
+
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Props</span></div>
+        <table class="props-table">
+          <tr><th>Prop</th><th>Type</th><th>Default</th><th>Description</th></tr>
+          <tr><td><code>variant</code></td><td><code>'primary'|'secondary'|'ghost'|'danger'|'icon'</code></td><td><code>'primary'</code></td><td>Style visuel</td></tr>
+          <tr><td><code>size</code></td><td><code>'sm'|'md'|'lg'</code></td><td><code>'md'</code></td><td>Taille</td></tr>
+          <tr><td><code>disabled</code></td><td><code>boolean</code></td><td><code>false</code></td><td>État désactivé</td></tr>
+          <tr><td><code>loading</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Spinner + disabled auto</td></tr>
+          <tr><td><code>onClick</code></td><td><code>() => void</code></td><td>—</td><td></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===================== INPUT ===================== -->
+    <div class="ds-section" id="input">
+      <div class="ds-section-header">
+        <span class="ds-section-layer">ui/</span>
+        <h2 class="ds-section-title">Input</h2>
+        <span class="ds-section-desc">src/ui/Input.tsx</span>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">États</span></div>
+        <div class="ds-block-body grid-2">
+          <div class="ds-variant">
+            <div class="ds-variant-label">Default</div>
+            <div class="input-wrap"><label class="input-label">Nom d'utilisateur</label><input class="input" type="text" placeholder="alice.bloom"></div>
+          </div>
+          <div class="ds-variant">
+            <div class="ds-variant-label">Focus</div>
+            <div class="input-wrap"><label class="input-label">Email</label><input class="input" type="text" value="alice@example.com" style="border-color:var(--sage-dark);box-shadow:0 0 0 3px rgba(138,173,144,0.18);"></div>
+          </div>
+          <div class="ds-variant">
+            <div class="ds-variant-label">Error</div>
+            <div class="input-wrap"><label class="input-label">Mot de passe</label><input class="input error" type="password" value="abc"><div class="input-hint error">8 caractères minimum</div></div>
+          </div>
+          <div class="ds-variant">
+            <div class="ds-variant-label">Disabled</div>
+            <div class="input-wrap"><label class="input-label" style="opacity:.5;">URL du serveur</label><input class="input" type="text" value="serre.harmonie.app" disabled style="opacity:.5;cursor:not-allowed;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Props</span></div>
+        <table class="props-table">
+          <tr><th>Prop</th><th>Type</th><th>Default</th><th>Description</th></tr>
+          <tr><td><code>label</code></td><td><code>string</code></td><td>—</td><td>Label affiché au-dessus</td></tr>
+          <tr><td><code>hint</code></td><td><code>string</code></td><td>—</td><td>Texte d'aide ou d'erreur en-dessous</td></tr>
+          <tr><td><code>error</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Active le style erreur + hint rouge</td></tr>
+          <tr><td><code>size</code></td><td><code>'sm'|'md'</code></td><td><code>'md'</code></td><td></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===================== TAG ===================== -->
+    <div class="ds-section" id="tag">
+      <div class="ds-section-header">
+        <span class="ds-section-layer">ui/</span>
+        <h2 class="ds-section-title">Tag / Badge</h2>
+        <span class="ds-section-desc">src/ui/Tag.tsx · src/ui/Badge.tsx</span>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Tags — couleurs sémantiques</span></div>
+        <div class="ds-block-body" style="flex-wrap:wrap;gap:20px;">
+          <div class="ds-variant"><div class="ds-variant-label">sage</div><span class="tag tag-sage">Admin</span></div>
+          <div class="ds-variant"><div class="ds-variant-label">lavender</div><span class="tag tag-lav">Modérateur</span></div>
+          <div class="ds-variant"><div class="ds-variant-label">peach</div><span class="tag tag-peach">Invité</span></div>
+          <div class="ds-variant"><div class="ds-variant-label">butter</div><span class="tag tag-butter">En ligne</span></div>
+          <div class="ds-variant"><div class="ds-variant-label">rose</div><span class="tag tag-rose">Banni</span></div>
+        </div>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Tailles · Notification badges</span></div>
+        <div class="ds-block-body" style="align-items:center;gap:24px;">
+          <div class="ds-variant"><div class="ds-variant-label">sm</div><span class="tag tag-sage sm">Membre</span></div>
+          <div class="ds-variant"><div class="ds-variant-label">md</div><span class="tag tag-sage">Membre</span></div>
+          <div class="ds-variant"><div class="ds-variant-label">lg</div><span class="tag tag-sage lg">Membre</span></div>
+          <div class="ds-variant">
+            <div class="ds-variant-label">Notif badge</div>
+            <div style="display:flex;gap:12px;align-items:center;">
+              <div class="badge-wrap"><div style="width:36px;height:36px;border-radius:50%;background:var(--sage-light);display:flex;align-items:center;justify-content:center;font-size:16px;">🔔</div><div class="badge-count">5</div></div>
+              <div class="badge-wrap"><div style="width:36px;height:36px;border-radius:50%;background:var(--lavender-light);display:flex;align-items:center;justify-content:center;font-size:16px;">✉️</div><div class="badge-count">12</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== AVATAR ===================== -->
+    <div class="ds-section" id="avatar">
+      <div class="ds-section-header">
+        <span class="ds-section-layer">ui/</span>
+        <h2 class="ds-section-title">Avatar</h2>
+        <span class="ds-section-desc">src/ui/Avatar.tsx</span>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Tailles + Statuts</span></div>
+        <div class="ds-block-body" style="align-items:flex-end;gap:28px;">
+          <div class="ds-variant" style="align-items:center;">
+            <div class="ds-variant-label">xs · 24px</div>
+            <div class="avatar xs" style="background:var(--sage-light);">🌸</div>
+          </div>
+          <div class="ds-variant" style="align-items:center;">
+            <div class="ds-variant-label">sm · 32px</div>
+            <div class="avatar sm" style="background:var(--sage-light);">🌸</div>
+          </div>
+          <div class="ds-variant" style="align-items:center;">
+            <div class="ds-variant-label">md · 40px</div>
+            <div class="avatar md" style="background:var(--lavender-light);">🌙</div>
+          </div>
+          <div class="ds-variant" style="align-items:center;">
+            <div class="ds-variant-label">lg · 52px</div>
+            <div class="avatar lg" style="background:var(--peach-light);">🌻</div>
+          </div>
+          <div class="ds-variant" style="align-items:center;">
+            <div class="ds-variant-label">xl · 64px</div>
+            <div class="avatar xl" style="background:var(--butter-light);">🍀</div>
+          </div>
+        </div>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Statuts</span></div>
+        <div class="ds-block-body" style="align-items:flex-end;gap:28px;">
+          <div class="ds-variant" style="align-items:center;">
+            <div class="ds-variant-label">online</div>
+            <div class="avatar md" style="background:var(--sage-light);">🌸<div class="avatar-status status-online"></div></div>
+          </div>
+          <div class="ds-variant" style="align-items:center;">
+            <div class="ds-variant-label">away</div>
+            <div class="avatar md" style="background:var(--lavender-light);">🌙<div class="avatar-status status-away"></div></div>
+          </div>
+          <div class="ds-variant" style="align-items:center;">
+            <div class="ds-variant-label">dnd</div>
+            <div class="avatar md" style="background:var(--peach-light);">🌻<div class="avatar-status status-dnd"></div></div>
+          </div>
+          <div class="ds-variant" style="align-items:center;">
+            <div class="ds-variant-label">offline</div>
+            <div class="avatar md" style="background:var(--butter-light);">🍀<div class="avatar-status status-offline"></div></div>
+          </div>
+          <div class="ds-variant" style="align-items:center;">
+            <div class="ds-variant-label">Server (rail)</div>
+            <div class="server-av active" style="background:var(--sage-light);">🌿</div>
+          </div>
+          <div class="ds-variant" style="align-items:center;">
+            <div class="ds-variant-label">Server idle</div>
+            <div class="server-av" style="background:var(--lavender-light);">🌙</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== TOGGLE ===================== -->
+    <div class="ds-section" id="toggle">
+      <div class="ds-section-header">
+        <span class="ds-section-layer">ui/</span>
+        <h2 class="ds-section-title">Toggle</h2>
+        <span class="ds-section-desc">src/ui/Toggle.tsx</span>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">États</span></div>
+        <div class="ds-block-body column" style="gap:12px;">
+          <div class="toggle-wrap">
+            <div class="toggle-track-ui on"><div class="toggle-thumb-ui"></div></div>
+            <div><div class="toggle-label-ui">Notifications activées</div></div>
+          </div>
+          <div class="toggle-wrap">
+            <div class="toggle-track-ui off"><div class="toggle-thumb-ui"></div></div>
+            <div><div class="toggle-label-ui">Mode focus</div><div class="toggle-sub">Masque les notifications non urgentes</div></div>
+          </div>
+          <div class="toggle-wrap" style="opacity:.45;pointer-events:none;">
+            <div class="toggle-track-ui on"><div class="toggle-thumb-ui"></div></div>
+            <div><div class="toggle-label-ui">Micro (désactivé)</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== MISC ===================== -->
+    <div class="ds-section" id="misc">
+      <div class="ds-section-header">
+        <span class="ds-section-layer">ui/</span>
+        <h2 class="ds-section-title">Tooltip · Divider · StatusDot</h2>
+        <span class="ds-section-desc">src/ui/</span>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-body" style="gap:40px;align-items:center;">
+          <div class="ds-variant" style="align-items:center;">
+            <div class="ds-variant-label">Tooltip</div>
+            <div class="tooltip-wrap">
+              <button class="btn btn-ghost btn-sm tooltip-target">Hover moi</button>
+              <div class="tooltip-box">Copier le lien</div>
+            </div>
+          </div>
+          <div class="ds-variant" style="width:200px;">
+            <div class="ds-variant-label">Divider</div>
+            <div class="divider-ui">membres actuels</div>
+          </div>
+          <div class="ds-variant">
+            <div class="ds-variant-label">StatusDot</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div class="status-dot-ui"><div class="dot status-online"></div>En ligne</div>
+              <div class="status-dot-ui"><div class="dot status-away"></div>Absent</div>
+              <div class="status-dot-ui"><div class="dot status-dnd"></div>Ne pas déranger</div>
+              <div class="status-dot-ui"><div class="dot status-offline"></div>Hors ligne</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== CHANNEL ITEM ===================== -->
+    <div class="ds-section" id="channel-item">
+      <div class="ds-section-header">
+        <span class="ds-section-layer">features/guild/</span>
+        <h2 class="ds-section-title">ChannelItem</h2>
+        <span class="ds-section-desc">src/features/guild/ChannelItem.tsx</span>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Variants</span></div>
+        <div class="ds-block-body column" style="max-width:280px;gap:2px;">
+          <div class="ch-item active"><span class="ch-icon">#</span><span class="ch-name">général</span></div>
+          <div class="ch-item"><span class="ch-icon">#</span><span class="ch-name">annonces</span><span class="ch-badge">3</span></div>
+          <div class="ch-item"><span class="ch-icon">#</span><span class="ch-name">ressources</span></div>
+          <div class="ch-item muted"><span class="ch-icon">#</span><span class="ch-name">archivé</span></div>
+          <div class="ch-item"><span class="ch-icon">🔊</span><span class="ch-name">Salon principal</span></div>
+          <div class="ch-item active"><span class="ch-icon">🔊</span><span class="ch-name">Session créa</span></div>
+        </div>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Props</span></div>
+        <table class="props-table">
+          <tr><th>Prop</th><th>Type</th><th>Req.</th><th>Description</th></tr>
+          <tr><td><code>channel</code></td><td><code>Channel</code></td><td><span class="prop-required">req.</span></td><td>Objet channel (id, name, type)</td></tr>
+          <tr><td><code>isActive</code></td><td><code>boolean</code></td><td><span class="prop-optional">opt.</span></td><td>Surbrillance active</td></tr>
+          <tr><td><code>unreadCount</code></td><td><code>number</code></td><td><span class="prop-optional">opt.</span></td><td>Badge de non-lu (0 = masqué)</td></tr>
+          <tr><td><code>isMuted</code></td><td><code>boolean</code></td><td><span class="prop-optional">opt.</span></td><td>Opacité réduite</td></tr>
+          <tr><td><code>onClick</code></td><td><code>() => void</code></td><td><span class="prop-required">req.</span></td><td></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===================== MESSAGE ===================== -->
+    <div class="ds-section" id="message">
+      <div class="ds-section-header">
+        <span class="ds-section-layer">features/chat/</span>
+        <h2 class="ds-section-title">MessageBubble · MessageGroup</h2>
+        <span class="ds-section-desc">src/features/chat/</span>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Variants</span></div>
+        <div class="ds-block-body column" style="gap:20px;">
+          <!-- Received -->
+          <div class="msg-group">
+            <div class="msg-av-wrap"><div class="avatar md" style="background:var(--lavender-light);">🌙</div></div>
+            <div class="msg-body">
+              <div class="msg-meta"><span class="msg-author">Bastien</span><span class="msg-timestamp">14:20</span></div>
+              <div class="msg-bubble">Salut tout le monde ! On se retrouve ce soir ? 🎮</div>
+              <div class="msg-reactions">
+                <div class="reaction-pill active">👍 4</div>
+                <div class="reaction-pill">🎮 2</div>
+                <div class="reaction-pill">+ Réagir</div>
+              </div>
+            </div>
+          </div>
+          <!-- Own -->
+          <div class="msg-group own">
+            <div class="msg-av-wrap"><div class="avatar md" style="background:var(--sage-light);">🌸</div></div>
+            <div class="msg-body">
+              <div class="msg-meta"><span class="msg-timestamp">14:31</span><span class="msg-author">Alice (moi)</span></div>
+              <div class="msg-bubble own">Oui je suis là dès 19h 🌿</div>
+            </div>
+          </div>
+          <!-- System -->
+          <div class="msg-group">
+            <div class="msg-av-wrap"><div class="avatar md" style="background:var(--butter-light);font-size:16px;">📢</div></div>
+            <div class="msg-body">
+              <div class="msg-meta"><span class="msg-author" style="color:var(--text-3);">Système</span><span class="msg-timestamp">14:00</span></div>
+              <div class="msg-bubble system">Chloé a rejoint la guilde Jardinage.</div>
+            </div>
+          </div>
+          <!-- Typing -->
+          <div class="msg-group">
+            <div class="msg-av-wrap"><div class="avatar md" style="background:var(--peach-light);">🌻</div></div>
+            <div class="msg-body">
+              <div class="typing-indicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <span class="typing-text">Chloé est en train d'écrire…</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Props — MessageBubble</span></div>
+        <table class="props-table">
+          <tr><th>Prop</th><th>Type</th><th>Req.</th><th>Description</th></tr>
+          <tr><td><code>message</code></td><td><code>Message</code></td><td><span class="prop-required">req.</span></td><td>Objet message complet</td></tr>
+          <tr><td><code>isOwn</code></td><td><code>boolean</code></td><td><span class="prop-optional">opt.</span></td><td>Aligné à droite, couleur sage</td></tr>
+          <tr><td><code>variant</code></td><td><code>'default'|'own'|'system'</code></td><td><span class="prop-optional">opt.</span></td><td></td></tr>
+          <tr><td><code>reactions</code></td><td><code>Reaction[]</code></td><td><span class="prop-optional">opt.</span></td><td>Liste des réactions</td></tr>
+          <tr><td><code>onReact</code></td><td><code>(emoji: string) => void</code></td><td><span class="prop-optional">opt.</span></td><td></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===================== USER PANEL ===================== -->
+    <div class="ds-section" id="user-panel">
+      <div class="ds-section-header">
+        <span class="ds-section-layer">features/auth/</span>
+        <h2 class="ds-section-title">UserPanel</h2>
+        <span class="ds-section-desc">src/features/auth/UserPanel.tsx</span>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Rendu</span></div>
+        <div class="ds-block-body column" style="padding:0;">
+          <div class="user-panel">
+            <div class="avatar sm" style="background:var(--peach-light);">🌸<div class="avatar-status status-online"></div></div>
+            <div class="user-panel-info">
+              <div class="user-panel-name">Alice</div>
+              <div class="user-panel-status">En ligne</div>
+            </div>
+            <div class="user-panel-actions">
+              <button class="btn btn-icon">🎤</button>
+              <button class="btn btn-icon">🎧</button>
+              <button class="btn btn-icon">⚙️</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== SERVER BANNER ===================== -->
+    <div class="ds-section" id="server-banner">
+      <div class="ds-section-header">
+        <span class="ds-section-layer">features/guild/</span>
+        <h2 class="ds-section-title">ServerBanner</h2>
+        <span class="ds-section-desc">src/features/guild/ServerBanner.tsx</span>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Rendu — indique le serveur parent de la guilde</span></div>
+        <div class="ds-block-body column" style="padding:0;">
+          <div class="server-banner">
+            <div class="server-banner-icon">🌿</div>
+            <div class="server-banner-url">serre.harmonie.app</div>
+            <div class="server-banner-pill">● en ligne</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== GUILD SWITCHER ===================== -->
+    <div class="ds-section" id="guild-switch">
+      <div class="ds-section-header">
+        <span class="ds-section-layer">features/guild/</span>
+        <h2 class="ds-section-title">GuildSwitcher</h2>
+        <span class="ds-section-desc">src/features/guild/GuildSwitcher.tsx</span>
+      </div>
+
+      <!-- Styles inline pour les server-group boxes dans le DS -->
+      <style>
+        /* Sidebar colonne stricte — pas de débordement vertical */
+        #guild-switch .ds-block { overflow: visible; }
+
+        .sw-server-group {
+          width: 44px;
+          border: 1.5px solid var(--sw-border);
+          border-radius: 12px;
+          overflow: hidden;
+          margin-bottom: 6px;
+          /* Accent coloré en haut pour identifier le serveur */
+          border-top: 3px solid var(--sw-accent);
+        }
+        .sw-server-group:last-child { margin-bottom: 0; }
+
+        .sw-group-body { padding: 5px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+
+        /* Variantes couleur serveur */
+        .sw-serre {
+          --sw-border:  rgba(138,173,144,0.30);
+          --sw-accent:  var(--server-serre);
+        }
+        .sw-nuit {
+          --sw-border:  rgba(155,142,196,0.30);
+          --sw-accent:  var(--server-nuit);
+        }
+        .sw-musique {
+          --sw-border:  rgba(196,138,114,0.30);
+          --sw-accent:  var(--server-musique);
+        }
+        /* Dark overrides */
+        [data-theme="dark"] .sw-serre { --sw-border: rgba(122,174,134,0.20); }
+        [data-theme="dark"] .sw-nuit  { --sw-border: rgba(142,130,186,0.20); }
+        [data-theme="dark"] .sw-musique { --sw-border: rgba(184,126,102,0.20); }
+      </style>
+
+      <div class="ds-block">
+        <div class="ds-block-header">
+          <span class="ds-block-name">Multi-serveurs — une box par serveur host</span>
+          <code class="ds-block-path">GuildSwitcherGroup per server</code>
+        </div>
+        <div class="ds-block-body column" style="width:44px;gap:6px;overflow:visible;flex-shrink:0;">
+
+          <!-- Serveur 1 : La Serre -->
+          <div class="sw-server-group sw-serre">
+            <div class="sw-group-body">
+              <div class="guild-switch-item active">
+                <div class="guild-switch-icon" style="background:var(--sage-light);">🌱</div>
+              </div>
+              <div class="guild-switch-item">
+                <div class="guild-switch-icon" style="background:var(--lavender-light);">📚</div>
+                <span class="notif-badge">3</span>
+              </div>
+              <div class="guild-switch-item">
+                <div class="guild-switch-icon" style="background:var(--butter-light);">🎨</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Serveur 2 : Nuit Noire -->
+          <div class="sw-server-group sw-nuit">
+            <div class="sw-group-body">
+              <div class="guild-switch-item">
+                <div class="guild-switch-icon" style="background:var(--lavender-light);">🌙</div>
+              </div>
+              <div class="guild-switch-item">
+                <div class="guild-switch-icon" style="background:#E8E0F8;">🎵</div>
+                <span class="notif-badge">1</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Serveur 3 : Musiques (offline) -->
+          <div class="sw-server-group sw-musique" style="opacity:0.45;">
+            <div class="sw-group-body">
+              <div class="guild-switch-item">
+                <div class="guild-switch-icon" style="background:var(--peach-light);">🎸</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Props — GuildSwitcherGroup</span></div>
+        <table class="props-table">
+          <tr><th>Prop</th><th>Type</th><th>Req.</th><th>Description</th></tr>
+          <tr><td><code>server</code></td><td><code>Server</code></td><td><span class="prop-required">req.</span></td><td>Instance parente (url, emoji, couleur)</td></tr>
+          <tr><td><code>guilds</code></td><td><code>Guild[]</code></td><td><span class="prop-required">req.</span></td><td>Guildes rejointes sur ce serveur</td></tr>
+          <tr><td><code>activeGuildId</code></td><td><code>string</code></td><td><span class="prop-optional">opt.</span></td><td>Guilde active (dot + surbrillance)</td></tr>
+          <tr><td><code>serverColor</code></td><td><code>string</code></td><td><span class="prop-required">req.</span></td><td>Hex assigné au serveur, injecté en CSS var</td></tr>
+          <tr><td><code>isOffline</code></td><td><code>boolean</code></td><td><span class="prop-optional">opt.</span></td><td>Réduit l'opacité + label "hors ligne"</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===================== GUILD CARD ===================== -->
+    <div class="ds-section" id="guild-card">
+      <div class="ds-section-header">
+        <span class="ds-section-layer">features/guild/</span>
+        <h2 class="ds-section-title">GuildCard</h2>
+        <span class="ds-section-desc">src/features/guild/GuildCard.tsx</span>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Grid view</span><code class="ds-block-path">border-top = couleur serveur host</code></div>
+        <div class="ds-block-body grid-3">
+          <div class="guild-card" style="border-top:3px solid var(--server-serre);">
+            <div class="guild-card-icon" style="background:var(--sage-light);">🌱</div>
+            <div><div class="guild-card-name">Jardinage</div><div class="guild-card-meta">12 membres · 3 channels</div></div>
+          </div>
+          <div class="guild-card" style="border-top:3px solid var(--server-serre);">
+            <div class="guild-card-icon" style="background:var(--lavender-light);">📚</div>
+            <div><div class="guild-card-name">Lecture</div><div class="guild-card-meta">28 membres · 5 channels</div></div>
+          </div>
+          <!-- Exemple multi-serveurs : guilde d'un autre serveur -->
+          <div class="guild-card" style="border-top:3px solid var(--server-nuit);">
+            <div class="guild-card-icon" style="background:var(--lavender-light);">🌙</div>
+            <div><div class="guild-card-name">Poésie</div><div class="guild-card-meta" style="display:flex;flex-direction:column;gap:1px;"><span>18 membres · 4 channels</span><span style="color:var(--server-nuit);font-size:10px;font-weight:500;">nuit.harmonie.app</span></div></div>
+          </div>
+          <div class="guild-card" style="border-style:dashed;justify-content:center;flex-direction:column;text-align:center;color:var(--text-3);gap:6px;">
+            <span style="font-size:26px;">+</span>
+            <span style="font-size:13px;">Créer une guilde</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== BREADCRUMB ===================== -->
+    <div class="ds-section" id="breadcrumb">
+      <div class="ds-section-header">
+        <span class="ds-section-layer">features/guild/</span>
+        <h2 class="ds-section-title">BreadcrumbServerGuild</h2>
+        <span class="ds-section-desc">src/features/guild/BreadcrumbServerGuild.tsx</span>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Contexte Serveur › Guilde — affiché en tête de modal ou panneau</span></div>
+        <div class="ds-block-body">
+          <div class="bc">
+            <div class="bc-server-chip"><span>🌿</span><span>serre.harmonie.app</span></div>
+            <span class="bc-arrow">›</span>
+            <div class="bc-guild-chip"><span>🌱</span><span>Jardinage</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Props</span></div>
+        <table class="props-table">
+          <tr><th>Prop</th><th>Type</th><th>Req.</th><th>Description</th></tr>
+          <tr><td><code>server</code></td><td><code>Server</code></td><td><span class="prop-required">req.</span></td><td>Instance parente</td></tr>
+          <tr><td><code>guild</code></td><td><code>Guild</code></td><td><span class="prop-required">req.</span></td><td>Guilde cible</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===================== INVITE LINK ===================== -->
+    <div class="ds-section" id="invite">
+      <div class="ds-section-header">
+        <span class="ds-section-layer">features/guild/</span>
+        <h2 class="ds-section-title">InviteLink</h2>
+        <span class="ds-section-desc">src/features/guild/InviteLink.tsx</span>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Lien scopé serveur + guilde</span></div>
+        <div class="ds-block-body column" style="gap:10px;max-width:480px;">
+          <div class="invite-box">
+            <span class="invite-box-url">serre.harmonie.app/invite/jardinage/abc123xyz</span>
+            <button class="invite-copy-btn">Copier</button>
+          </div>
+          <div style="font-size:11px;color:var(--text-3);display:flex;align-items:center;gap:5px;">
+            <span>⏱</span><span>Expire dans 7 jours · Utilisation illimitée</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-start;background:var(--butter-light);border:1px solid var(--butter);border-radius:8px;padding:10px 12px;font-size:12px;color:#7A6820;line-height:1.5;">
+            <span>⚠️</span>
+            <span>Ce lien est valable <strong>uniquement sur serre.harmonie.app</strong>.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== VOICE TILE ===================== -->
+    <div class="ds-section" id="voice-tile">
+      <div class="ds-section-header">
+        <span class="ds-section-layer">features/voice/</span>
+        <h2 class="ds-section-title">VoiceTile · VoiceControls</h2>
+        <span class="ds-section-desc">src/features/voice/</span>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">VoiceTile — états participants</span></div>
+        <div class="ds-block-body" style="gap:12px;align-items:flex-start;">
+          <div class="ds-variant">
+            <div class="ds-variant-label">Idle</div>
+            <div class="voice-tile">
+              <div class="voice-tile-av" style="background:var(--lavender-light);">🌙</div>
+              <div class="voice-tile-name">Bastien</div>
+              <div class="voice-tile-state">🎤</div>
+            </div>
+          </div>
+          <div class="ds-variant">
+            <div class="ds-variant-label">Speaking</div>
+            <div class="voice-tile speaking">
+              <div class="voice-tile-av" style="background:var(--sage-light);">🌸</div>
+              <div class="voice-tile-name">Alice</div>
+              <div class="voice-tile-state speaking-anim">🎤 parle…</div>
+            </div>
+          </div>
+          <div class="ds-variant">
+            <div class="ds-variant-label">Muted</div>
+            <div class="voice-tile">
+              <div class="voice-tile-av" style="background:var(--peach-light);">🌻</div>
+              <div class="voice-tile-name">Chloé</div>
+              <div class="voice-tile-state muted">🔇 muet</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">VoiceControls</span></div>
+        <div class="ds-block-body">
+          <div class="voice-controls">
+            <button class="vc-btn muted md">🔇</button>
+            <button class="vc-btn normal md">📷</button>
+            <button class="vc-btn danger lg">📞</button>
+            <button class="vc-btn normal md">🖥️</button>
+            <button class="vc-btn normal md">⚙️</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== CHAT INPUT ===================== -->
+    <div class="ds-section" id="chat-input">
+      <div class="ds-section-header">
+        <span class="ds-section-layer">features/chat/</span>
+        <h2 class="ds-section-title">ChatInput</h2>
+        <span class="ds-section-desc">src/features/chat/ChatInput.tsx</span>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Rendu</span></div>
+        <div class="ds-block-body column">
+          <div class="chat-input-box" style="max-width:520px;">
+            <button class="btn btn-icon" style="font-size:18px;">➕</button>
+            <input class="chat-input-field" type="text" placeholder="Envoyer un message dans #général…">
+            <button class="btn btn-icon">😊</button>
+            <button class="btn btn-icon">🎁</button>
+            <div class="chat-send-btn">↵</div>
+          </div>
+        </div>
+      </div>
+      <div class="ds-block">
+        <div class="ds-block-header"><span class="ds-block-name">Props</span></div>
+        <table class="props-table">
+          <tr><th>Prop</th><th>Type</th><th>Req.</th><th>Description</th></tr>
+          <tr><td><code>channelName</code></td><td><code>string</code></td><td><span class="prop-required">req.</span></td><td>Affiché dans le placeholder</td></tr>
+          <tr><td><code>onSend</code></td><td><code>(content: string) => void</code></td><td><span class="prop-required">req.</span></td><td>Callback envoi</td></tr>
+          <tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="prop-optional">opt.</span></td><td>Ex: channel en lecture seule</td></tr>
+          <tr><td><code>onTyping</code></td><td><code>() => void</code></td><td><span class="prop-optional">opt.</span></td><td>Déclenche l'indicateur de frappe</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  function toggleTheme() {
+    const html = document.documentElement;
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    document.getElementById('theme-label').textContent = isDark ? 'Mode sombre' : 'Mode clair';
+  }
+
+  // Smooth scroll for nav links
+  document.querySelectorAll('.ds-nav-item').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const id = link.getAttribute('href').slice(1);
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.querySelectorAll('.ds-nav-item').forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+    });
+  });
+
+  // Intersection observer for active nav
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        document.querySelectorAll('.ds-nav-item').forEach(l => {
+          l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  document.querySelectorAll('.ds-section[id]').forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

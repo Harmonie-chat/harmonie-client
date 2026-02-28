@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harmonie — 04 Channel Vocal</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sage: #B8CCBC; --sage-light: #D4E4D7; --sage-dark: #8AAD90;
+    --lavender-light: #E2DCEF; --peach-light: #FAE4D8; --butter-light: #FAF4DC;
+    --rose: #E8C0C0; --cream: #FAF7F2; --warm-white: #FDFBF8;
+    --text-dark: #3D3530; --text-mid: #6B5F58; --text-soft: #9A8E88;
+    --border: rgba(61,53,48,0.08);
+    --shadow-sm: 0 2px 8px rgba(61,53,48,0.06);
+    --shadow-md: 0 4px 20px rgba(61,53,48,0.10);
+    --shadow-lg: 0 8px 40px rgba(61,53,48,0.14);
+    --radius-sm: 8px; --radius-md: 14px;
+    --font-display: 'Lora', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-body); background: #F5F0EB; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+
+  .screen {
+    width: 860px; height: 480px;
+    display: grid; grid-template-columns: 220px 1fr;
+    border-radius: 20px; overflow: hidden;
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Sidebar participants */
+  .participants {
+    background: var(--warm-white);
+    border-right: 1px solid var(--border);
+    padding: 20px 12px;
+    display: flex; flex-direction: column;
+  }
+  /* Server + guild breadcrumb */
+  .breadcrumb {
+    display: flex; flex-direction: column; gap: 4px; margin-bottom: 16px;
+  }
+  .bc-server {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--sage-dark); border-radius: 8px;
+    padding: 5px 10px;
+  }
+  .bc-server-icon { font-size: 12px; }
+  .bc-server-name { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.9); }
+  .bc-guild {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--cream); border-radius: 8px;
+    padding: 5px 10px; border: 1px solid var(--border);
+    margin-left: 10px;
+  }
+  .bc-guild-name { font-size: 10px; font-weight: 600; color: var(--text-mid); }
+
+  .section-label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--text-soft); margin-bottom: 8px;
+  }
+  .participant {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px; border-radius: var(--radius-sm); margin-bottom: 4px;
+  }
+  .participant.speaking { background: var(--sage-light); }
+  .p-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; flex-shrink: 0; position: relative;
+  }
+  .p-avatar.speaking::after {
+    content: '';
+    position: absolute; inset: -3px;
+    border-radius: 50%; border: 2px solid var(--sage-dark);
+    animation: pulse-ring 1s ease-in-out infinite;
+  }
+  @keyframes pulse-ring {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.06); }
+  }
+  .p-name { font-size: 13px; font-weight: 500; color: var(--text-dark); flex: 1; }
+  .p-icon { font-size: 13px; color: var(--text-soft); }
+
+  /* Main voice area */
+  .voice-main {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 32px; padding: 32px;
+    background: linear-gradient(135deg, var(--sage-light) 0%, var(--lavender-light) 100%);
+  }
+  .voice-info { text-align: center; }
+  .voice-channel-name {
+    font-family: var(--font-display);
+    font-size: 22px; font-weight: 600; color: var(--text-dark);
+    margin-bottom: 4px;
+  }
+  .voice-channel-meta { font-size: 13px; color: var(--text-mid); }
+
+  .tiles { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+  .tile {
+    width: 120px; background: white;
+    border-radius: var(--radius-md); padding: 20px 16px 16px;
+    text-align: center; box-shadow: var(--shadow-sm);
+    border: 2px solid transparent;
+  }
+  .tile.speaking { border-color: var(--sage-dark); box-shadow: 0 0 0 4px rgba(138,173,144,0.2); }
+  .tile-avatar {
+    width: 52px; height: 52px; border-radius: 50%;
+    margin: 0 auto 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .tile-name { font-size: 13px; font-weight: 500; color: var(--text-dark); }
+  .tile-status { font-size: 12px; color: var(--text-soft); margin-top: 3px; }
+  .tile-status.muted { color: var(--rose); }
+
+  .controls { display: flex; gap: 12px; align-items: center; }
+  .ctrl-btn {
+    width: 48px; height: 48px; border-radius: 50%;
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .ctrl-btn.normal { background: white; box-shadow: var(--shadow-sm); }
+  .ctrl-btn.muted { background: var(--rose); }
+  .ctrl-btn.danger { background: #E87070; color: white; width: 56px; height: 56px; font-size: 22px; }
+</style>
+</head>
+<body>
+<div class="screen">
+
+  <!-- Participants sidebar -->
+  <div class="participants">
+    <!-- Breadcrumb serveur > guilde -->
+    <div class="breadcrumb">
+      <div class="bc-server">
+        <span class="bc-server-icon">🌿</span>
+        <span class="bc-server-name">serre.harmonie.app</span>
+      </div>
+      <div class="bc-guild">
+        <span style="font-size:12px;">🌱</span>
+        <span class="bc-guild-name">Jardinage</span>
+      </div>
+    </div>
+
+    <div class="section-label">Participants (4)</div>
+
+    <div class="participant speaking">
+      <div class="p-avatar speaking" style="background:var(--sage-light);">🌸</div>
+      <div class="p-name">Alice</div>
+      <div class="p-icon">🎤</div>
+    </div>
+    <div class="participant">
+      <div class="p-avatar" style="background:var(--lavender-light);">🌙</div>
+      <div class="p-name">Bastien</div>
+      <div class="p-icon">🎤</div>
+    </div>
+    <div class="participant">
+      <div class="p-avatar" style="background:var(--peach-light);">🌻</div>
+      <div class="p-name">Chloé</div>
+      <div class="p-icon">🔇</div>
+    </div>
+    <div class="participant">
+      <div class="p-avatar" style="background:var(--butter-light);">🍀</div>
+      <div class="p-name">Marc</div>
+      <div class="p-icon">🎤</div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="voice-main">
+    <div class="voice-info">
+      <div class="voice-channel-name">🔊 Session principale</div>
+      <div class="voice-channel-meta">4 participants · Guilde Jardinage</div>
+    </div>
+
+    <div class="tiles">
+      <div class="tile speaking">
+        <div class="tile-avatar" style="background:var(--sage-light);">🌸</div>
+        <div class="tile-name">Alice</div>
+        <div class="tile-status">🎤 parle…</div>
+      </div>
+      <div class="tile">
+        <div class="tile-avatar" style="background:var(--lavender-light);">🌙</div>
+        <div class="tile-name">Bastien</div>
+        <div class="tile-status">🎤</div>
+      </div>
+      <div class="tile">
+        <div class="tile-avatar" style="background:var(--peach-light);">🌻</div>
+        <div class="tile-name">Chloé</div>
+        <div class="tile-status muted">🔇 muet</div>
+      </div>
+      <div class="tile">
+        <div class="tile-avatar" style="background:var(--butter-light);">🍀</div>
+        <div class="tile-name">Marc</div>
+        <div class="tile-status">🎤</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="ctrl-btn muted">🔇</button>
+      <button class="ctrl-btn normal">📷</button>
+      <button class="ctrl-btn danger">📞</button>
+      <button class="ctrl-btn normal">🖥️</button>
+      <button class="ctrl-btn normal">⚙️</button>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

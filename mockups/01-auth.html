@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harmonie — 01 Auth</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sage: #B8CCBC; --sage-light: #D4E4D7; --sage-dark: #8AAD90;
+    --lavender-light: #E2DCEF; --peach-light: #FAE4D8;
+    --butter-light: #FAF4DC; --cream: #FAF7F2; --warm-white: #FDFBF8;
+    --text-dark: #3D3530; --text-mid: #6B5F58; --text-soft: #9A8E88;
+    --border: rgba(61,53,48,0.08); --shadow-lg: 0 8px 40px rgba(61,53,48,0.14);
+    --radius-sm: 8px; --radius-md: 14px;
+    --font-display: 'Lora', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-body); background: #F5F0EB; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+
+  .screen {
+    width: 860px;
+    height: 540px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* LEFT — branding */
+  .left {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 40px;
+  }
+  .left::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 70% at 30% 40%, var(--sage-light) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 60% at 70% 80%, var(--lavender-light) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 60% 10%, var(--butter-light) 0%, transparent 50%);
+    background-color: var(--warm-white);
+  }
+  .left > * { position: relative; }
+  .brand {
+    font-family: var(--font-display);
+    font-size: 40px; font-weight: 600;
+    color: var(--text-dark); margin-bottom: 10px;
+  }
+  .brand em { font-style: italic; color: var(--sage-dark); }
+  .tagline { font-size: 14px; color: var(--text-mid); max-width: 260px; line-height: 1.7; font-weight: 300; }
+
+  /* RIGHT — form */
+  .right {
+    background: var(--warm-white);
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-left: 1px solid var(--border);
+  }
+  .form-title { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: var(--text-dark); margin-bottom: 4px; }
+  .form-sub { font-size: 13px; color: var(--text-soft); margin-bottom: 28px; }
+
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; color: var(--text-mid); margin-bottom: 6px; }
+  .field input {
+    width: 100%; padding: 10px 14px;
+    background: var(--cream); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); font-family: var(--font-body);
+    font-size: 14px; color: var(--text-dark); outline: none;
+  }
+  .field input:focus { border-color: var(--sage-dark); box-shadow: 0 0 0 3px rgba(138,173,144,0.2); }
+
+  /* Server selector pills */
+  .server-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+  .pill {
+    background: var(--sage-light); border: 1px solid var(--sage);
+    color: var(--sage-dark); border-radius: 100px;
+    padding: 4px 12px; font-size: 12px; cursor: pointer;
+    font-family: var(--font-body); font-weight: 500;
+  }
+  .pill.active { background: var(--sage-dark); color: white; border-color: var(--sage-dark); }
+  .pill.ghost { background: transparent; border: 1px dashed var(--border); color: var(--text-soft); }
+
+  .btn {
+    width: 100%; padding: 12px;
+    background: var(--sage-dark); color: white;
+    border: none; border-radius: var(--radius-sm);
+    font-family: var(--font-body); font-size: 15px; font-weight: 500;
+    cursor: pointer; margin-top: 4px;
+  }
+  .footer-link { font-size: 12px; color: var(--text-soft); text-align: center; margin-top: 14px; }
+  .footer-link a { color: var(--sage-dark); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="screen">
+  <div class="left">
+    <div class="brand"><em>Harmonie</em></div>
+    <div class="tagline">Des espaces qui vous appartiennent vraiment. Rejoignez une communauté ou hébergez la vôtre.</div>
+  </div>
+  <div class="right">
+    <div class="form-title">Créer un compte</div>
+    <div class="form-sub">Choisissez votre serveur d'inscription</div>
+
+    <div class="field">
+      <label>Serveur (Instance)</label>
+      <div class="server-pills">
+        <button class="pill active">🌿 serre.harmonie.app</button>
+        <button class="pill">🌙 nuit.harmonie.app</button>
+        <button class="pill ghost">+ Autre URL</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Nom d'utilisateur</label>
+      <input type="text" value="alice.bloom">
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" value="alice@example.com">
+    </div>
+    <div class="field">
+      <label>Mot de passe</label>
+      <input type="password" value="••••••••••">
+    </div>
+
+    <button class="btn">Rejoindre la communauté</button>
+    <div class="footer-link">Déjà un compte ? <a href="#">Se connecter</a></div>
+  </div>
+</div>
+</body>
+</html>

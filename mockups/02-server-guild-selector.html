@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harmonie — 02 Sélecteur Serveurs & Guildes</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sage: #B8CCBC; --sage-light: #D4E4D7; --sage-dark: #8AAD90;
+    --lavender-light: #E2DCEF; --peach-light: #FAE4D8; --butter-light: #FAF4DC;
+    --cream: #FAF7F2; --warm-white: #FDFBF8;
+    --text-dark: #3D3530; --text-mid: #6B5F58; --text-soft: #9A8E88; --text-faint: #C8BFB8;
+    --border: rgba(61,53,48,0.08);
+    --shadow-sm: 0 2px 8px rgba(61,53,48,0.06);
+    --shadow-md: 0 4px 20px rgba(61,53,48,0.10);
+    --shadow-lg: 0 8px 40px rgba(61,53,48,0.14);
+    --radius-sm: 8px; --radius-md: 14px;
+    --font-display: 'Lora', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+
+    --server-serre:   #8AAD90;
+    --server-nuit:    #9B8EC4;
+    --server-musique: #C48A72;
+    --server-gamers:  #6A9EC0;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-body); background: #F5F0EB; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+
+  .screen {
+    width: 960px; height: 560px;
+    display: grid; grid-template-columns: 260px 1fr;
+    border-radius: 20px; overflow: hidden;
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* ── SERVER LIST ── */
+  .servers {
+    background: var(--cream);
+    border-right: 1px solid var(--border);
+    padding: 20px 12px;
+    display: flex; flex-direction: column; gap: 4px;
+    overflow-y: auto;
+  }
+  .servers-title {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--text-soft);
+    padding: 0 8px; margin-bottom: 8px;
+  }
+  .server-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: var(--radius-sm);
+    cursor: pointer; transition: background 0.15s;
+    position: relative;
+  }
+  .server-item:hover { background: rgba(61,53,48,0.04); }
+  .server-item.active { background: var(--warm-white); box-shadow: var(--shadow-sm); }
+  /* Pill couleur à gauche */
+  .server-item::before {
+    content: '';
+    position: absolute; left: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 3px; border-radius: 0 3px 3px 0;
+    height: 0; background: var(--srv-color);
+    transition: height 0.2s;
+  }
+  .server-item.active::before,
+  .server-item:hover::before { height: 24px; }
+
+  .server-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .server-info { flex: 1; min-width: 0; }
+  .server-name { font-size: 13px; font-weight: 500; color: var(--text-dark); }
+  .server-url { font-size: 10px; color: var(--text-soft); font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .status-dot.online  { background: #88C498; }
+  .status-dot.offline { background: var(--text-faint); }
+
+  .add-server {
+    margin-top: auto;
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: var(--radius-sm);
+    border: 1px dashed var(--border);
+    color: var(--text-soft); font-size: 13px; cursor: pointer;
+  }
+  .add-server:hover { border-color: var(--sage-dark); color: var(--sage-dark); }
+
+  /* ── GUILD PANELS ── */
+  .guilds-scroll {
+    background: var(--warm-white);
+    overflow-y: auto;
+    padding: 24px 28px;
+    display: flex; flex-direction: column; gap: 20px;
+  }
+  .guilds-scroll::-webkit-scrollbar { width: 4px; }
+  .guilds-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* Box englobante par serveur */
+  .server-section {
+    border: 1.5px solid var(--srv-border-color);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  /* Header de la section = bandeau couleur serveur */
+  .section-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px;
+    background: var(--srv-header-bg);
+    border-bottom: 1.5px solid var(--srv-border-color);
+  }
+  .section-header-icon {
+    width: 24px; height: 24px; border-radius: 7px;
+    background: var(--srv-icon-bg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0;
+  }
+  .section-header-url {
+    font-size: 11px; font-weight: 600;
+    color: var(--srv-text-color);
+    flex: 1;
+  }
+  .section-header-count {
+    font-size: 10px; font-weight: 600;
+    background: var(--srv-icon-bg);
+    color: var(--srv-text-color);
+    padding: 2px 8px; border-radius: 100px;
+  }
+
+  /* Grille des guildes à l'intérieur */
+  .guild-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+  }
+  .guild-card {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 16px;
+    cursor: pointer;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--warm-white);
+    transition: background 0.15s;
+  }
+  .guild-card:nth-child(3n) { border-right: none; }
+  .guild-card:nth-last-child(-n+3):nth-child(3n+1),
+  .guild-card:nth-last-child(-n+3):nth-child(3n+2),
+  .guild-card:nth-last-child(-n+3) { border-bottom: none; }
+  .guild-card:hover { background: var(--cream); }
+
+  .guild-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .guild-name { font-size: 13px; font-weight: 500; color: var(--text-dark); }
+  .guild-meta { font-size: 10px; color: var(--text-soft); margin-top: 1px; }
+
+  .guild-card.new {
+    flex-direction: column; justify-content: center; align-items: center;
+    text-align: center; gap: 4px;
+    color: var(--text-faint); font-size: 12px;
+    background: transparent;
+    border-right: none;
+    border-bottom: none;
+  }
+  .guild-card.new:hover { color: var(--text-soft); background: var(--cream); }
+  .guild-card.new .plus { font-size: 22px; }
+
+  /* Couleurs par serveur — via classes */
+  .srv-serre {
+    --srv-color:        var(--server-serre);
+    --srv-border-color: rgba(138,173,144,0.35);
+    --srv-header-bg:    rgba(138,173,144,0.10);
+    --srv-icon-bg:      rgba(138,173,144,0.18);
+    --srv-text-color:   #5A8E62;
+  }
+  .srv-nuit {
+    --srv-color:        var(--server-nuit);
+    --srv-border-color: rgba(155,142,196,0.35);
+    --srv-header-bg:    rgba(155,142,196,0.10);
+    --srv-icon-bg:      rgba(155,142,196,0.18);
+    --srv-text-color:   #7060A8;
+  }
+  .srv-musique {
+    --srv-color:        var(--server-musique);
+    --srv-border-color: rgba(196,138,114,0.35);
+    --srv-header-bg:    rgba(196,138,114,0.10);
+    --srv-icon-bg:      rgba(196,138,114,0.18);
+    --srv-text-color:   #A06848;
+  }
+  .srv-gamers {
+    --srv-color:        var(--server-gamers);
+    --srv-border-color: rgba(106,158,192,0.35);
+    --srv-header-bg:    rgba(106,158,192,0.10);
+    --srv-icon-bg:      rgba(106,158,192,0.18);
+    --srv-text-color:   #4878A0;
+  }
+</style>
+</head>
+<body>
+<div class="screen">
+
+  <!-- Server list -->
+  <div class="servers">
+    <div class="servers-title">Mes Serveurs</div>
+
+    <div class="server-item active srv-serre" style="--srv-color:var(--server-serre);">
+      <div class="server-icon" style="background:rgba(138,173,144,0.15);">🌿</div>
+      <div class="server-info">
+        <div class="server-name">La Serre</div>
+        <div class="server-url">serre.harmonie.app</div>
+      </div>
+      <div class="status-dot online"></div>
+    </div>
+
+    <div class="server-item srv-nuit" style="--srv-color:var(--server-nuit);">
+      <div class="server-icon" style="background:rgba(155,142,196,0.15);">🌙</div>
+      <div class="server-info">
+        <div class="server-name">Nuit Noire</div>
+        <div class="server-url">nuit.harmonie.app</div>
+      </div>
+      <div class="status-dot online"></div>
+    </div>
+
+    <div class="server-item srv-musique" style="--srv-color:var(--server-musique);">
+      <div class="server-icon" style="background:rgba(196,138,114,0.15);">🎸</div>
+      <div class="server-info">
+        <div class="server-name">Musiques</div>
+        <div class="server-url">music.local:3000</div>
+      </div>
+      <div class="status-dot offline"></div>
+    </div>
+
+    <div class="server-item srv-gamers" style="--srv-color:var(--server-gamers);">
+      <div class="server-icon" style="background:rgba(106,158,192,0.15);">🎮</div>
+      <div class="server-info">
+        <div class="server-name">Gamers</div>
+        <div class="server-url">game.harmonie.app</div>
+      </div>
+      <div class="status-dot online"></div>
+    </div>
+
+    <div class="add-server">
+      <span style="font-size:16px;">+</span>
+      <span>Rejoindre / Héberger</span>
+    </div>
+  </div>
+
+  <!-- Guild panels — une box par serveur -->
+  <div class="guilds-scroll">
+
+    <!-- Serveur 1 : La Serre -->
+    <div class="server-section srv-serre">
+      <div class="section-header">
+        <div class="section-header-icon">🌿</div>
+        <span class="section-header-url">serre.harmonie.app</span>
+        <span class="section-header-count">3 guildes</span>
+      </div>
+      <div class="guild-grid">
+        <div class="guild-card">
+          <div class="guild-icon" style="background:var(--sage-light);">🌱</div>
+          <div>
+            <div class="guild-name">Jardinage</div>
+            <div class="guild-meta">12 membres · 3 channels</div>
+          </div>
+        </div>
+        <div class="guild-card">
+          <div class="guild-icon" style="background:var(--lavender-light);">📚</div>
+          <div>
+            <div class="guild-name">Lecture</div>
+            <div class="guild-meta">28 membres · 5 channels</div>
+          </div>
+        </div>
+        <div class="guild-card">
+          <div class="guild-icon" style="background:var(--butter-light);">🎨</div>
+          <div>
+            <div class="guild-name">Créa & Design</div>
+            <div class="guild-meta">47 membres · 8 channels</div>
+          </div>
+        </div>
+        <div class="guild-card new">
+          <div class="plus">+</div>
+          <span>Créer</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Serveur 2 : Nuit Noire -->
+    <div class="server-section srv-nuit">
+      <div class="section-header">
+        <div class="section-header-icon">🌙</div>
+        <span class="section-header-url">nuit.harmonie.app</span>
+        <span class="section-header-count">2 guildes</span>
+      </div>
+      <div class="guild-grid">
+        <div class="guild-card">
+          <div class="guild-icon" style="background:var(--lavender-light);">🌙</div>
+          <div>
+            <div class="guild-name">Poésie</div>
+            <div class="guild-meta">18 membres · 4 channels</div>
+          </div>
+        </div>
+        <div class="guild-card">
+          <div class="guild-icon" style="background:#EAE0F8;">🎵</div>
+          <div>
+            <div class="guild-name">Ambient</div>
+            <div class="guild-meta">9 membres · 2 channels</div>
+          </div>
+        </div>
+        <div class="guild-card new">
+          <div class="plus">+</div>
+          <span>Créer</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
