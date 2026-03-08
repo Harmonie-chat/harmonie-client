@@ -25,6 +25,7 @@ coverage/
 
 # Vite
 vite.config.ts.timestamp-*
+**/.vite/
 
 # Playwright
 playwright-report/
