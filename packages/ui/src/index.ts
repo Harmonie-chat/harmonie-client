@@ -1,2 +1,2 @@
-// Design system barrel export
-// Components will be added here as they are implemented in Phase 6
+export { Button } from './components/Button/Button'
+export type { ButtonProps, ButtonVariant } from './components/Button/Button'
