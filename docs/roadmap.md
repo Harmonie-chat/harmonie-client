@@ -18,16 +18,16 @@ Mettre en place la structure du monorepo sans aucun code applicatif.
 
 ---
 
-## Phase 3 — Package `packages/ui` (structure + Storybook)
+## Phase 3 — Package `packages/ui` (structure + Storybook) ✅
 Créer le package du design system, vide mais fonctionnel avec Storybook.
 
-- [ ] `packages/ui/package.json` (nom `@harmonie/ui`, React en `peerDependencies`)
-- [ ] `packages/ui/vite.config.ts` (library mode, externalize React, `vite-plugin-dts`)
-- [ ] `packages/ui/tsconfig.json`
-- [ ] Tailwind CSS v4 dans `packages/ui` (`tailwind.config.ts` avec preset)
-- [ ] `.storybook/main.ts`, `preview.ts`, `preview-head.html` (Google Fonts)
-- [ ] `src/index.ts` barrel export vide
-- [ ] Vérification : `pnpm --filter @harmonie/ui storybook` démarre sur le port 6006
+- [x] `packages/ui/package.json` (nom `@harmonie/ui`, React en `peerDependencies`)
+- [x] `packages/ui/vite.config.ts` (library mode, externalize React, `vite-plugin-dts`)
+- [x] `packages/ui/tsconfig.json`
+- [x] Tailwind CSS v4 dans `packages/ui` — `src/styles/index.css` avec `@import "tailwindcss"` + `@theme` (tokens Harmonie inclus : couleurs, typo, radius)
+- [x] `.storybook/main.ts`, `preview.ts`, `preview-head.html` (Lora + DM Sans via Google Fonts)
+- [x] `src/index.ts` barrel export vide
+- [x] Vérification : `pnpm --filter @harmonie/ui storybook` démarre sur le port 6006
 
 ---
 

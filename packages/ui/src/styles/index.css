@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@theme {
+  /* ── Brand colors ── */
+  --color-primary: #8AAD90;
+  --color-primary-fg: #FFFFFF;
+  --color-secondary: #D4E4D7;
+  --color-secondary-fg: #8AAD90;
+  --color-tertiary: #F5F0EB;
+  --color-tertiary-fg: #6B5F58;
+
+  /* ── Background & surfaces ── */
+  --color-background: #F5F0EB;
+  --color-surface-1: #FDFBF8;
+  --color-surface-2: #FAF7F2;
+  --color-surface-hover: #EEE9E2;
+
+  /* ── Borders ── */
+  --color-border-1: #3D3530;
+  --color-border-2: rgba(61, 53, 48, 0.14);
+
+  /* ── Text ── */
+  --color-text-1: #3D3530;
+  --color-text-2: #6B5F58;
+  --color-text-3: #9A8E88;
+  --color-text-4: #C8BFB8;
+
+  /* ── Categories (tags, badges) ── */
+  --color-cat-1: #D4E4D7;
+  --color-cat-1-fg: #8AAD90;
+  --color-cat-2: #E2DCEF;
+  --color-cat-2-fg: #7B6FA0;
+  --color-cat-3: #FAE4D8;
+  --color-cat-3-fg: #B07060;
+  --color-cat-4: #FAF4DC;
+  --color-cat-4-fg: #9A8030;
+  --color-cat-5: #FAE8E8;
+  --color-cat-5-fg: #A05050;
+
+  /* ── Error states ── */
+  --color-error: #E8C0C0;
+  --color-error-fg: #E89090;
+
+  /* ── User status ── */
+  --color-status-online: #72B882;
+  --color-status-away: #C8B060;
+  --color-status-busy: #C07070;
+  --color-status-offline: #C8BFB8;
+
+  /* ── Typography ── */
+  --font-family-display: 'Lora', Georgia, serif;
+  --font-family-body: 'DM Sans', system-ui, sans-serif;
+
+  /* ── Border radius ── */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-xl: 32px;
+}
