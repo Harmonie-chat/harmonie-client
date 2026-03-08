@@ -11,46 +11,90 @@
    DESIGN TOKENS — LIGHT
 ===================================================================== */
 [data-theme="light"] {
-  --sage:            #B8CCBC;
-  --sage-light:      #D4E4D7;
-  --sage-dark:       #8AAD90;
-  --lavender:        #C8C0DC;
-  --lavender-light:  #E2DCEF;
-  --peach:           #F0C8B4;
-  --peach-light:     #FAE4D8;
-  --butter:          #F0E4B8;
-  --butter-light:    #FAF4DC;
-  --rose:            #E8C0C0;
-  --rose-light:      #FAE8E8;
-  --sky-light:       #D4E8F4;
+  /* ── Palette brute — ne pas utiliser directement dans les composants ── */
+  --palette-sage:           #B8CCBC;
+  --palette-sage-light:     #D4E4D7;
+  --palette-sage-dark:      #8AAD90;
+  --palette-lavender:       #C8C0DC;
+  --palette-lavender-light: #E2DCEF;
+  --palette-lavender-dark:  #7B6FA0;
+  --palette-peach:          #F0C8B4;
+  --palette-peach-light:    #FAE4D8;
+  --palette-peach-dark:     #B07060;
+  --palette-butter:         #F0E4B8;
+  --palette-butter-light:   #FAF4DC;
+  --palette-butter-dark:    #9A8030;
+  --palette-rose:           #E8C0C0;
+  --palette-rose-light:     #FAE8E8;
+  --palette-rose-dark:      #A05050;
+  --palette-sky-light:      #D4E8F4;
 
+  /* ── Fond & Surfaces ──────────────────────────────────────────────── */
   --bg:              #F5F0EB;
   --surface-1:       #FDFBF8;
   --surface-2:       #FAF7F2;
-  --surface-3:       #D4E4D7;
+  --surface-3:       var(--palette-sage-light);
   --surface-hover:   #EEE9E2;
-  --surface-active:  #D4E4D7;
+  --surface-active:  var(--primary-subtle);
 
+  /* ── Texte ────────────────────────────────────────────────────────── */
   --text-1:          #3D3530;
   --text-2:          #6B5F58;
   --text-3:          #9A8E88;
   --text-4:          #C8BFB8;
 
+  /* ── Bordures & Ombres ────────────────────────────────────────────── */
   --border:          rgba(61,53,48,0.08);
   --border-strong:   rgba(61,53,48,0.14);
-
   --shadow-sm:       0 1px 4px rgba(61,53,48,0.07);
   --shadow-md:       0 4px 16px rgba(61,53,48,0.10);
   --shadow-lg:       0 8px 32px rgba(61,53,48,0.13);
 
-  --accent:          var(--sage-dark);
-  --accent-text:     #fff;
-  --accent-subtle:   var(--sage-light);
+  /* ── Couleur primaire (marque / interactive) ──────────────────────── */
+  --primary:         var(--palette-sage-dark);
+  --primary-subtle:  var(--palette-sage-light);
+  --primary-muted:   var(--palette-sage);
+  --primary-fg:      #fff;
+  --primary-ring:    rgba(138,173,144,0.18);
 
+  /* ── Couleurs catégorielles (tags, étiquettes, accents décoratifs) ── */
+  --cat-1:           var(--palette-sage-dark);   /* vert */
+  --cat-1-subtle:    var(--palette-sage-light);
+  --cat-1-fg:        var(--palette-sage-dark);
+  --cat-2:           var(--palette-lavender-dark); /* lavande */
+  --cat-2-subtle:    var(--palette-lavender-light);
+  --cat-2-fg:        var(--palette-lavender-dark);
+  --cat-3:           var(--palette-peach-dark);    /* pêche */
+  --cat-3-subtle:    var(--palette-peach-light);
+  --cat-3-fg:        var(--palette-peach-dark);
+  --cat-4:           var(--palette-butter-dark);   /* beurre */
+  --cat-4-subtle:    var(--palette-butter-light);
+  --cat-4-fg:        var(--palette-butter-dark);
+  --cat-5:           var(--palette-rose-dark);     /* rose */
+  --cat-5-subtle:    var(--palette-rose-light);
+  --cat-5-fg:        var(--palette-rose-dark);
+
+  /* ── États sémantiques ────────────────────────────────────────────── */
+  --error:           var(--palette-rose);
+  --error-subtle:    var(--palette-rose-light);
+  --error-fg:        var(--palette-rose-dark);
+  --error-ring:      rgba(232,144,144,0.15);
+  --warning:         var(--palette-butter);
+  --warning-subtle:  var(--palette-butter-light);
+  --warning-fg:      var(--palette-butter-dark);
+  --info-subtle:     var(--palette-sky-light);
+
+  /* ── Bulles de messages ───────────────────────────────────────────── */
+  --bubble-other:         var(--palette-lavender-light);
+  --bubble-own:           var(--palette-sage-light);
+  --bubble-system:        var(--palette-butter-light);
+  --bubble-system-border: var(--palette-butter);
+
+  /* ── Code ─────────────────────────────────────────────────────────── */
   --code-bg:         #EDE8E0;
   --code-text:       #7B6FA0;
 
-  /* Couleurs assignées par serveur — light */
+  /* ── Couleurs assignées par serveur ───────────────────────────────── */
   --server-serre:    #8AAD90;
   --server-nuit:     #9B8EC4;
   --server-musique:  #C48A72;
@@ -61,19 +105,25 @@
    DESIGN TOKENS — DARK
 ===================================================================== */
 [data-theme="dark"] {
-  --sage:            #7A9E82;
-  --sage-light:      #2E4232;
-  --sage-dark:       #96C49E;
-  --lavender:        #9A90B8;
-  --lavender-light:  #2C2840;
-  --peach:           #C8987A;
-  --peach-light:     #3A2820;
-  --butter:          #C8B060;
-  --butter-light:    #2E2810;
-  --rose:            #C89090;
-  --rose-light:      #3A2020;
-  --sky-light:       #1C2E3A;
+  /* ── Palette brute — ne pas utiliser directement dans les composants ── */
+  --palette-sage:           #7A9E82;
+  --palette-sage-light:     #2E4232;
+  --palette-sage-dark:      #96C49E;
+  --palette-lavender:       #9A90B8;
+  --palette-lavender-light: #2C2840;
+  --palette-lavender-dark:  #A090D0;
+  --palette-peach:          #C8987A;
+  --palette-peach-light:    #3A2820;
+  --palette-peach-dark:     #C8987A;
+  --palette-butter:         #C8B060;
+  --palette-butter-light:   #2E2810;
+  --palette-butter-dark:    #C8B060;
+  --palette-rose:           #C89090;
+  --palette-rose-light:     #3A2020;
+  --palette-rose-dark:      #C89090;
+  --palette-sky-light:      #1C2E3A;
 
+  /* ── Fond & Surfaces ──────────────────────────────────────────────── */
   --bg:              #1A1714;
   --surface-1:       #211E1A;
   --surface-2:       #272320;
@@ -81,30 +131,77 @@
   --surface-hover:   #342F2A;
   --surface-active:  #2E4232;
 
+  /* ── Texte ────────────────────────────────────────────────────────── */
   --text-1:          #EDE8E0;
   --text-2:          #C8C0B8;
   --text-3:          #9A908A;
   --text-4:          #6E6560;
 
+  /* ── Bordures & Ombres ────────────────────────────────────────────── */
   --border:          rgba(255,240,220,0.07);
   --border-strong:   rgba(255,240,220,0.13);
-
   --shadow-sm:       0 1px 4px rgba(0,0,0,0.25);
   --shadow-md:       0 4px 16px rgba(0,0,0,0.35);
   --shadow-lg:       0 8px 32px rgba(0,0,0,0.50);
 
-  --accent:          var(--sage-dark);
-  --accent-text:     #1A2E1E;
-  --accent-subtle:   var(--sage-light);
+  /* ── Couleur primaire (marque / interactive) ──────────────────────── */
+  --primary:         var(--palette-sage-dark);
+  --primary-subtle:  var(--palette-sage-light);
+  --primary-muted:   var(--palette-sage);
+  --primary-fg:      #1A2E1E;
+  --primary-ring:    rgba(150,196,158,0.12);
 
+  /* ── Couleurs catégorielles (tags, étiquettes, accents décoratifs) ── */
+  --cat-1:           var(--palette-sage-dark);   /* vert */
+  --cat-1-subtle:    var(--palette-sage-light);
+  --cat-1-fg:        var(--palette-sage-dark);
+  --cat-2:           var(--palette-lavender-dark); /* lavande */
+  --cat-2-subtle:    var(--palette-lavender-light);
+  --cat-2-fg:        var(--palette-lavender-dark);
+  --cat-3:           var(--palette-peach-dark);    /* pêche */
+  --cat-3-subtle:    var(--palette-peach-light);
+  --cat-3-fg:        var(--palette-peach-dark);
+  --cat-4:           var(--palette-butter-dark);   /* beurre */
+  --cat-4-subtle:    var(--palette-butter-light);
+  --cat-4-fg:        var(--palette-butter-dark);
+  --cat-5:           var(--palette-rose-dark);     /* rose */
+  --cat-5-subtle:    var(--palette-rose-light);
+  --cat-5-fg:        var(--palette-rose-dark);
+
+  /* ── États sémantiques ────────────────────────────────────────────── */
+  --error:           var(--palette-rose);
+  --error-subtle:    var(--palette-rose-light);
+  --error-fg:        var(--palette-rose-dark);
+  --error-ring:      rgba(201,144,144,0.15);
+  --warning:         var(--palette-butter);
+  --warning-subtle:  var(--palette-butter-light);
+  --warning-fg:      var(--palette-butter-dark);
+  --info-subtle:     var(--palette-sky-light);
+
+  /* ── Bulles de messages ───────────────────────────────────────────── */
+  --bubble-other:         var(--palette-lavender-light);
+  --bubble-own:           var(--palette-sage-light);
+  --bubble-system:        var(--palette-butter-light);
+  --bubble-system-border: var(--palette-butter);
+
+  /* ── Code ─────────────────────────────────────────────────────────── */
   --code-bg:         #2A2620;
   --code-text:       #A090D0;
 
-  /* Couleurs assignées par serveur — dark */
+  /* ── Couleurs assignées par serveur ───────────────────────────────── */
   --server-serre:    #7AAE86;
   --server-nuit:     #8E82BA;
   --server-musique:  #B87E66;
   --server-gamers:   #5E92B2;
+}
+
+/* =====================================================================
+   TOKENS FIXES — indépendants du thème et de la palette
+===================================================================== */
+:root {
+  --status-online:  #72B882;
+  --status-away:    #C8B060;
+  --status-busy:    #C07070;
 }
 
 /* =====================================================================
@@ -167,7 +264,7 @@ code, .mono {
   color: var(--text-1);
   margin-bottom: 2px;
 }
-.ds-nav-logo em { font-style: italic; color: var(--sage-dark); }
+.ds-nav-logo em { font-style: italic; color: var(--primary); }
 .ds-nav-version {
   font-size: 10px;
   color: var(--text-3);
@@ -192,7 +289,7 @@ code, .mono {
 .toggle-track {
   width: 36px; height: 20px;
   border-radius: 100px;
-  background: var(--sage-dark);
+  background: var(--primary);
   position: relative;
   flex-shrink: 0;
   transition: background 0.2s;
@@ -344,7 +441,7 @@ code, .mono {
   line-height: 1.5;
 }
 .props-table tr:last-child td { border-bottom: none; }
-.prop-required { color: #E87070; font-weight: 600; font-size: 10px; }
+.prop-required { color: var(--error-fg); font-weight: 600; font-size: 10px; }
 .prop-optional { color: var(--text-4); font-size: 10px; }
 
 /* TOKEN ROW */
@@ -394,12 +491,11 @@ code, .mono {
 .btn-md   { padding: 10px 18px; font-size: 14px; }
 .btn-lg   { padding: 13px 24px; font-size: 15px; border-radius: 10px; }
 
-.btn-primary   { background: var(--sage-dark); color: var(--accent-text); }
-.btn-secondary { background: var(--sage-light); color: var(--sage-dark); border: 1px solid var(--sage); }
+.btn-primary   { background: var(--primary); color: var(--primary-fg); }
+.btn-secondary { background: var(--primary-subtle); color: var(--primary); border: 1px solid var(--primary-muted); }
 .btn-ghost     { background: transparent; color: var(--text-2); border: 1px solid var(--border-strong); }
 .btn-ghost:hover { background: var(--surface-hover); opacity: 1; }
-.btn-danger    { background: var(--rose-light); color: #A05050; border: 1px solid var(--rose); }
-[data-theme="dark"] .btn-danger { background: var(--rose-light); color: var(--rose); }
+.btn-danger    { background: var(--error-subtle); color: var(--error-fg); border: 1px solid var(--error); }
 .btn-icon      { padding: 8px; border-radius: 8px; background: transparent; color: var(--text-3); border: none; }
 .btn-icon:hover { background: var(--surface-hover); color: var(--text-1); opacity: 1; transform: none; }
 .btn-icon.sm   { padding: 5px; border-radius: 6px; }
@@ -425,13 +521,11 @@ code, .mono {
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .input::placeholder { color: var(--text-4); }
-.input:focus { border-color: var(--sage-dark); box-shadow: 0 0 0 3px rgba(138,173,144,0.18); }
-[data-theme="dark"] .input:focus { box-shadow: 0 0 0 3px rgba(150,196,158,0.12); }
-.input.error  { border-color: var(--rose); box-shadow: 0 0 0 3px rgba(232,144,144,0.15); }
+.input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-ring); }
+.input.error  { border-color: var(--error); box-shadow: 0 0 0 3px var(--error-ring); }
 .input.sm     { padding: 7px 10px; font-size: 13px; }
 .input-hint   { font-size: 11px; color: var(--text-3); }
-.input-hint.error { color: #C05050; }
-[data-theme="dark"] .input-hint.error { color: var(--rose); }
+.input-hint.error { color: var(--error-fg); }
 
 /* TAG / BADGE */
 .tag {
@@ -444,15 +538,11 @@ code, .mono {
   border-radius: 100px;
   white-space: nowrap;
 }
-.tag-sage    { background: var(--sage-light);    color: var(--sage-dark); }
-.tag-lav     { background: var(--lavender-light); color: #7B6FA0; }
-.tag-peach   { background: var(--peach-light);   color: #B07060; }
-.tag-butter  { background: var(--butter-light);  color: #9A8030; }
-.tag-rose    { background: var(--rose-light);    color: #A05050; }
-[data-theme="dark"] .tag-lav   { color: #A090D0; }
-[data-theme="dark"] .tag-peach { color: var(--peach); }
-[data-theme="dark"] .tag-butter { color: var(--butter); }
-[data-theme="dark"] .tag-rose  { color: var(--rose); }
+.tag-cat-1 { background: var(--cat-1-subtle); color: var(--cat-1-fg); }
+.tag-cat-2 { background: var(--cat-2-subtle); color: var(--cat-2-fg); }
+.tag-cat-3 { background: var(--cat-3-subtle); color: var(--cat-3-fg); }
+.tag-cat-4 { background: var(--cat-4-subtle); color: var(--cat-4-fg); }
+.tag-cat-5 { background: var(--cat-5-subtle); color: var(--cat-5-fg); }
 .tag.lg { font-size: 12px; padding: 4px 12px; }
 .tag.sm { font-size: 10px; padding: 2px 8px; }
 
@@ -482,9 +572,9 @@ code, .mono {
 .avatar.sm .avatar-status { width: 10px; height: 10px; }
 .avatar.md .avatar-status { width: 12px; height: 12px; }
 .avatar.lg .avatar-status { width: 14px; height: 14px; }
-.status-online  { background: #72B882; }
-.status-away    { background: #C8B060; }
-.status-dnd     { background: #C07070; }
+.status-online  { background: var(--status-online); }
+.status-away    { background: var(--status-away); }
+.status-dnd     { background: var(--status-busy); }
 .status-offline { background: var(--text-4); }
 
 /* TOGGLE */
@@ -496,7 +586,7 @@ code, .mono {
   flex-shrink: 0;
   transition: background 0.2s;
 }
-.toggle-track-ui.on  { background: var(--sage-dark); }
+.toggle-track-ui.on  { background: var(--primary); }
 .toggle-track-ui.off { background: var(--text-4); }
 .toggle-thumb-ui {
   position: absolute;
@@ -576,8 +666,8 @@ code, .mono {
 .badge-count {
   position: absolute;
   top: -4px; right: -4px;
-  background: #D05050;
-  color: white;
+  background: var(--error);
+  color: var(--primary-fg);
   font-size: 9px;
   font-weight: 700;
   min-width: 16px; height: 16px;
@@ -599,7 +689,7 @@ code, .mono {
   flex-shrink: 0;
 }
 .server-av:hover { border-radius: 12px; }
-.server-av.active { border-radius: 12px; outline: 2px solid var(--sage-dark); outline-offset: 2px; }
+.server-av.active { border-radius: 12px; outline: 2px solid var(--primary); outline-offset: 2px; }
 
 /* =====================================================================
    MOLECULES
@@ -624,7 +714,7 @@ code, .mono {
 .ch-item .ch-icon { font-size: 13px; opacity: 0.65; flex-shrink: 0; }
 .ch-item .ch-name { flex: 1; }
 .ch-item .ch-badge {
-  background: var(--sage-dark); color: var(--accent-text);
+  background: var(--primary); color: var(--primary-fg);
   font-size: 9px; font-weight: 700;
   padding: 1px 5px; border-radius: 100px;
 }
@@ -650,20 +740,20 @@ code, .mono {
   color: var(--text-1);
   line-height: 1.55;
   max-width: 420px;
-  background: var(--lavender-light);
+  background: var(--bubble-other);
   border-radius: 4px 18px 18px 18px;
   border: 1px solid var(--border);
 }
 .msg-bubble.own {
-  background: var(--sage-light);
+  background: var(--bubble-own);
   border-radius: 18px 4px 18px 18px;
 }
 .msg-bubble.system {
-  background: var(--butter-light);
+  background: var(--bubble-system);
   border-radius: 8px;
   font-size: 12px;
   color: var(--text-2);
-  border-color: var(--butter);
+  border-color: var(--bubble-system-border);
 }
 .msg-reactions {
   display: flex;
@@ -680,8 +770,8 @@ code, .mono {
   cursor: pointer;
   transition: border-color 0.12s, background 0.12s;
 }
-.reaction-pill:hover { border-color: var(--sage-dark); background: var(--sage-light); }
-.reaction-pill.active { background: var(--sage-light); border-color: var(--sage-dark); }
+.reaction-pill:hover { border-color: var(--primary); background: var(--primary-subtle); }
+.reaction-pill.active { background: var(--primary-subtle); border-color: var(--primary); }
 
 /* TYPING INDICATOR */
 .typing-indicator {
@@ -724,10 +814,10 @@ code, .mono {
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
-  background: var(--sage-dark);
+  background: var(--primary);
   color: rgba(255,255,255,0.9);
 }
-[data-theme="dark"] .server-banner { background: rgba(150,196,158,0.14); }
+[data-theme="dark"] .server-banner { background: var(--primary-subtle); color: var(--primary); }
 .server-banner-icon {
   width: 22px; height: 22px;
   border-radius: 6px;
@@ -735,13 +825,13 @@ code, .mono {
   display: flex; align-items: center; justify-content: center;
   font-size: 12px; flex-shrink: 0;
 }
-[data-theme="dark"] .server-banner-icon { background: rgba(150,196,158,0.18); }
+[data-theme="dark"] .server-banner-icon { background: var(--primary-ring); }
 .server-banner-url {
   flex: 1;
   font-size: 11px; font-weight: 600;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-[data-theme="dark"] .server-banner-url { color: var(--sage-dark); }
+[data-theme="dark"] .server-banner-url { color: var(--primary); }
 .server-banner-pill {
   font-size: 9px;
   background: rgba(255,255,255,0.18);
@@ -749,7 +839,7 @@ code, .mono {
   border-radius: 100px;
   flex-shrink: 0;
 }
-[data-theme="dark"] .server-banner-pill { background: rgba(150,196,158,0.15); color: var(--sage-dark); }
+[data-theme="dark"] .server-banner-pill { background: var(--primary-ring); color: var(--primary); }
 
 /* GUILD SWITCHER ITEM */
 .guild-switch-item {
@@ -801,7 +891,7 @@ code, .mono {
 /* Notification badge */
 .notif-badge {
   position: absolute; top: -2px; right: -2px;
-  background: #E05252; color: #fff;
+  background: var(--error); color: var(--primary-fg);
   font-size: 9px; font-weight: 700; line-height: 1;
   min-width: 15px; height: 15px;
   border-radius: 8px;
@@ -823,7 +913,7 @@ code, .mono {
   cursor: pointer;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
-.guild-card:hover { border-color: var(--sage); box-shadow: var(--shadow-md); }
+.guild-card:hover { border-color: var(--primary-muted); box-shadow: var(--shadow-md); }
 .guild-card-icon {
   width: 44px; height: 44px;
   border-radius: 12px;
@@ -841,11 +931,11 @@ code, .mono {
 }
 .bc-server-chip {
   display: flex; align-items: center; gap: 5px;
-  background: var(--sage-light);
+  background: var(--primary-subtle);
   border-radius: 100px;
   padding: 4px 10px 4px 7px;
 }
-.bc-server-chip span:last-child { font-size: 11px; font-weight: 600; color: var(--sage-dark); }
+.bc-server-chip span:last-child { font-size: 11px; font-weight: 600; color: var(--primary); }
 .bc-arrow { font-size: 12px; color: var(--text-4); }
 .bc-guild-chip {
   display: flex; align-items: center; gap: 5px;
@@ -874,14 +964,14 @@ code, .mono {
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .invite-copy-btn {
-  background: var(--sage-light); color: var(--sage-dark);
+  background: var(--primary-subtle); color: var(--primary);
   border: none; border-radius: 6px;
   padding: 5px 12px; font-size: 12px; font-weight: 600;
   cursor: pointer; font-family: 'DM Sans', sans-serif;
   white-space: nowrap; flex-shrink: 0;
   transition: background 0.12s;
 }
-.invite-copy-btn:hover { background: var(--sage); }
+.invite-copy-btn:hover { background: var(--primary-muted); }
 
 /* VOICE TILE */
 .voice-tile {
@@ -894,15 +984,14 @@ code, .mono {
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .voice-tile.speaking {
-  border-color: var(--sage-dark);
-  box-shadow: 0 0 0 3px rgba(138,173,144,0.2);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-ring);
 }
-[data-theme="dark"] .voice-tile.speaking { box-shadow: 0 0 0 3px rgba(150,196,158,0.12); }
 .voice-tile-av { width: 50px; height: 50px; border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
 .voice-tile-name { font-size: 13px; font-weight: 500; color: var(--text-1); }
 .voice-tile-state { font-size: 12px; color: var(--text-3); margin-top: 3px; }
-.voice-tile-state.muted { color: var(--rose); }
-.voice-tile-state.speaking-anim { color: var(--sage-dark); }
+.voice-tile-state.muted { color: var(--error); }
+.voice-tile-state.speaking-anim { color: var(--primary); }
 
 /* VOICE CONTROLS */
 .voice-controls {
@@ -920,9 +1009,9 @@ code, .mono {
 .vc-btn.md { width: 44px; height: 44px; }
 .vc-btn.lg { width: 52px; height: 52px; font-size: 22px; }
 .vc-btn.normal { background: var(--surface-1); border: 1px solid var(--border-strong); }
-.vc-btn.muted  { background: var(--rose-light); border: 1px solid var(--rose); }
+.vc-btn.muted  { background: var(--error-subtle); border: 1px solid var(--error); }
 [data-theme="dark"] .vc-btn.normal { background: var(--surface-2); }
-.vc-btn.danger { background: #D05050; color: white; }
+.vc-btn.danger { background: var(--error); color: var(--primary-fg); }
 
 /* CHAT INPUT */
 .chat-input-box {
@@ -935,7 +1024,7 @@ code, .mono {
   padding: 10px 14px;
   transition: border-color 0.15s;
 }
-.chat-input-box:focus-within { border-color: var(--sage-dark); }
+.chat-input-box:focus-within { border-color: var(--primary); }
 .chat-input-field {
   flex: 1; border: none; background: transparent;
   font-family: 'DM Sans', sans-serif;
@@ -944,12 +1033,94 @@ code, .mono {
 .chat-input-field::placeholder { color: var(--text-4); }
 .chat-send-btn {
   width: 30px; height: 30px;
-  background: var(--sage-dark); color: var(--accent-text);
+  background: var(--primary); color: var(--primary-fg);
   border: none; border-radius: 7px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   font-size: 15px; font-weight: 600;
   flex-shrink: 0;
 }
+
+/* =====================================================================
+   COLOR CARDS — palette grid & token rows
+===================================================================== */
+.palette-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  padding: 24px;
+}
+.color-family { display: flex; flex-direction: column; gap: 6px; }
+.color-family-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-4);
+  margin-bottom: 4px;
+}
+.color-card {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.color-card-swatch { height: 56px; width: 100%; }
+.color-card-info {
+  padding: 7px 9px;
+  background: var(--surface-1);
+  border-top: 1px solid var(--border);
+}
+.color-card-token {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+.color-card-hex {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-1);
+}
+
+/* Token row amélioré avec hex */
+.token-row { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 12px; }
+.token-row:last-child { border-bottom: none; }
+.token-row .token-swatch { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border-strong); flex-shrink: 0; }
+.token-row .token-name { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--code-text); min-width: 200px; }
+.token-row .token-hex  { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; color: var(--text-1); min-width: 80px; }
+.token-row .token-usage { color: var(--text-3); font-size: 11px; flex: 1; }
+
+/* Cat row — 3 swatches côte à côte */
+.cat-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.cat-row:last-child { border-bottom: none; }
+.cat-swatches { display: flex; gap: 4px; flex-shrink: 0; }
+.cat-swatch {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  position: relative;
+}
+.cat-swatch-label {
+  font-size: 8px;
+  font-weight: 700;
+  position: absolute;
+  bottom: 2px; right: 3px;
+  opacity: 0.5;
+  font-family: 'DM Mono', monospace;
+}
+.cat-info { flex: 1; display: flex; align-items: center; gap: 12px; }
+.cat-name { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--code-text); min-width: 48px; }
+.cat-hex  { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; color: var(--text-1); min-width: 72px; }
+.cat-usage { font-size: 11px; color: var(--text-3); }
 
 /* =====================================================================
    TYPOGRAPHY DISPLAY
@@ -983,7 +1154,7 @@ code, .mono {
   color: var(--text-1);
   margin-bottom: 6px;
 }
-.ds-page-title h1 em { font-style: italic; color: var(--sage-dark); }
+.ds-page-title h1 em { font-style: italic; color: var(--primary); }
 .ds-page-title p { font-size: 14px; color: var(--text-3); max-width: 480px; line-height: 1.7; }
 
 .ds-intro-grid {
@@ -998,7 +1169,7 @@ code, .mono {
   border-radius: 12px;
   padding: 16px 18px;
 }
-.ds-intro-card-num { font-family: 'Lora', Georgia, serif; font-size: 28px; font-weight: 600; color: var(--sage-dark); line-height: 1; margin-bottom: 6px; }
+.ds-intro-card-num { font-family: 'Lora', Georgia, serif; font-size: 28px; font-weight: 600; color: var(--primary); line-height: 1; margin-bottom: 6px; }
 .ds-intro-card-label { font-size: 13px; font-weight: 500; color: var(--text-1); }
 .ds-intro-card-desc { font-size: 12px; color: var(--text-3); margin-top: 3px; }
 
@@ -1024,33 +1195,33 @@ code, .mono {
 
     <div class="ds-nav-section">
       <div class="ds-nav-section-label">Fondations</div>
-      <a href="#tokens" class="ds-nav-item"><span class="nav-dot" style="background:#8AAD90;"></span>Tokens</a>
-      <a href="#typography" class="ds-nav-item"><span class="nav-dot" style="background:#C8C0DC;"></span>Typographie</a>
-      <a href="#colors" class="ds-nav-item"><span class="nav-dot" style="background:#F0C8B4;"></span>Couleurs</a>
+      <a href="#tokens" class="ds-nav-item"><span class="nav-dot" style="background:var(--palette-sage-dark);"></span>Tokens</a>
+      <a href="#typography" class="ds-nav-item"><span class="nav-dot" style="background:var(--palette-lavender);"></span>Typographie</a>
+      <a href="#colors" class="ds-nav-item"><span class="nav-dot" style="background:var(--palette-peach);"></span>Couleurs</a>
     </div>
 
     <div class="ds-nav-section">
       <div class="ds-nav-section-label">ui/ — Primitives</div>
-      <a href="#button" class="ds-nav-item"><span class="nav-dot" style="background:#8AAD90;"></span>Button</a>
-      <a href="#input" class="ds-nav-item"><span class="nav-dot" style="background:#C8C0DC;"></span>Input</a>
-      <a href="#tag" class="ds-nav-item"><span class="nav-dot" style="background:#F0E4B8;"></span>Tag / Badge</a>
-      <a href="#avatar" class="ds-nav-item"><span class="nav-dot" style="background:#F0C8B4;"></span>Avatar</a>
-      <a href="#toggle" class="ds-nav-item"><span class="nav-dot" style="background:#8AAD90;"></span>Toggle</a>
-      <a href="#misc" class="ds-nav-item"><span class="nav-dot" style="background:#E8C0C0;"></span>Tooltip · Divider · Dot</a>
+      <a href="#button" class="ds-nav-item"><span class="nav-dot" style="background:var(--palette-sage-dark);"></span>Button</a>
+      <a href="#input" class="ds-nav-item"><span class="nav-dot" style="background:var(--palette-lavender);"></span>Input</a>
+      <a href="#tag" class="ds-nav-item"><span class="nav-dot" style="background:var(--palette-butter);"></span>Tag / Badge</a>
+      <a href="#avatar" class="ds-nav-item"><span class="nav-dot" style="background:var(--palette-peach);"></span>Avatar</a>
+      <a href="#toggle" class="ds-nav-item"><span class="nav-dot" style="background:var(--palette-sage-dark);"></span>Toggle</a>
+      <a href="#misc" class="ds-nav-item"><span class="nav-dot" style="background:var(--palette-rose);"></span>Tooltip · Divider · Dot</a>
     </div>
 
     <div class="ds-nav-section">
       <div class="ds-nav-section-label">features/ — Molecules</div>
-      <a href="#channel-item" class="ds-nav-item"><span class="nav-dot" style="background:#B8CCBC;"></span>ChannelItem</a>
-      <a href="#message" class="ds-nav-item"><span class="nav-dot" style="background:#C8C0DC;"></span>MessageBubble</a>
-      <a href="#user-panel" class="ds-nav-item"><span class="nav-dot" style="background:#F0C8B4;"></span>UserPanel</a>
-      <a href="#server-banner" class="ds-nav-item"><span class="nav-dot" style="background:#8AAD90;"></span>ServerBanner</a>
-      <a href="#guild-switch" class="ds-nav-item"><span class="nav-dot" style="background:#8AAD90;"></span>GuildSwitcher</a>
-      <a href="#guild-card" class="ds-nav-item"><span class="nav-dot" style="background:#F0E4B8;"></span>GuildCard</a>
-      <a href="#breadcrumb" class="ds-nav-item"><span class="nav-dot" style="background:#B8CCBC;"></span>Breadcrumb</a>
-      <a href="#invite" class="ds-nav-item"><span class="nav-dot" style="background:#C8C0DC;"></span>InviteLink</a>
-      <a href="#voice-tile" class="ds-nav-item"><span class="nav-dot" style="background:#8AAD90;"></span>VoiceTile</a>
-      <a href="#chat-input" class="ds-nav-item"><span class="nav-dot" style="background:#8AAD90;"></span>ChatInput</a>
+      <a href="#channel-item" class="ds-nav-item"><span class="nav-dot" style="background:var(--palette-sage);"></span>ChannelItem</a>
+      <a href="#message" class="ds-nav-item"><span class="nav-dot" style="background:var(--palette-lavender);"></span>MessageBubble</a>
+      <a href="#user-panel" class="ds-nav-item"><span class="nav-dot" style="background:var(--palette-peach);"></span>UserPanel</a>
+      <a href="#server-banner" class="ds-nav-item"><span class="nav-dot" style="background:var(--palette-sage-dark);"></span>ServerBanner</a>
+      <a href="#guild-switch" class="ds-nav-item"><span class="nav-dot" style="background:var(--palette-sage-dark);"></span>GuildSwitcher</a>
+      <a href="#guild-card" class="ds-nav-item"><span class="nav-dot" style="background:var(--palette-butter);"></span>GuildCard</a>
+      <a href="#breadcrumb" class="ds-nav-item"><span class="nav-dot" style="background:var(--palette-sage);"></span>Breadcrumb</a>
+      <a href="#invite" class="ds-nav-item"><span class="nav-dot" style="background:var(--palette-lavender);"></span>InviteLink</a>
+      <a href="#voice-tile" class="ds-nav-item"><span class="nav-dot" style="background:var(--palette-sage-dark);"></span>VoiceTile</a>
+      <a href="#chat-input" class="ds-nav-item"><span class="nav-dot" style="background:var(--palette-sage-dark);"></span>ChatInput</a>
     </div>
   </nav>
 
@@ -1094,12 +1265,12 @@ code, .mono {
           <code class="ds-block-path">--space-*</code>
         </div>
         <div class="ds-block-body column" style="padding:0;">
-          <div class="token-row"><div class="token-swatch" style="width:4px;height:28px;border-radius:2px;background:var(--sage-dark);"></div><span class="token-name">--space-xs</span><span class="token-value">4px</span><span class="token-usage">Gaps fins, icônes</span></div>
-          <div class="token-row"><div class="token-swatch" style="width:8px;height:28px;border-radius:2px;background:var(--sage-dark);"></div><span class="token-name">--space-sm</span><span class="token-value">8px</span><span class="token-usage">Padding items sidebar</span></div>
-          <div class="token-row"><div class="token-swatch" style="width:16px;height:28px;border-radius:2px;background:var(--sage-dark);"></div><span class="token-name">--space-md</span><span class="token-value">16px</span><span class="token-usage">Padding cards, sections</span></div>
-          <div class="token-row"><div class="token-swatch" style="width:24px;height:28px;border-radius:2px;background:var(--sage-dark);"></div><span class="token-name">--space-lg</span><span class="token-value">24px</span><span class="token-usage">Espacement sections</span></div>
-          <div class="token-row"><div class="token-swatch" style="width:40px;height:28px;border-radius:2px;background:var(--sage-dark);"></div><span class="token-name">--space-xl</span><span class="token-value">40px</span><span class="token-usage">Padding pages</span></div>
-          <div class="token-row"><div class="token-swatch" style="width:64px;height:28px;border-radius:2px;background:var(--sage-dark);"></div><span class="token-name">--space-2xl</span><span class="token-value">64px</span><span class="token-usage">Hero / covers</span></div>
+          <div class="token-row"><div class="token-swatch" style="width:4px;height:28px;border-radius:2px;background:var(--primary);"></div><span class="token-name">--space-xs</span><span class="token-value">4px</span><span class="token-usage">Gaps fins, icônes</span></div>
+          <div class="token-row"><div class="token-swatch" style="width:8px;height:28px;border-radius:2px;background:var(--primary);"></div><span class="token-name">--space-sm</span><span class="token-value">8px</span><span class="token-usage">Padding items sidebar</span></div>
+          <div class="token-row"><div class="token-swatch" style="width:16px;height:28px;border-radius:2px;background:var(--primary);"></div><span class="token-name">--space-md</span><span class="token-value">16px</span><span class="token-usage">Padding cards, sections</span></div>
+          <div class="token-row"><div class="token-swatch" style="width:24px;height:28px;border-radius:2px;background:var(--primary);"></div><span class="token-name">--space-lg</span><span class="token-value">24px</span><span class="token-usage">Espacement sections</span></div>
+          <div class="token-row"><div class="token-swatch" style="width:40px;height:28px;border-radius:2px;background:var(--primary);"></div><span class="token-name">--space-xl</span><span class="token-value">40px</span><span class="token-usage">Padding pages</span></div>
+          <div class="token-row"><div class="token-swatch" style="width:64px;height:28px;border-radius:2px;background:var(--primary);"></div><span class="token-name">--space-2xl</span><span class="token-value">64px</span><span class="token-usage">Hero / covers</span></div>
         </div>
       </div>
 
@@ -1110,23 +1281,23 @@ code, .mono {
         </div>
         <div class="ds-block-body" style="align-items:center;">
           <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-            <div style="width:40px;height:40px;border-radius:4px;background:var(--sage-light);border:1px solid var(--sage-dark);"></div>
+            <div style="width:40px;height:40px;border-radius:4px;background:var(--primary-subtle);border:1px solid var(--primary);"></div>
             <code>xs · 4px</code>
           </div>
           <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-            <div style="width:40px;height:40px;border-radius:8px;background:var(--sage-light);border:1px solid var(--sage-dark);"></div>
+            <div style="width:40px;height:40px;border-radius:8px;background:var(--primary-subtle);border:1px solid var(--primary);"></div>
             <code>sm · 8px</code>
           </div>
           <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-            <div style="width:40px;height:40px;border-radius:14px;background:var(--sage-light);border:1px solid var(--sage-dark);"></div>
+            <div style="width:40px;height:40px;border-radius:14px;background:var(--primary-subtle);border:1px solid var(--primary);"></div>
             <code>md · 14px</code>
           </div>
           <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-            <div style="width:40px;height:40px;border-radius:22px;background:var(--sage-light);border:1px solid var(--sage-dark);"></div>
+            <div style="width:40px;height:40px;border-radius:22px;background:var(--primary-subtle);border:1px solid var(--primary);"></div>
             <code>lg · 22px</code>
           </div>
           <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-            <div style="width:40px;height:40px;border-radius:999px;background:var(--sage-light);border:1px solid var(--sage-dark);"></div>
+            <div style="width:40px;height:40px;border-radius:999px;background:var(--primary-subtle);border:1px solid var(--primary);"></div>
             <code>full</code>
           </div>
         </div>
@@ -1145,7 +1316,7 @@ code, .mono {
           <div class="type-specimen">
             <div class="type-row">
               <div class="type-meta"><div class="type-meta-name">Display</div><div class="type-meta-spec">Lora 600 · 52px · ls -2px</div></div>
-              <div class="type-sample" style="font-family:'Lora',serif;font-size:52px;font-weight:600;line-height:1.1;letter-spacing:-2px;color:var(--text-1);">Mes <em style="font-style:italic;color:var(--sage-dark);">Guildes</em></div>
+              <div class="type-sample" style="font-family:'Lora',serif;font-size:52px;font-weight:600;line-height:1.1;letter-spacing:-2px;color:var(--text-1);">Mes <em style="font-style:italic;color:var(--primary);">Guildes</em></div>
             </div>
             <div class="type-row">
               <div class="type-meta"><div class="type-meta-name">Heading 1</div><div class="type-meta-spec">Lora 600 · 28px</div></div>
@@ -1185,23 +1356,395 @@ code, .mono {
       <div class="ds-section-header">
         <span class="ds-section-layer">Fondations</span>
         <h2 class="ds-section-title">Couleurs</h2>
+        <span class="ds-section-desc">src/styles/tokens.css</span>
       </div>
+
+      <!-- PALETTE BRUTE -->
       <div class="ds-block">
-        <div class="ds-block-header"><span class="ds-block-name">Palette sémantique</span><span class="ds-block-path">s'adapte au thème actif</span></div>
-        <div class="ds-block-body column" style="padding:0;">
-          <div class="token-row"><div class="token-swatch" style="background:var(--sage-dark);"></div><span class="token-name">--sage-dark</span><span class="token-value" id="c-sage-dark"></span><span class="token-usage">Accent principal · CTA · Active states</span></div>
-          <div class="token-row"><div class="token-swatch" style="background:var(--sage-light);"></div><span class="token-name">--sage-light</span><span class="token-value" id="c-sage-light"></span><span class="token-usage">Surfaces actives · Bulles "own"</span></div>
-          <div class="token-row"><div class="token-swatch" style="background:var(--lavender-light);"></div><span class="token-name">--lavender-light</span><span class="token-value" id="c-lav"></span><span class="token-usage">Bulles messages reçus</span></div>
-          <div class="token-row"><div class="token-swatch" style="background:var(--peach-light);"></div><span class="token-name">--peach-light</span><span class="token-value" id="c-peach"></span><span class="token-usage">Avatars · Accents chauds</span></div>
-          <div class="token-row"><div class="token-swatch" style="background:var(--butter-light);"></div><span class="token-name">--butter-light</span><span class="token-value" id="c-butter"></span><span class="token-usage">Warnings · Messages système</span></div>
-          <div class="token-row"><div class="token-swatch" style="background:var(--rose-light);"></div><span class="token-name">--rose-light</span><span class="token-value" id="c-rose"></span><span class="token-usage">Danger · Mute · Erreurs</span></div>
-          <div class="token-row"><div class="token-swatch" style="background:var(--surface-1);border:1px solid var(--border-strong);"></div><span class="token-name">--surface-1</span><span class="token-value" id="c-s1"></span><span class="token-usage">Surface principale · Sidebar</span></div>
-          <div class="token-row"><div class="token-swatch" style="background:var(--surface-2);border:1px solid var(--border-strong);"></div><span class="token-name">--surface-2</span><span class="token-value" id="c-s2"></span><span class="token-usage">Surface secondaire · Chat</span></div>
-          <div class="token-row"><div class="token-swatch" style="background:var(--surface-3);border:1px solid var(--border-strong);"></div><span class="token-name">--surface-3</span><span class="token-value" id="c-s3"></span><span class="token-usage">Surface tertiaire · Rail · User panel</span></div>
-          <div class="token-row"><div class="token-swatch" style="background:var(--text-1);"></div><span class="token-name">--text-1</span><span class="token-value" id="c-t1"></span><span class="token-usage">Texte principal</span></div>
-          <div class="token-row"><div class="token-swatch" style="background:var(--text-3);"></div><span class="token-name">--text-3</span><span class="token-value" id="c-t3"></span><span class="token-usage">Texte tertiaire · Labels · Meta</span></div>
+        <div class="ds-block-header">
+          <span class="ds-block-name">Palette brute</span>
+          <span class="ds-block-path">--palette-* · source de vérité · ne pas utiliser directement dans les composants</span>
+        </div>
+        <div class="palette-grid">
+          <!-- Sage -->
+          <div class="color-family">
+            <div class="color-family-label">Sage</div>
+            <div class="color-card">
+              <div class="color-card-swatch" style="background:var(--palette-sage-dark);"></div>
+              <div class="color-card-info">
+                <div class="color-card-token">--palette-sage-dark</div>
+                <div class="color-card-hex" data-hex-var="--palette-sage-dark">—</div>
+              </div>
+            </div>
+            <div class="color-card">
+              <div class="color-card-swatch" style="background:var(--palette-sage);"></div>
+              <div class="color-card-info">
+                <div class="color-card-token">--palette-sage</div>
+                <div class="color-card-hex" data-hex-var="--palette-sage">—</div>
+              </div>
+            </div>
+            <div class="color-card">
+              <div class="color-card-swatch" style="background:var(--palette-sage-light);"></div>
+              <div class="color-card-info">
+                <div class="color-card-token">--palette-sage-light</div>
+                <div class="color-card-hex" data-hex-var="--palette-sage-light">—</div>
+              </div>
+            </div>
+          </div>
+          <!-- Lavande -->
+          <div class="color-family">
+            <div class="color-family-label">Lavande</div>
+            <div class="color-card">
+              <div class="color-card-swatch" style="background:var(--palette-lavender-dark);"></div>
+              <div class="color-card-info">
+                <div class="color-card-token">--palette-lavender-dark</div>
+                <div class="color-card-hex" data-hex-var="--palette-lavender-dark">—</div>
+              </div>
+            </div>
+            <div class="color-card">
+              <div class="color-card-swatch" style="background:var(--palette-lavender);"></div>
+              <div class="color-card-info">
+                <div class="color-card-token">--palette-lavender</div>
+                <div class="color-card-hex" data-hex-var="--palette-lavender">—</div>
+              </div>
+            </div>
+            <div class="color-card">
+              <div class="color-card-swatch" style="background:var(--palette-lavender-light);"></div>
+              <div class="color-card-info">
+                <div class="color-card-token">--palette-lavender-light</div>
+                <div class="color-card-hex" data-hex-var="--palette-lavender-light">—</div>
+              </div>
+            </div>
+          </div>
+          <!-- Pêche -->
+          <div class="color-family">
+            <div class="color-family-label">Pêche</div>
+            <div class="color-card">
+              <div class="color-card-swatch" style="background:var(--palette-peach-dark);"></div>
+              <div class="color-card-info">
+                <div class="color-card-token">--palette-peach-dark</div>
+                <div class="color-card-hex" data-hex-var="--palette-peach-dark">—</div>
+              </div>
+            </div>
+            <div class="color-card">
+              <div class="color-card-swatch" style="background:var(--palette-peach);"></div>
+              <div class="color-card-info">
+                <div class="color-card-token">--palette-peach</div>
+                <div class="color-card-hex" data-hex-var="--palette-peach">—</div>
+              </div>
+            </div>
+            <div class="color-card">
+              <div class="color-card-swatch" style="background:var(--palette-peach-light);"></div>
+              <div class="color-card-info">
+                <div class="color-card-token">--palette-peach-light</div>
+                <div class="color-card-hex" data-hex-var="--palette-peach-light">—</div>
+              </div>
+            </div>
+          </div>
+          <!-- Beurre -->
+          <div class="color-family">
+            <div class="color-family-label">Beurre</div>
+            <div class="color-card">
+              <div class="color-card-swatch" style="background:var(--palette-butter-dark);"></div>
+              <div class="color-card-info">
+                <div class="color-card-token">--palette-butter-dark</div>
+                <div class="color-card-hex" data-hex-var="--palette-butter-dark">—</div>
+              </div>
+            </div>
+            <div class="color-card">
+              <div class="color-card-swatch" style="background:var(--palette-butter);"></div>
+              <div class="color-card-info">
+                <div class="color-card-token">--palette-butter</div>
+                <div class="color-card-hex" data-hex-var="--palette-butter">—</div>
+              </div>
+            </div>
+            <div class="color-card">
+              <div class="color-card-swatch" style="background:var(--palette-butter-light);"></div>
+              <div class="color-card-info">
+                <div class="color-card-token">--palette-butter-light</div>
+                <div class="color-card-hex" data-hex-var="--palette-butter-light">—</div>
+              </div>
+            </div>
+          </div>
+          <!-- Rose -->
+          <div class="color-family">
+            <div class="color-family-label">Rose</div>
+            <div class="color-card">
+              <div class="color-card-swatch" style="background:var(--palette-rose-dark);"></div>
+              <div class="color-card-info">
+                <div class="color-card-token">--palette-rose-dark</div>
+                <div class="color-card-hex" data-hex-var="--palette-rose-dark">—</div>
+              </div>
+            </div>
+            <div class="color-card">
+              <div class="color-card-swatch" style="background:var(--palette-rose);"></div>
+              <div class="color-card-info">
+                <div class="color-card-token">--palette-rose</div>
+                <div class="color-card-hex" data-hex-var="--palette-rose">—</div>
+              </div>
+            </div>
+            <div class="color-card">
+              <div class="color-card-swatch" style="background:var(--palette-rose-light);"></div>
+              <div class="color-card-info">
+                <div class="color-card-token">--palette-rose-light</div>
+                <div class="color-card-hex" data-hex-var="--palette-rose-light">—</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+
+      <!-- TOKENS INTERACTIFS -->
+      <div class="ds-block">
+        <div class="ds-block-header">
+          <span class="ds-block-name">Tokens interactifs</span>
+          <span class="ds-block-path">--primary-* · change avec la palette choisie</span>
+        </div>
+        <div class="ds-block-body column" style="padding:0;">
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--primary);"></div>
+            <span class="token-name">--primary</span>
+            <span class="token-hex" data-hex-var="--primary">—</span>
+            <span class="token-usage">CTA · Focus ring · Active states · Badges</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--primary-subtle);"></div>
+            <span class="token-name">--primary-subtle</span>
+            <span class="token-hex" data-hex-var="--primary-subtle">—</span>
+            <span class="token-usage">Fond bouton secondaire · Bulles "own" · Surface active</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--primary-muted);"></div>
+            <span class="token-name">--primary-muted</span>
+            <span class="token-hex" data-hex-var="--primary-muted">—</span>
+            <span class="token-usage">Bordures douces · Hover copy-button</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--primary-fg);outline:1px solid var(--border-strong);"></div>
+            <span class="token-name">--primary-fg</span>
+            <span class="token-hex" data-hex-var="--primary-fg">—</span>
+            <span class="token-usage">Texte / icône sur fond primary</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- COULEURS CATÉGORIELLES -->
+      <div class="ds-block">
+        <div class="ds-block-header">
+          <span class="ds-block-name">Couleurs catégorielles</span>
+          <span class="ds-block-path">--cat-1…5 · pour tags, étiquettes, avatars décoratifs</span>
+        </div>
+        <div class="ds-block-body column" style="padding:0;">
+          <div class="cat-row">
+            <div class="cat-swatches">
+              <div class="cat-swatch" style="background:var(--cat-1);"></div>
+              <div class="cat-swatch" style="background:var(--cat-1-subtle);outline:1px solid var(--cat-1);"></div>
+            </div>
+            <div class="cat-info">
+              <span class="cat-name">cat-1</span>
+              <span class="cat-hex" data-hex-var="--cat-1">—</span>
+              <span class="cat-usage">Vert · Admin · canal actif · primary tag</span>
+            </div>
+          </div>
+          <div class="cat-row">
+            <div class="cat-swatches">
+              <div class="cat-swatch" style="background:var(--cat-2);"></div>
+              <div class="cat-swatch" style="background:var(--cat-2-subtle);outline:1px solid var(--cat-2);"></div>
+            </div>
+            <div class="cat-info">
+              <span class="cat-name">cat-2</span>
+              <span class="cat-hex" data-hex-var="--cat-2">—</span>
+              <span class="cat-usage">Lavande · Modérateur · bulles messages reçus</span>
+            </div>
+          </div>
+          <div class="cat-row">
+            <div class="cat-swatches">
+              <div class="cat-swatch" style="background:var(--cat-3);"></div>
+              <div class="cat-swatch" style="background:var(--cat-3-subtle);outline:1px solid var(--cat-3);"></div>
+            </div>
+            <div class="cat-info">
+              <span class="cat-name">cat-3</span>
+              <span class="cat-hex" data-hex-var="--cat-3">—</span>
+              <span class="cat-usage">Pêche · Invité · accents chauds</span>
+            </div>
+          </div>
+          <div class="cat-row">
+            <div class="cat-swatches">
+              <div class="cat-swatch" style="background:var(--cat-4);"></div>
+              <div class="cat-swatch" style="background:var(--cat-4-subtle);outline:1px solid var(--cat-4);"></div>
+            </div>
+            <div class="cat-info">
+              <span class="cat-name">cat-4</span>
+              <span class="cat-hex" data-hex-var="--cat-4">—</span>
+              <span class="cat-usage">Beurre · En ligne · messages système · warnings</span>
+            </div>
+          </div>
+          <div class="cat-row">
+            <div class="cat-swatches">
+              <div class="cat-swatch" style="background:var(--cat-5);"></div>
+              <div class="cat-swatch" style="background:var(--cat-5-subtle);outline:1px solid var(--cat-5);"></div>
+            </div>
+            <div class="cat-info">
+              <span class="cat-name">cat-5</span>
+              <span class="cat-hex" data-hex-var="--cat-5">—</span>
+              <span class="cat-usage">Rose · Banni · états destructifs</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÉTATS SÉMANTIQUES -->
+      <div class="ds-block">
+        <div class="ds-block-header">
+          <span class="ds-block-name">États sémantiques</span>
+          <span class="ds-block-path">--error · --warning · --info · --status-*</span>
+        </div>
+        <div class="ds-block-body column" style="padding:0;">
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--error);"></div>
+            <span class="token-name">--error</span>
+            <span class="token-hex" data-hex-var="--error">—</span>
+            <span class="token-usage">Bordure · icône erreur</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--error-subtle);"></div>
+            <span class="token-name">--error-subtle</span>
+            <span class="token-hex" data-hex-var="--error-subtle">—</span>
+            <span class="token-usage">Fond danger · btn-danger · vc-btn mute</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--error-fg);"></div>
+            <span class="token-name">--error-fg</span>
+            <span class="token-hex" data-hex-var="--error-fg">—</span>
+            <span class="token-usage">Texte erreur · hint erreur · prop-required</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--warning);"></div>
+            <span class="token-name">--warning</span>
+            <span class="token-hex" data-hex-var="--warning">—</span>
+            <span class="token-usage">Bordure avertissement · bulle système</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--warning-subtle);"></div>
+            <span class="token-name">--warning-subtle</span>
+            <span class="token-hex" data-hex-var="--warning-subtle">—</span>
+            <span class="token-usage">Fond avertissement · bulle système</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--warning-fg);"></div>
+            <span class="token-name">--warning-fg</span>
+            <span class="token-hex" data-hex-var="--warning-fg">—</span>
+            <span class="token-usage">Texte avertissement</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--info-subtle);"></div>
+            <span class="token-name">--info-subtle</span>
+            <span class="token-hex" data-hex-var="--info-subtle">—</span>
+            <span class="token-usage">Fond informatif · sky tint</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--status-online);border-radius:50%;"></div>
+            <span class="token-name">--status-online</span>
+            <span class="token-hex" data-hex-var="--status-online">—</span>
+            <span class="token-usage">Badge présence · En ligne</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--status-away);border-radius:50%;"></div>
+            <span class="token-name">--status-away</span>
+            <span class="token-hex" data-hex-var="--status-away">—</span>
+            <span class="token-usage">Badge présence · Absent</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--status-busy);border-radius:50%;"></div>
+            <span class="token-name">--status-busy</span>
+            <span class="token-hex" data-hex-var="--status-busy">—</span>
+            <span class="token-usage">Badge présence · Ne pas déranger</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SURFACES & TEXTE -->
+      <div class="ds-block">
+        <div class="ds-block-header">
+          <span class="ds-block-name">Surfaces & Texte</span>
+          <span class="ds-block-path">--bg · --surface-* · --text-* · --border-*</span>
+        </div>
+        <div class="ds-block-body column" style="padding:0;">
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--bg);"></div>
+            <span class="token-name">--bg</span>
+            <span class="token-hex" data-hex-var="--bg">—</span>
+            <span class="token-usage">Fond de page global</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--surface-1);"></div>
+            <span class="token-name">--surface-1</span>
+            <span class="token-hex" data-hex-var="--surface-1">—</span>
+            <span class="token-usage">Surface principale · Sidebar · Cards</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--surface-2);"></div>
+            <span class="token-name">--surface-2</span>
+            <span class="token-hex" data-hex-var="--surface-2">—</span>
+            <span class="token-usage">Surface secondaire · Headers internes</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--surface-3);"></div>
+            <span class="token-name">--surface-3</span>
+            <span class="token-hex" data-hex-var="--surface-3">—</span>
+            <span class="token-usage">Surface tertiaire · Rail · User panel</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--surface-hover);"></div>
+            <span class="token-name">--surface-hover</span>
+            <span class="token-hex" data-hex-var="--surface-hover">—</span>
+            <span class="token-usage">Fond au survol · btn-ghost · nav-item · ch-item</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--surface-active);"></div>
+            <span class="token-name">--surface-active</span>
+            <span class="token-hex" data-hex-var="--surface-active">—</span>
+            <span class="token-usage">Fond état actif / sélectionné · suit --primary</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--text-1);"></div>
+            <span class="token-name">--text-1</span>
+            <span class="token-hex" data-hex-var="--text-1">—</span>
+            <span class="token-usage">Texte principal</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--text-2);"></div>
+            <span class="token-name">--text-2</span>
+            <span class="token-hex" data-hex-var="--text-2">—</span>
+            <span class="token-usage">Texte secondaire · Labels · Nav items</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--text-3);"></div>
+            <span class="token-name">--text-3</span>
+            <span class="token-hex" data-hex-var="--text-3">—</span>
+            <span class="token-usage">Texte tertiaire · Meta · Timestamps · Placeholders</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--text-4);"></div>
+            <span class="token-name">--text-4</span>
+            <span class="token-hex" data-hex-var="--text-4">—</span>
+            <span class="token-usage">Texte désactivé · Séparateurs · Nav labels</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--border-strong);border-radius:2px;"></div>
+            <span class="token-name">--border</span>
+            <span class="token-hex" data-hex-var="--border">—</span>
+            <span class="token-usage">Bordure subtile</span>
+          </div>
+          <div class="token-row">
+            <div class="token-swatch" style="background:var(--border-strong);border-radius:2px;"></div>
+            <span class="token-name">--border-strong</span>
+            <span class="token-hex" data-hex-var="--border-strong">—</span>
+            <span class="token-usage">Bordure marquée · inputs · cards</span>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- ===================== BUTTON ===================== -->
@@ -1285,7 +1828,7 @@ code, .mono {
           </div>
           <div class="ds-variant">
             <div class="ds-variant-label">Focus</div>
-            <div class="input-wrap"><label class="input-label">Email</label><input class="input" type="text" value="alice@example.com" style="border-color:var(--sage-dark);box-shadow:0 0 0 3px rgba(138,173,144,0.18);"></div>
+            <div class="input-wrap"><label class="input-label">Email</label><input class="input" type="text" value="alice@example.com" style="border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-ring);"></div>
           </div>
           <div class="ds-variant">
             <div class="ds-variant-label">Error</div>
@@ -1319,24 +1862,24 @@ code, .mono {
       <div class="ds-block">
         <div class="ds-block-header"><span class="ds-block-name">Tags — couleurs sémantiques</span></div>
         <div class="ds-block-body" style="flex-wrap:wrap;gap:20px;">
-          <div class="ds-variant"><div class="ds-variant-label">sage</div><span class="tag tag-sage">Admin</span></div>
-          <div class="ds-variant"><div class="ds-variant-label">lavender</div><span class="tag tag-lav">Modérateur</span></div>
-          <div class="ds-variant"><div class="ds-variant-label">peach</div><span class="tag tag-peach">Invité</span></div>
-          <div class="ds-variant"><div class="ds-variant-label">butter</div><span class="tag tag-butter">En ligne</span></div>
-          <div class="ds-variant"><div class="ds-variant-label">rose</div><span class="tag tag-rose">Banni</span></div>
+          <div class="ds-variant"><div class="ds-variant-label">cat-1</div><span class="tag tag-cat-1">Admin</span></div>
+          <div class="ds-variant"><div class="ds-variant-label">cat-2</div><span class="tag tag-cat-2">Modérateur</span></div>
+          <div class="ds-variant"><div class="ds-variant-label">cat-3</div><span class="tag tag-cat-3">Invité</span></div>
+          <div class="ds-variant"><div class="ds-variant-label">cat-4</div><span class="tag tag-cat-4">En ligne</span></div>
+          <div class="ds-variant"><div class="ds-variant-label">cat-5</div><span class="tag tag-cat-5">Banni</span></div>
         </div>
       </div>
       <div class="ds-block">
         <div class="ds-block-header"><span class="ds-block-name">Tailles · Notification badges</span></div>
         <div class="ds-block-body" style="align-items:center;gap:24px;">
-          <div class="ds-variant"><div class="ds-variant-label">sm</div><span class="tag tag-sage sm">Membre</span></div>
-          <div class="ds-variant"><div class="ds-variant-label">md</div><span class="tag tag-sage">Membre</span></div>
-          <div class="ds-variant"><div class="ds-variant-label">lg</div><span class="tag tag-sage lg">Membre</span></div>
+          <div class="ds-variant"><div class="ds-variant-label">sm</div><span class="tag tag-cat-1 sm">Membre</span></div>
+          <div class="ds-variant"><div class="ds-variant-label">md</div><span class="tag tag-cat-1">Membre</span></div>
+          <div class="ds-variant"><div class="ds-variant-label">lg</div><span class="tag tag-cat-1 lg">Membre</span></div>
           <div class="ds-variant">
             <div class="ds-variant-label">Notif badge</div>
             <div style="display:flex;gap:12px;align-items:center;">
-              <div class="badge-wrap"><div style="width:36px;height:36px;border-radius:50%;background:var(--sage-light);display:flex;align-items:center;justify-content:center;font-size:16px;">🔔</div><div class="badge-count">5</div></div>
-              <div class="badge-wrap"><div style="width:36px;height:36px;border-radius:50%;background:var(--lavender-light);display:flex;align-items:center;justify-content:center;font-size:16px;">✉️</div><div class="badge-count">12</div></div>
+              <div class="badge-wrap"><div style="width:36px;height:36px;border-radius:50%;background:var(--cat-1-subtle);display:flex;align-items:center;justify-content:center;font-size:16px;">🔔</div><div class="badge-count">5</div></div>
+              <div class="badge-wrap"><div style="width:36px;height:36px;border-radius:50%;background:var(--cat-2-subtle);display:flex;align-items:center;justify-content:center;font-size:16px;">✉️</div><div class="badge-count">12</div></div>
             </div>
           </div>
         </div>
@@ -1355,23 +1898,23 @@ code, .mono {
         <div class="ds-block-body" style="align-items:flex-end;gap:28px;">
           <div class="ds-variant" style="align-items:center;">
             <div class="ds-variant-label">xs · 24px</div>
-            <div class="avatar xs" style="background:var(--sage-light);">🌸</div>
+            <div class="avatar xs" style="background:var(--cat-1-subtle);">🌸</div>
           </div>
           <div class="ds-variant" style="align-items:center;">
             <div class="ds-variant-label">sm · 32px</div>
-            <div class="avatar sm" style="background:var(--sage-light);">🌸</div>
+            <div class="avatar sm" style="background:var(--cat-1-subtle);">🌸</div>
           </div>
           <div class="ds-variant" style="align-items:center;">
             <div class="ds-variant-label">md · 40px</div>
-            <div class="avatar md" style="background:var(--lavender-light);">🌙</div>
+            <div class="avatar md" style="background:var(--cat-2-subtle);">🌙</div>
           </div>
           <div class="ds-variant" style="align-items:center;">
             <div class="ds-variant-label">lg · 52px</div>
-            <div class="avatar lg" style="background:var(--peach-light);">🌻</div>
+            <div class="avatar lg" style="background:var(--cat-3-subtle);">🌻</div>
           </div>
           <div class="ds-variant" style="align-items:center;">
             <div class="ds-variant-label">xl · 64px</div>
-            <div class="avatar xl" style="background:var(--butter-light);">🍀</div>
+            <div class="avatar xl" style="background:var(--cat-4-subtle);">🍀</div>
           </div>
         </div>
       </div>
@@ -1380,27 +1923,27 @@ code, .mono {
         <div class="ds-block-body" style="align-items:flex-end;gap:28px;">
           <div class="ds-variant" style="align-items:center;">
             <div class="ds-variant-label">online</div>
-            <div class="avatar md" style="background:var(--sage-light);">🌸<div class="avatar-status status-online"></div></div>
+            <div class="avatar md" style="background:var(--cat-1-subtle);">🌸<div class="avatar-status status-online"></div></div>
           </div>
           <div class="ds-variant" style="align-items:center;">
             <div class="ds-variant-label">away</div>
-            <div class="avatar md" style="background:var(--lavender-light);">🌙<div class="avatar-status status-away"></div></div>
+            <div class="avatar md" style="background:var(--cat-2-subtle);">🌙<div class="avatar-status status-away"></div></div>
           </div>
           <div class="ds-variant" style="align-items:center;">
             <div class="ds-variant-label">dnd</div>
-            <div class="avatar md" style="background:var(--peach-light);">🌻<div class="avatar-status status-dnd"></div></div>
+            <div class="avatar md" style="background:var(--cat-3-subtle);">🌻<div class="avatar-status status-dnd"></div></div>
           </div>
           <div class="ds-variant" style="align-items:center;">
             <div class="ds-variant-label">offline</div>
-            <div class="avatar md" style="background:var(--butter-light);">🍀<div class="avatar-status status-offline"></div></div>
+            <div class="avatar md" style="background:var(--cat-4-subtle);">🍀<div class="avatar-status status-offline"></div></div>
           </div>
           <div class="ds-variant" style="align-items:center;">
             <div class="ds-variant-label">Server (rail)</div>
-            <div class="server-av active" style="background:var(--sage-light);">🌿</div>
+            <div class="server-av active" style="background:var(--cat-1-subtle);">🌿</div>
           </div>
           <div class="ds-variant" style="align-items:center;">
             <div class="ds-variant-label">Server idle</div>
-            <div class="server-av" style="background:var(--lavender-light);">🌙</div>
+            <div class="server-av" style="background:var(--cat-2-subtle);">🌙</div>
           </div>
         </div>
       </div>
@@ -1508,7 +2051,7 @@ code, .mono {
         <div class="ds-block-body column" style="gap:20px;">
           <!-- Received -->
           <div class="msg-group">
-            <div class="msg-av-wrap"><div class="avatar md" style="background:var(--lavender-light);">🌙</div></div>
+            <div class="msg-av-wrap"><div class="avatar md" style="background:var(--cat-2-subtle);">🌙</div></div>
             <div class="msg-body">
               <div class="msg-meta"><span class="msg-author">Bastien</span><span class="msg-timestamp">14:20</span></div>
               <div class="msg-bubble">Salut tout le monde ! On se retrouve ce soir ? 🎮</div>
@@ -1521,7 +2064,7 @@ code, .mono {
           </div>
           <!-- Own -->
           <div class="msg-group own">
-            <div class="msg-av-wrap"><div class="avatar md" style="background:var(--sage-light);">🌸</div></div>
+            <div class="msg-av-wrap"><div class="avatar md" style="background:var(--cat-1-subtle);">🌸</div></div>
             <div class="msg-body">
               <div class="msg-meta"><span class="msg-timestamp">14:31</span><span class="msg-author">Alice (moi)</span></div>
               <div class="msg-bubble own">Oui je suis là dès 19h 🌿</div>
@@ -1529,7 +2072,7 @@ code, .mono {
           </div>
           <!-- System -->
           <div class="msg-group">
-            <div class="msg-av-wrap"><div class="avatar md" style="background:var(--butter-light);font-size:16px;">📢</div></div>
+            <div class="msg-av-wrap"><div class="avatar md" style="background:var(--cat-4-subtle);font-size:16px;">📢</div></div>
             <div class="msg-body">
               <div class="msg-meta"><span class="msg-author" style="color:var(--text-3);">Système</span><span class="msg-timestamp">14:00</span></div>
               <div class="msg-bubble system">Chloé a rejoint la guilde Jardinage.</div>
@@ -1537,7 +2080,7 @@ code, .mono {
           </div>
           <!-- Typing -->
           <div class="msg-group">
-            <div class="msg-av-wrap"><div class="avatar md" style="background:var(--peach-light);">🌻</div></div>
+            <div class="msg-av-wrap"><div class="avatar md" style="background:var(--cat-3-subtle);">🌻</div></div>
             <div class="msg-body">
               <div class="typing-indicator">
                 <div class="typing-dot"></div>
@@ -1573,7 +2116,7 @@ code, .mono {
         <div class="ds-block-header"><span class="ds-block-name">Rendu</span></div>
         <div class="ds-block-body column" style="padding:0;">
           <div class="user-panel">
-            <div class="avatar sm" style="background:var(--peach-light);">🌸<div class="avatar-status status-online"></div></div>
+            <div class="avatar sm" style="background:var(--cat-3-subtle);">🌸<div class="avatar-status status-online"></div></div>
             <div class="user-panel-info">
               <div class="user-panel-name">Alice</div>
               <div class="user-panel-status">En ligne</div>
@@ -1663,14 +2206,14 @@ code, .mono {
           <div class="sw-server-group sw-serre">
             <div class="sw-group-body">
               <div class="guild-switch-item active">
-                <div class="guild-switch-icon" style="background:var(--sage-light);">🌱</div>
+                <div class="guild-switch-icon" style="background:var(--cat-1-subtle);">🌱</div>
               </div>
               <div class="guild-switch-item">
-                <div class="guild-switch-icon" style="background:var(--lavender-light);">📚</div>
+                <div class="guild-switch-icon" style="background:var(--cat-2-subtle);">📚</div>
                 <span class="notif-badge">3</span>
               </div>
               <div class="guild-switch-item">
-                <div class="guild-switch-icon" style="background:var(--butter-light);">🎨</div>
+                <div class="guild-switch-icon" style="background:var(--cat-4-subtle);">🎨</div>
               </div>
             </div>
           </div>
@@ -1679,10 +2222,10 @@ code, .mono {
           <div class="sw-server-group sw-nuit">
             <div class="sw-group-body">
               <div class="guild-switch-item">
-                <div class="guild-switch-icon" style="background:var(--lavender-light);">🌙</div>
+                <div class="guild-switch-icon" style="background:var(--cat-2-subtle);">🌙</div>
               </div>
               <div class="guild-switch-item">
-                <div class="guild-switch-icon" style="background:#E8E0F8;">🎵</div>
+                <div class="guild-switch-icon" style="background:var(--cat-2-subtle);">🎵</div>
                 <span class="notif-badge">1</span>
               </div>
             </div>
@@ -1692,7 +2235,7 @@ code, .mono {
           <div class="sw-server-group sw-musique" style="opacity:0.45;">
             <div class="sw-group-body">
               <div class="guild-switch-item">
-                <div class="guild-switch-icon" style="background:var(--peach-light);">🎸</div>
+                <div class="guild-switch-icon" style="background:var(--cat-3-subtle);">🎸</div>
               </div>
             </div>
           </div>
@@ -1724,16 +2267,16 @@ code, .mono {
         <div class="ds-block-header"><span class="ds-block-name">Grid view</span><code class="ds-block-path">border-top = couleur serveur host</code></div>
         <div class="ds-block-body grid-3">
           <div class="guild-card" style="border-top:3px solid var(--server-serre);">
-            <div class="guild-card-icon" style="background:var(--sage-light);">🌱</div>
+            <div class="guild-card-icon" style="background:var(--cat-1-subtle);">🌱</div>
             <div><div class="guild-card-name">Jardinage</div><div class="guild-card-meta">12 membres · 3 channels</div></div>
           </div>
           <div class="guild-card" style="border-top:3px solid var(--server-serre);">
-            <div class="guild-card-icon" style="background:var(--lavender-light);">📚</div>
+            <div class="guild-card-icon" style="background:var(--cat-2-subtle);">📚</div>
             <div><div class="guild-card-name">Lecture</div><div class="guild-card-meta">28 membres · 5 channels</div></div>
           </div>
           <!-- Exemple multi-serveurs : guilde d'un autre serveur -->
           <div class="guild-card" style="border-top:3px solid var(--server-nuit);">
-            <div class="guild-card-icon" style="background:var(--lavender-light);">🌙</div>
+            <div class="guild-card-icon" style="background:var(--cat-2-subtle);">🌙</div>
             <div><div class="guild-card-name">Poésie</div><div class="guild-card-meta" style="display:flex;flex-direction:column;gap:1px;"><span>18 membres · 4 channels</span><span style="color:var(--server-nuit);font-size:10px;font-weight:500;">nuit.harmonie.app</span></div></div>
           </div>
           <div class="guild-card" style="border-style:dashed;justify-content:center;flex-direction:column;text-align:center;color:var(--text-3);gap:6px;">
@@ -1788,7 +2331,7 @@ code, .mono {
           <div style="font-size:11px;color:var(--text-3);display:flex;align-items:center;gap:5px;">
             <span>⏱</span><span>Expire dans 7 jours · Utilisation illimitée</span>
           </div>
-          <div style="display:flex;gap:8px;align-items:flex-start;background:var(--butter-light);border:1px solid var(--butter);border-radius:8px;padding:10px 12px;font-size:12px;color:#7A6820;line-height:1.5;">
+          <div style="display:flex;gap:8px;align-items:flex-start;background:var(--warning-subtle);border:1px solid var(--warning);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--warning-fg);line-height:1.5;">
             <span>⚠️</span>
             <span>Ce lien est valable <strong>uniquement sur serre.harmonie.app</strong>.</span>
           </div>
@@ -1809,7 +2352,7 @@ code, .mono {
           <div class="ds-variant">
             <div class="ds-variant-label">Idle</div>
             <div class="voice-tile">
-              <div class="voice-tile-av" style="background:var(--lavender-light);">🌙</div>
+              <div class="voice-tile-av" style="background:var(--cat-2-subtle);">🌙</div>
               <div class="voice-tile-name">Bastien</div>
               <div class="voice-tile-state">🎤</div>
             </div>
@@ -1817,7 +2360,7 @@ code, .mono {
           <div class="ds-variant">
             <div class="ds-variant-label">Speaking</div>
             <div class="voice-tile speaking">
-              <div class="voice-tile-av" style="background:var(--sage-light);">🌸</div>
+              <div class="voice-tile-av" style="background:var(--cat-1-subtle);">🌸</div>
               <div class="voice-tile-name">Alice</div>
               <div class="voice-tile-state speaking-anim">🎤 parle…</div>
             </div>
@@ -1825,7 +2368,7 @@ code, .mono {
           <div class="ds-variant">
             <div class="ds-variant-label">Muted</div>
             <div class="voice-tile">
-              <div class="voice-tile-av" style="background:var(--peach-light);">🌻</div>
+              <div class="voice-tile-av" style="background:var(--cat-3-subtle);">🌻</div>
               <div class="voice-tile-name">Chloé</div>
               <div class="voice-tile-state muted">🔇 muet</div>
             </div>
@@ -1881,11 +2424,32 @@ code, .mono {
 </div>
 
 <script>
+  /* ── Hex resolver ─────────────────────────────────────────────────── */
+  function resolveHex(varName) {
+    const el = document.createElement('div');
+    el.style.cssText = 'position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;background:var(' + varName + ');';
+    document.body.appendChild(el);
+    const rgb = getComputedStyle(el).backgroundColor;
+    document.body.removeChild(el);
+    const m = rgb.match(/[\d.]+/g);
+    if (!m || m.length < 3) return '—';
+    const [r,g,b,a] = m.map(Number);
+    if (a !== undefined && a === 0) return 'transparent';
+    return '#' + [r,g,b].map(n => Math.round(n).toString(16).padStart(2,'0')).join('').toUpperCase();
+  }
+
+  function updateAllHex() {
+    document.querySelectorAll('[data-hex-var]').forEach(el => {
+      el.textContent = resolveHex(el.getAttribute('data-hex-var'));
+    });
+  }
+
   function toggleTheme() {
     const html = document.documentElement;
     const isDark = html.getAttribute('data-theme') === 'dark';
     html.setAttribute('data-theme', isDark ? 'light' : 'dark');
     document.getElementById('theme-label').textContent = isDark ? 'Mode sombre' : 'Mode clair';
+    updateAllHex();
   }
 
   // Smooth scroll for nav links
@@ -1912,6 +2476,9 @@ code, .mono {
   }, { rootMargin: '-20% 0px -70% 0px' });
 
   document.querySelectorAll('.ds-section[id]').forEach(s => observer.observe(s));
+
+  // Populate hex values on page load
+  updateAllHex();
 </script>
 </body>
 </html>
