@@ -19,6 +19,11 @@ export const fr = {
     errors: {
       emailInvalid: 'Adresse email invalide',
       passwordInvalid: '8 caractères minimum, 1 majuscule, 1 chiffre, 1 caractère spécial',
+      duplicateEmail: 'Cette adresse email est déjà utilisée',
+      duplicateUsername: "Ce nom d'utilisateur est déjà pris",
+      invalidCredentials: "Email, nom d'utilisateur ou mot de passe invalide.",
+      userInactive: 'Votre compte est inactif. Veuillez contacter le support.',
+      genericError: 'Une erreur est survenue. Veuillez réessayer.',
     },
   },
-}
+};

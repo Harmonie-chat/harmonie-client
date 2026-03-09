@@ -1,11 +1,11 @@
-import type { Meta, StoryObj } from '@storybook/react'
-import { useState } from 'react'
-import { LanguageSelector } from './LanguageSelector'
+import type { Meta, StoryObj } from '@storybook/react';
+import { useState } from 'react';
+import { LanguageSelector } from './LanguageSelector';
 
 const LANGUAGES = [
   { code: 'fr', label: 'Français' },
   { code: 'en', label: 'English' },
-]
+];
 
 const meta: Meta<typeof LanguageSelector> = {
   title: 'Components/LanguageSelector',
@@ -16,19 +16,19 @@ const meta: Meta<typeof LanguageSelector> = {
     currentLang: 'fr',
     onChange: () => {},
   },
-}
+};
 
-export default meta
-type Story = StoryObj<typeof LanguageSelector>
+export default meta;
+type Story = StoryObj<typeof LanguageSelector>;
 
-export const Default: Story = {}
+export const Default: Story = {};
 
 export const EnglishSelected: Story = {
   args: { currentLang: 'en' },
-}
+};
 
 const InteractiveRender = () => {
-  const [lang, setLang] = useState('fr')
+  const [lang, setLang] = useState('fr');
   return (
     <div className="p-6 flex items-start gap-4">
       <LanguageSelector languages={LANGUAGES} currentLang={lang} onChange={setLang} />
@@ -36,9 +36,9 @@ const InteractiveRender = () => {
         Langue active : <strong>{lang}</strong>
       </span>
     </div>
-  )
-}
+  );
+};
 
 export const Interactive: Story = {
   render: () => <InteractiveRender />,
-}
+};

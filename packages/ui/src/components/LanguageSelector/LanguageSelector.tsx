@@ -1,33 +1,33 @@
-import { useEffect, useRef, useState } from 'react'
-import { Languages } from 'lucide-react'
-import { Button } from '../Button/Button'
+import { useEffect, useRef, useState } from 'react';
+import { Languages } from 'lucide-react';
+import { Button } from '../Button/Button';
 
 export interface Language {
-  code: string
-  label: string
+  code: string;
+  label: string;
 }
 
 export interface LanguageSelectorProps {
-  languages: Language[]
-  currentLang: string
-  onChange: (code: string) => void
+  languages: Language[];
+  currentLang: string;
+  onChange: (code: string) => void;
 }
 
 export const LanguageSelector = ({ languages, currentLang, onChange }: LanguageSelectorProps) => {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false)
+        setOpen(false);
       }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-  const current = languages.find((l) => l.code === currentLang)
+  const current = languages.find((l) => l.code === currentLang);
 
   return (
     <div ref={ref} className="relative">
@@ -54,8 +54,8 @@ export const LanguageSelector = ({ languages, currentLang, onChange }: LanguageS
               role="option"
               aria-selected={lang.code === currentLang}
               onClick={() => {
-                onChange(lang.code)
-                setOpen(false)
+                onChange(lang.code);
+                setOpen(false);
               }}
               className={`px-3 py-2 font-body text-sm cursor-pointer select-none transition-colors whitespace-nowrap ${
                 lang.code === currentLang
@@ -69,5 +69,5 @@ export const LanguageSelector = ({ languages, currentLang, onChange }: LanguageS
         </ul>
       )}
     </div>
-  )
-}
+  );
+};

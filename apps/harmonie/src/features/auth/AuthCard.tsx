@@ -1,15 +1,15 @@
-import { ReactNode } from 'react'
-import { Trans, useTranslation } from 'react-i18next'
-import { LanguageSelector } from '@harmonie/ui'
-import { LANGUAGES } from '@/i18n/languages'
+import { ReactNode } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
+import { LanguageSelector } from '@harmonie/ui';
+import { LANGUAGES } from '@/i18n/languages';
 
 interface AuthCardProps {
-  title: string
-  children: ReactNode
+  title: string;
+  children: ReactNode;
 }
 
 export const AuthCard = ({ title, children }: AuthCardProps) => {
-  const { t, i18n } = useTranslation()
+  const { t, i18n } = useTranslation();
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -46,5 +46,5 @@ export const AuthCard = ({ title, children }: AuthCardProps) => {
         {children}
       </div>
     </div>
-  )
-}
+  );
+};
