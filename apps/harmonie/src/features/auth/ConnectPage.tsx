@@ -52,7 +52,11 @@ export const ConnectPage = () => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           rightElement={
-            <button type="button" onClick={() => setShowPassword(v => !v)} className="cursor-pointer">
+            <button
+              type="button"
+              onClick={() => setShowPassword((show) => !show)}
+              className="cursor-pointer"
+            >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           }

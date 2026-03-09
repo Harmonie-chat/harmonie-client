@@ -27,16 +27,18 @@ export const EnglishSelected: Story = {
   args: { currentLang: 'en' },
 }
 
+const InteractiveRender = () => {
+  const [lang, setLang] = useState('fr')
+  return (
+    <div className="p-6 flex items-start gap-4">
+      <LanguageSelector languages={LANGUAGES} currentLang={lang} onChange={setLang} />
+      <span className="font-body text-sm text-text-2 mt-1.5">
+        Langue active : <strong>{lang}</strong>
+      </span>
+    </div>
+  )
+}
+
 export const Interactive: Story = {
-  render: () => {
-    const [lang, setLang] = useState('fr')
-    return (
-      <div className="p-6 flex items-start gap-4">
-        <LanguageSelector languages={LANGUAGES} currentLang={lang} onChange={setLang} />
-        <span className="font-body text-sm text-text-2 mt-1.5">
-          Langue active : <strong>{lang}</strong>
-        </span>
-      </div>
-    )
-  },
+  render: () => <InteractiveRender />,
 }

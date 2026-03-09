@@ -16,7 +16,11 @@ export const AuthCard = ({ title, children }: AuthCardProps) => {
       <div className="relative bg-surface-1 rounded-lg shadow-[0_4px_32px_rgba(61,53,48,0.10)] p-8 w-full max-w-107.5">
         {/* Language switcher */}
         <div className="absolute top-5 right-5">
-          <LanguageSelector languages={LANGUAGES} currentLang={i18n.language} onChange={i18n.changeLanguage} />
+          <LanguageSelector
+            languages={LANGUAGES}
+            currentLang={i18n.language}
+            onChange={i18n.changeLanguage}
+          />
         </div>
 
         {/* Branding */}
@@ -27,15 +31,17 @@ export const AuthCard = ({ title, children }: AuthCardProps) => {
           <p className="font-body text-sm text-text-2 mt-2 text-justify">
             <Trans
               i18nKey="auth.tagline"
-              components={{ host: <a href="#" className="underline" target="_blank" rel="noopener noreferrer" /> }}
+              components={{
+                host: (
+                  <a href="#" className="underline" target="_blank" rel="noopener noreferrer" />
+                ),
+              }}
             />
           </p>
         </div>
 
         {/* Title */}
-        <h2 className="font-display text-xl font-semibold text-text-1 text-center mb-6">
-          {title}
-        </h2>
+        <h2 className="font-display text-xl font-semibold text-text-1 text-center mb-6">{title}</h2>
 
         {children}
       </div>

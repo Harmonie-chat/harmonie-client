@@ -4,25 +4,25 @@
 
 Harmonie is a monorepo containing two workspaces:
 
-| Workspace | npm name | Role |
-|---|---|---|
-| `apps/harmonie` | `@harmonie/app` | Main React application |
-| `packages/ui` | `@harmonie/ui` | Design system: UI components + Storybook |
+| Workspace       | npm name        | Role                                     |
+| --------------- | --------------- | ---------------------------------------- |
+| `apps/harmonie` | `@harmonie/app` | Main React application                   |
+| `packages/ui`   | `@harmonie/ui`  | Design system: UI components + Storybook |
 
 ---
 
 ## Tech stack
 
-| Tool | Usage |
-|---|---|
-| **pnpm** | Package manager + workspaces |
-| **Turborepo** | Monorepo task orchestration (build, dev, lint) |
-| **Vite** | Bundler (SPA mode for app, library mode for UI) |
-| **React 18** | UI framework |
-| **TypeScript 5** | Static typing |
-| **Tailwind CSS v4** | Styling — used in `packages/ui` and `apps/harmonie` |
-| **Storybook 8** | Component development and documentation in isolation |
-| **React Router v6** | Client-side routing |
+| Tool                | Usage                                                |
+| ------------------- | ---------------------------------------------------- |
+| **pnpm**            | Package manager + workspaces                         |
+| **Turborepo**       | Monorepo task orchestration (build, dev, lint)       |
+| **Vite**            | Bundler (SPA mode for app, library mode for UI)      |
+| **React 18**        | UI framework                                         |
+| **TypeScript 5**    | Static typing                                        |
+| **Tailwind CSS v4** | Styling — used in `packages/ui` and `apps/harmonie`  |
+| **Storybook 8**     | Component development and documentation in isolation |
+| **React Router v6** | Client-side routing                                  |
 
 ---
 
@@ -209,22 +209,3 @@ pnpm --filter @harmonie/ui build
 # Build the app only
 pnpm --filter @harmonie/app build
 ```
-
----
-
-## Architectural decisions
-
-### Why Turborepo + pnpm?
-Turborepo manages build order (the design system must build before the app) and caches results. pnpm workspaces provides a strict `node_modules` layout and the `workspace:*` protocol for local dependencies.
-
-### Why Tailwind v4?
-Tailwind v4 is the current version. Its CSS-first approach integrates naturally with Vite. The shared token definition in `packages/ui/src/styles/index.css` guarantees visual consistency across the entire project.
-
-### Why Storybook separate from the app?
-Storybook lives exclusively in `packages/ui`, which forces components to be developed independently from the app. This ensures the design system is reusable and not coupled to business logic.
-
-### Why Vite in library mode for `packages/ui`?
-Vite in library mode produces an optimized ES bundle without duplicating React (externalized). `vite-plugin-dts` generates TypeScript declarations.
-
-### Why feature folders?
-Each feature (auth, chat, guild…) owns its pages, hooks, and components. This avoids a generic `components/` or `pages/` folder that becomes a dumping ground. All dumb UI primitives go to `packages/ui`; everything domain-specific lives in its feature folder.

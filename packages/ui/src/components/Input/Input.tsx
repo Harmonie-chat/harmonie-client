@@ -36,23 +36,14 @@ export const Input = ({ label, error, disabled, id, rightElement, ...props }: In
         </label>
       )}
       <div className="relative">
-        <input
-          id={inputId}
-          disabled={disabled}
-          className={inputClasses}
-          {...props}
-        />
+        <input id={inputId} disabled={disabled} className={inputClasses} {...props} />
         {rightElement && (
           <div className="absolute inset-y-0 right-0 flex items-center pr-3 text-text-3">
             {rightElement}
           </div>
         )}
       </div>
-      {error && (
-        <span className="font-body text-[11px] font-normal text-error-fg">
-          {error}
-        </span>
-      )}
+      {error && <span className="font-body text-[11px] font-normal text-error-fg">{error}</span>}
     </div>
   )
 }

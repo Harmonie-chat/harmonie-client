@@ -8,4 +8,7 @@ export { Separator } from './components/Separator/Separator'
 export type { SeparatorProps } from './components/Separator/Separator'
 
 export { LanguageSelector } from './components/LanguageSelector/LanguageSelector'
-export type { LanguageSelectorProps, Language } from './components/LanguageSelector/LanguageSelector'
+export type {
+  LanguageSelectorProps,
+  Language,
+} from './components/LanguageSelector/LanguageSelector'

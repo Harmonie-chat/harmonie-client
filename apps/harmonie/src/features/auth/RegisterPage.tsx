@@ -17,9 +17,7 @@ export const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false)
 
   const isSubmittable =
-    username.trim().length > 0 &&
-    isValidEmail(email) &&
-    isValidPassword(password)
+    username.trim().length > 0 && isValidEmail(email) && isValidPassword(password)
 
   const handleEmailBlur = () =>
     email && !isValidEmail(email)
@@ -58,7 +56,11 @@ export const RegisterPage = () => {
           onBlur={handlePasswordBlur}
           error={passwordErrorKey ? t(passwordErrorKey) : undefined}
           rightElement={
-            <button type="button" onClick={() => setShowPassword(v => !v)} className="cursor-pointer">
+            <button
+              type="button"
+              onClick={() => setShowPassword((show) => !show)}
+              className="cursor-pointer"
+            >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           }

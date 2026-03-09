@@ -1,52 +1,52 @@
-@import "tailwindcss";
-@source "../components";
+@import 'tailwindcss';
+@source '../components';
 
 @theme {
   /* ── Brand colors ── */
-  --color-primary: #8AAD90;
-  --color-primary-fg: #FFFFFF;
-  --color-secondary: #D4E4D7;
-  --color-secondary-fg: #8AAD90;
-  --color-tertiary: #F5F0EB;
-  --color-tertiary-fg: #6B5F58;
+  --color-primary: #8aad90;
+  --color-primary-fg: #ffffff;
+  --color-secondary: #d4e4d7;
+  --color-secondary-fg: #8aad90;
+  --color-tertiary: #f5f0eb;
+  --color-tertiary-fg: #6b5f58;
 
   /* ── Background & surfaces ── */
-  --color-background: #F5F0EB;
-  --color-surface-1: #FDFBF8;
-  --color-surface-2: #FAF7F2;
-  --color-surface-3: #EEE9E2;
+  --color-background: #f5f0eb;
+  --color-surface-1: #fdfbf8;
+  --color-surface-2: #faf7f2;
+  --color-surface-3: #eee9e2;
 
   /* ── Borders ── */
-  --color-border-1: #3D3530;
+  --color-border-1: #3d3530;
   --color-border-2: rgba(61, 53, 48, 0.14);
 
   /* ── Text ── */
-  --color-text-1: #3D3530;
-  --color-text-2: #6B5F58;
-  --color-text-3: #9A8E88;
-  --color-text-4: #C8BFB8;
+  --color-text-1: #3d3530;
+  --color-text-2: #6b5f58;
+  --color-text-3: #9a8e88;
+  --color-text-4: #c8bfb8;
 
   /* ── Categories (tags, badges) ── */
-  --color-cat-1: #D4E4D7;
-  --color-cat-1-fg: #8AAD90;
-  --color-cat-2: #E2DCEF;
-  --color-cat-2-fg: #7B6FA0;
-  --color-cat-3: #FAE4D8;
-  --color-cat-3-fg: #B07060;
-  --color-cat-4: #FAF4DC;
-  --color-cat-4-fg: #9A8030;
-  --color-cat-5: #FAE8E8;
-  --color-cat-5-fg: #A05050;
+  --color-cat-1: #d4e4d7;
+  --color-cat-1-fg: #8aad90;
+  --color-cat-2: #e2dcef;
+  --color-cat-2-fg: #7b6fa0;
+  --color-cat-3: #fae4d8;
+  --color-cat-3-fg: #b07060;
+  --color-cat-4: #faf4dc;
+  --color-cat-4-fg: #9a8030;
+  --color-cat-5: #fae8e8;
+  --color-cat-5-fg: #a05050;
 
   /* ── Error states ── */
-  --color-error: #E8C0C0;
-  --color-error-fg: #E89090;
+  --color-error: #e8c0c0;
+  --color-error-fg: #e89090;
 
   /* ── User status ── */
-  --color-status-online: #72B882;
-  --color-status-away: #C8B060;
-  --color-status-busy: #C07070;
-  --color-status-offline: #C8BFB8;
+  --color-status-online: #72b882;
+  --color-status-away: #c8b060;
+  --color-status-busy: #c07070;
+  --color-status-offline: #c8bfb8;
 
   /* ── Typography ── */
   --font-display: 'Lora', Georgia, serif;

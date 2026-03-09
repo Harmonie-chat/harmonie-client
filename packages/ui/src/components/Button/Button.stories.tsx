@@ -35,17 +35,23 @@ export const AllVariants: Story = {
       <div className="flex items-center gap-8">
         <span className="w-24 text-text-2 text-sm">Primary</span>
         <Button variant="primary">Button</Button>
-        <Button variant="primary" disabled>Button</Button>
+        <Button variant="primary" disabled>
+          Button
+        </Button>
       </div>
       <div className="flex items-center gap-8">
         <span className="w-24 text-text-2 text-sm">Secondary</span>
         <Button variant="secondary">Button</Button>
-        <Button variant="secondary" disabled>Button</Button>
+        <Button variant="secondary" disabled>
+          Button
+        </Button>
       </div>
       <div className="flex items-center gap-8">
         <span className="w-24 text-text-2 text-sm">Tertiary</span>
         <Button variant="tertiary">Button</Button>
-        <Button variant="tertiary" disabled>Button</Button>
+        <Button variant="tertiary" disabled>
+          Button
+        </Button>
       </div>
     </div>
   ),
