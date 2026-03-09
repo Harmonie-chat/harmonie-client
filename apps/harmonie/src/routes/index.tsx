@@ -1,14 +1,14 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom'
-import { AppLayout } from '../layouts/AppLayout'
-import { RequireAuth } from '../features/auth/RequireAuth'
-import { GuestRoute } from '../features/auth/GuestRoute'
-import { ConnectPage } from '../features/auth/ConnectPage'
-import { RegisterPage } from '../features/auth/RegisterPage'
+import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { AppLayout } from '../layouts/AppLayout';
+import { AuthGuard } from './AuthGuard';
+import { GuestGuard } from './GuestGuard';
+import { ConnectPage } from '../features/auth/ConnectPage';
+import { RegisterPage } from '../features/auth/RegisterPage';
 
 export const router = createBrowserRouter([
   {
     path: '/auth',
-    element: <GuestRoute />,
+    element: <GuestGuard />,
     children: [
       {
         index: true,
@@ -25,7 +25,7 @@ export const router = createBrowserRouter([
     ],
   },
   {
-    element: <RequireAuth />,
+    element: <AuthGuard />,
     children: [
       {
         path: '/',
@@ -37,4 +37,4 @@ export const router = createBrowserRouter([
     path: '*',
     element: <Navigate to="/" replace />,
   },
-])
+]);

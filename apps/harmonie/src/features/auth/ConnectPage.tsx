@@ -1,32 +1,69 @@
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
-import { Button, Input, Separator } from '@harmonie/ui'
-import { Eye, EyeOff } from 'lucide-react'
-import { isValidEmail } from '@/utils/user'
-import { AuthCard } from './AuthCard'
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link, useNavigate } from 'react-router-dom';
+import { Button, Input, Separator } from '@harmonie/ui';
+import { Eye, EyeOff } from 'lucide-react';
+import { isValidEmail } from '@/utils/user';
+import { login } from '@/api/auth';
+import { storeTokens } from '@/api/authStorage';
+import type { ApiError } from '@/api/errors';
+import { AuthCard } from './AuthCard';
+import { useAuth } from './AuthContext';
 
 export const ConnectPage = () => {
-  const { t } = useTranslation()
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { setIsAuthenticated } = useAuth();
 
-  const [username, setUsername] = useState('')
-  const [email, setEmail] = useState('')
-  const [emailErrorKey, setEmailErrorKey] = useState<string | undefined>()
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [emailErrorKey, setEmailErrorKey] = useState<string | undefined>();
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [globalErrorKey, setGlobalErrorKey] = useState<string | undefined>();
 
   const isSubmittable =
     (username.trim().length > 0 || (email.trim().length > 0 && isValidEmail(email))) &&
-    password.trim().length > 0
+    password.trim().length > 0;
 
   const handleEmailBlur = () =>
     email && !isValidEmail(email)
       ? setEmailErrorKey('auth.errors.emailInvalid')
-      : setEmailErrorKey(undefined)
+      : setEmailErrorKey(undefined);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isSubmittable) return;
+
+    setIsLoading(true);
+    setGlobalErrorKey(undefined);
+
+    try {
+      const response = await login({
+        emailOrUsername: username.trim() || email.trim(),
+        password,
+      });
+      storeTokens(response);
+      setIsAuthenticated(true);
+      navigate('/');
+    } catch (err) {
+      const apiError = err as ApiError;
+      if (apiError.code === 'AUTH_INVALID_CREDENTIALS') {
+        setGlobalErrorKey('auth.errors.invalidCredentials');
+      } else if (apiError.code === 'AUTH_USER_INACTIVE') {
+        setGlobalErrorKey('auth.errors.userInactive');
+      } else {
+        setGlobalErrorKey('auth.errors.genericError');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <AuthCard title={t('auth.signIn')}>
-      <form className="flex flex-col gap-4">
+      <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         <div className="flex flex-col gap-3 rounded-sm border border-border-2 p-3">
           <Input
             label={t('auth.username')}
@@ -61,7 +98,14 @@ export const ConnectPage = () => {
             </button>
           }
         />
-        <Button variant="primary" className="w-full mt-2" type="submit" disabled={!isSubmittable}>
+        {globalErrorKey && <p className="text-sm text-error-fg text-center">{t(globalErrorKey)}</p>}
+        <Button
+          variant="primary"
+          className="w-full mt-2"
+          type="submit"
+          disabled={!isSubmittable}
+          isLoading={isLoading}
+        >
           {t('auth.signIn')}
         </Button>
       </form>
@@ -73,5 +117,5 @@ export const ConnectPage = () => {
         </Link>
       </p>
     </AuthCard>
-  )
-}
+  );
+};

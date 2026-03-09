@@ -1,10 +1,10 @@
 export interface SeparatorProps {
-  label?: string
+  label?: string;
 }
 
 export const Separator = ({ label }: SeparatorProps) => {
   if (!label) {
-    return <div className="h-px w-full bg-border-2" />
+    return <div className="h-px w-full bg-border-2" />;
   }
 
   return (
@@ -13,5 +13,5 @@ export const Separator = ({ label }: SeparatorProps) => {
       <span className="font-body text-xs text-text-3">{label}</span>
       <div className="flex-1 h-px bg-border-2" />
     </div>
-  )
-}
+  );
+};

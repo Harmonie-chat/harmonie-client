@@ -1,13 +1,13 @@
-import { InputHTMLAttributes, ReactNode } from 'react'
+import { InputHTMLAttributes, ReactNode } from 'react';
 
 export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'className'> {
-  label?: string
-  error?: string
-  rightElement?: ReactNode
+  label?: string;
+  error?: string;
+  rightElement?: ReactNode;
 }
 
 export const Input = ({ label, error, disabled, id, rightElement, ...props }: InputProps) => {
-  const inputId = id ?? (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined)
+  const inputId = id ?? (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
 
   const inputClasses = [
     'w-full px-4 py-3 rounded-sm font-body text-sm text-text-1 bg-surface-2',
@@ -20,7 +20,7 @@ export const Input = ({ label, error, disabled, id, rightElement, ...props }: In
     disabled ? 'opacity-50 cursor-not-allowed' : '',
   ]
     .filter(Boolean)
-    .join(' ')
+    .join(' ');
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -45,5 +45,5 @@ export const Input = ({ label, error, disabled, id, rightElement, ...props }: In
       </div>
       {error && <span className="font-body text-[11px] font-normal text-error-fg">{error}</span>}
     </div>
-  )
-}
+  );
+};

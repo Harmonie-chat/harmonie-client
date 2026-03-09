@@ -35,7 +35,8 @@ harmonie-client/
 ├── turbo.json                # Turborepo pipeline
 ├── .npmrc                    # pnpm configuration
 ├── docs/
-│   └── architecture.md       # This file
+│   ├── architecture.md       # This file
+│   └── auth.md               # Authentication architecture
 ├── apps/
 │   └── harmonie/             # Main application
 │       ├── package.json
@@ -43,16 +44,22 @@ harmonie-client/
 │       ├── tsconfig.json
 │       ├── index.html
 │       └── src/
-│           ├── main.tsx          # Entry point
+│           ├── main.tsx          # Entry point — mounts AuthProvider + RouterProvider
+│           ├── vite-env.d.ts     # Vite env types (import.meta.env)
+│           ├── api/
+│           │   ├── auth.ts       # API functions: login, register, refreshTokens
+│           │   ├── authStorage.ts# Token storage (accessToken in memory, refreshToken in localStorage)
+│           │   └── errors.ts     # Shared ApiError interface
 │           ├── routes/
-│           │   └── index.tsx     # createBrowserRouter
+│           │   ├── index.tsx     # createBrowserRouter
+│           │   ├── AuthGuard.tsx # Redirects to /auth if not authenticated
+│           │   └── GuestGuard.tsx# Redirects to / if authenticated
 │           ├── layouts/
 │           │   └── AppLayout.tsx # 3-column layout + <Outlet />
 │           └── features/
 │               ├── auth/
-│               │   ├── useAuth.ts        # Auth state hook (stub)
-│               │   ├── RequireAuth.tsx   # Redirects to /auth/connect if not authenticated
-│               │   ├── GuestRoute.tsx    # Redirects to / if authenticated
+│               │   ├── AuthContext.tsx   # AuthProvider + useAuth hook
+│               │   ├── AuthCard.tsx      # Shared card layout for auth pages
 │               │   ├── ConnectPage.tsx   # Login page
 │               │   └── RegisterPage.tsx  # Registration page
 │               ├── chat/
@@ -126,8 +133,8 @@ All dumb/presentational components live in `packages/ui`. The app never defines 
 `src/index.ts` exports all components and their types:
 
 ```ts
-export { Button } from './components/Button'
-export type { ButtonProps } from './components/Button'
+export { Button } from './components/Button';
+export type { ButtonProps } from './components/Button';
 ```
 
 ---
@@ -137,16 +144,13 @@ export type { ButtonProps } from './components/Button'
 ### Routing (React Router v6)
 
 ```
-/auth                → GuestRoute (redirects to / if authenticated)
+/auth                → GuestGuard (redirects to / if authenticated)
   /auth              → redirect to /auth/connect
   /auth/connect      → ConnectPage  (login)
   /auth/register     → RegisterPage (registration)
 
-/                    → RequireAuth (redirects to /auth/connect if not authenticated)
+/                    → AuthGuard (redirects to /auth if not authenticated)
   /                  → AppLayout
-    /                → GuildSelectorPage  (index)
-    /:serverId/:guildId/channel/:channelId → ChatPage
-    /:serverId/:guildId/voice/:channelId   → VoicePage
 
 *                    → redirect to /
 ```
@@ -156,31 +160,18 @@ export type { ButtonProps } from './components/Button'
 Each feature folder is self-contained and owns its pages, hooks, and components:
 
 ```
-features/auth/       → auth pages, route guards, useAuth hook
-features/chat/       → chat feature (Phase 7+)
-features/guild/      → guild/server feature (Phase 7+)
-features/sidebar/    → sidebar feature (Phase 7+)
-features/voice/      → voice feature (Phase 7+)
+features/auth/       → auth pages + AuthContext (useAuth hook + AuthProvider)
 ```
 
-### Main layout
+Route guards (`AuthGuard`, `GuestGuard`) live in `routes/` rather than `features/auth/` since they are routing concerns, not feature concerns.
 
-`AppLayout` is a 3-column flex layout:
+See [`docs/auth.md`](./auth.md) for the full authentication architecture.
 
-```
-┌──────┬────────────────┬─────────────────────────────┐
-│      │                │                             │
-│Server│  Guild sidebar │     <Outlet />              │
-│ Rail │  (channels,    │     (ChatPage, VoicePage,   │
-│      │   user panel)  │      GuildSelectorPage)     │
-│      │                │                             │
-└──────┴────────────────┴─────────────────────────────┘
-```
 
 ### Consuming the design system
 
 ```ts
-import { Button, Input } from '@harmonie/ui'
+import { Button, Input } from '@harmonie/ui';
 ```
 
 ---
