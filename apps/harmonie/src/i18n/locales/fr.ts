@@ -12,6 +12,8 @@ const fr = {
     email: "Email",
     password: "Password",
     joinButton: "Rejoindre la communauté",
+    or: "ou",
+    noAccount: "Pas encore de compte ?",
     alreadyAccount: "Déjà un compte ?",
     signIn: "Se connecter",
     errors: {
