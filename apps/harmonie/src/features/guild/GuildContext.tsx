@@ -29,9 +29,7 @@ export const GuildProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => refresh(), [refresh]);
 
   return (
-    <GuildContext.Provider value={{ guilds, isLoading, refresh }}>
-      {children}
-    </GuildContext.Provider>
+    <GuildContext.Provider value={{ guilds, isLoading, refresh }}>{children}</GuildContext.Provider>
   );
 };
 
