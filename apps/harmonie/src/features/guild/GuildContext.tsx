@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { listGuilds } from '@/api/guilds';
 import type { Guild } from '@/api/guilds';
 
@@ -14,7 +14,7 @@ const GuildContext = createContext<GuildContextValue>({
   refresh: () => {},
 });
 
-export const GuildProvider = ({ children }: { children: React.ReactNode }) => {
+export const GuildProvider = ({ children }: { children: ReactNode }) => {
   const [guilds, setGuilds] = useState<Guild[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
