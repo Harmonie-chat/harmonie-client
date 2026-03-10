@@ -167,7 +167,6 @@ Route guards (`AuthGuard`, `GuestGuard`) live in `routes/` rather than `features
 
 See [`docs/auth.md`](./auth.md) for the full authentication architecture.
 
-
 ### Consuming the design system
 
 ```ts

@@ -3,6 +3,7 @@
 ## Context
 
 Auth (login/register) est fonctionnel. Cette phase construit :
+
 1. Un `apiFetch` centralisé qui gère automatiquement le 401 (refresh → replay ou déconnexion)
 2. `GET /api/users/me` → UserContext (avatar, username dans le UserPanel)
 3. `GET /api/guilds` → guild sidebar avec vraies données
@@ -23,7 +24,7 @@ MainLayout (CSS shell uniquement — flex h-screen)
 ```
 
 `MainLayout` ne contient aucune logique ni fetch — juste la structure CSS.
- 
+
 ---
 
 ## Routing
@@ -36,7 +37,7 @@ MainLayout (CSS shell uniquement — flex h-screen)
     /channels/:channelId → (phase suivante)
     /voice/:channelId    → (phase suivante)
 ```
- 
+
 ---
 
 ## Fichiers à créer / modifier
@@ -44,6 +45,7 @@ MainLayout (CSS shell uniquement — flex h-screen)
 ### `apps/harmonie/src/api/client.ts` — nouveau
 
 `apiFetch(input, init)` : wrapper autour de `fetch` qui :
+
 - Ajoute `Authorization: Bearer {accessToken}` automatiquement
 - Sur 401 : tente le refresh token (via `refreshTokens()`)
   - Si refresh OK → rejoue la requête originale
@@ -54,13 +56,13 @@ MainLayout (CSS shell uniquement — flex h-screen)
 ```ts
 // Pseudo-code de la mécanique
 let refreshPromise: Promise<void> | null = null;
- 
+
 export const apiFetch = async (input, init) => {
   const res = await fetch(input, withBearer(init));
   if (res.status !== 401) return res;
   // refresh lock
   if (!refreshPromise) {
-    refreshPromise = doRefresh().finally(() => refreshPromise = null);
+    refreshPromise = doRefresh().finally(() => (refreshPromise = null));
   }
   await refreshPromise;
   return fetch(input, withBearer(init)); // replay
@@ -68,7 +70,7 @@ export const apiFetch = async (input, init) => {
 ```
 
 Note : les erreurs 401 sur `/auth/refresh` lui-même ne doivent pas déclencher un nouveau refresh (boucle infinie) → guard sur l'URL.
- 
+
 ---
 
 ### `apps/harmonie/src/api/users.ts` — nouveau
@@ -81,9 +83,10 @@ export interface UserProfile {
   bio: string | null;
   avatarUrl: string | null;
 }
-export const getMe = (): Promise<UserProfile> => apiFetch(`${API_BASE}/users/me`).then(r => r.json());
+export const getMe = (): Promise<UserProfile> =>
+  apiFetch(`${API_BASE}/users/me`).then((r) => r.json());
 ```
- 
+
 ---
 
 ### `apps/harmonie/src/api/guilds.ts` — nouveau
@@ -92,12 +95,12 @@ export const getMe = (): Promise<UserProfile> => apiFetch(`${API_BASE}/users/me`
 export interface Guild { guildId, name, ownerUserId, role, joinedAtUtc }
 export interface Channel { channelId, name, type: 'Text' | 'Voice', isDefault, position }
 export interface ChannelList { guildId, channels: Channel[] }
- 
+
 export const listGuilds = (): Promise<{ guilds: Guild[] }>
 export const listChannels = (guildId: string): Promise<ChannelList>
 export const createGuild = (name: string): Promise<...>
 ```
- 
+
 ---
 
 ### `apps/harmonie/src/features/user/UserContext.tsx` — nouveau
@@ -111,6 +114,7 @@ export const createGuild = (name: string): Promise<...>
 ### `apps/harmonie/src/features/auth/AuthContext.tsx` — modifié
 
 Ajouter dans `AuthProvider` :
+
 ```tsx
 useEffect(() => {
   setLogoutHandler(() => {
@@ -119,7 +123,7 @@ useEffect(() => {
   });
 }, []);
 ```
- 
+
 ---
 
 ### `apps/harmonie/src/layouts/MainLayout.tsx` — renommé depuis `AppLayout.tsx`
@@ -135,7 +139,7 @@ export const MainLayout = () => (
   </div>
 );
 ```
- 
+
 ---
 
 ### `apps/harmonie/src/features/guild/GuildSidebar.tsx` — nouveau
@@ -180,17 +184,20 @@ export const MainLayout = () => (
 
 ```tsx
 <AuthProvider>
-  <UserProvider>      {/* ← nouveau */}
+  <UserProvider>
+    {' '}
+    {/* ← nouveau */}
     <RouterProvider router={router} />
   </UserProvider>
 </AuthProvider>
 ```
- 
+
 ---
 
 ### `docs/roadmap.md` — nouveau
 
 Phases :
+
 - **Phase 1 — Auth** ✅ login, register, JWT, guards
 - **Phase 2 — Layout + profil** (cette phase) : `apiFetch`, `users/me`, 3 colonnes, guilds/channels réels
 - **Phase 3 — Gestion guilds/channels** : créer guild, créer channel, inviter
@@ -200,23 +207,24 @@ Phases :
 
 ## Fichiers critiques
 
-| Fichier | Action |
-|---------|--------|
-| `apps/harmonie/src/api/client.ts` | Créer |
-| `apps/harmonie/src/api/users.ts` | Créer |
-| `apps/harmonie/src/api/guilds.ts` | Créer |
-| `apps/harmonie/src/features/user/UserContext.tsx` | Créer |
-| `apps/harmonie/src/features/user/UserPanel.tsx` | Créer |
-| `apps/harmonie/src/features/guild/GuildSidebar.tsx` | Créer |
-| `apps/harmonie/src/features/channel/ChannelSidebar.tsx` | Créer |
-| `apps/harmonie/src/layouts/MainLayout.tsx` | Créer (remplace AppLayout) |
-| `apps/harmonie/src/layouts/AppLayout.tsx` | Supprimer |
-| `apps/harmonie/src/features/auth/AuthContext.tsx` | Modifier (setLogoutHandler) |
-| `apps/harmonie/src/routes/index.tsx` | Modifier (routes + MainLayout) |
-| `apps/harmonie/src/main.tsx` | Modifier (UserProvider) |
-| `docs/roadmap.md` | Créer |
+| Fichier                                                 | Action                         |
+| ------------------------------------------------------- | ------------------------------ |
+| `apps/harmonie/src/api/client.ts`                       | Créer                          |
+| `apps/harmonie/src/api/users.ts`                        | Créer                          |
+| `apps/harmonie/src/api/guilds.ts`                       | Créer                          |
+| `apps/harmonie/src/features/user/UserContext.tsx`       | Créer                          |
+| `apps/harmonie/src/features/user/UserPanel.tsx`         | Créer                          |
+| `apps/harmonie/src/features/guild/GuildSidebar.tsx`     | Créer                          |
+| `apps/harmonie/src/features/channel/ChannelSidebar.tsx` | Créer                          |
+| `apps/harmonie/src/layouts/MainLayout.tsx`              | Créer (remplace AppLayout)     |
+| `apps/harmonie/src/layouts/AppLayout.tsx`               | Supprimer                      |
+| `apps/harmonie/src/features/auth/AuthContext.tsx`       | Modifier (setLogoutHandler)    |
+| `apps/harmonie/src/routes/index.tsx`                    | Modifier (routes + MainLayout) |
+| `apps/harmonie/src/main.tsx`                            | Modifier (UserProvider)        |
+| `docs/roadmap.md`                                       | Créer                          |
 
 Réutilisé :
+
 - `getAccessToken()`, `clearTokens()` — `api/authStorage.ts`
 - `refreshTokens()` — `api/auth.ts`
 - `ApiError` — `api/errors.ts`

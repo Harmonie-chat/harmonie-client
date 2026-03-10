@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { refreshTokens } from '@/api/auth';
 import { clearTokens, getRefreshToken, storeTokens } from '@/api/authStorage';
+import { setLogoutHandler } from '@/api/client';
 import type { ApiError } from '@/api/errors';
 
 interface AuthContextValue {
@@ -25,7 +26,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
 
+  // useRef guard intentional: POST /auth/refresh consumes the token.
+  // A double call (StrictMode) would trigger AUTH_REFRESH_TOKEN_REUSE_DETECTED
+  // and invalidate the entire token family server-side.
   const initialized = useRef(false);
+
+  useEffect(() => {
+    setLogoutHandler(() => {
+      clearTokens();
+      setIsAuthenticated(false);
+    });
+  }, []);
 
   useEffect(() => {
     if (initialized.current) return;

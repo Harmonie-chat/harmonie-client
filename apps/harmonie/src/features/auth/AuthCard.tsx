@@ -33,7 +33,12 @@ export const AuthCard = ({ title, children }: AuthCardProps) => {
               i18nKey="auth.tagline"
               components={{
                 host: (
-                  <a href="#" className="underline" target="_blank" rel="noopener noreferrer" />
+                  <a
+                    href="https://github.com/Harmonie-chat"
+                    className="underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  />
                 ),
               }}
             />

@@ -1,9 +1,10 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import { AppLayout } from '../layouts/AppLayout';
+import { MainLayout } from '../layouts/MainLayout';
 import { AuthGuard } from './AuthGuard';
 import { GuestGuard } from './GuestGuard';
 import { ConnectPage } from '../features/auth/ConnectPage';
 import { RegisterPage } from '../features/auth/RegisterPage';
+import { GuildIndexPage } from '../features/guild/GuildIndexPage';
 
 export const router = createBrowserRouter([
   {
@@ -29,7 +30,30 @@ export const router = createBrowserRouter([
     children: [
       {
         path: '/',
-        element: <AppLayout />,
+        element: <MainLayout />,
+        children: [
+          {
+            index: true,
+            element: <GuildIndexPage />,
+          },
+          {
+            path: 'guilds/:guildId',
+            children: [
+              {
+                index: true,
+                element: null,
+              },
+              {
+                path: 'channels/:channelId',
+                element: null,
+              },
+              {
+                path: 'voice/:channelId',
+                element: null,
+              },
+            ],
+          },
+        ],
       },
     ],
   },

@@ -34,10 +34,10 @@ apps/harmonie/src/
 
 Access tokens are short-lived JWTs. Refresh tokens are long-lived and used to obtain new access tokens silently.
 
-| Token         | Storage             | Rationale                                                                 |
-| ------------- | ------------------- | ------------------------------------------------------------------------- |
-| `accessToken` | JS module variable  | Never persisted — wiped on page reload; not accessible via XSS from other tabs |
-| `refreshToken` | `localStorage`     | Persisted across page reloads; used on app init to restore the session    |
+| Token          | Storage            | Rationale                                                                      |
+| -------------- | ------------------ | ------------------------------------------------------------------------------ |
+| `accessToken`  | JS module variable | Never persisted — wiped on page reload; not accessible via XSS from other tabs |
+| `refreshToken` | `localStorage`     | Persisted across page reloads; used on app init to restore the session         |
 
 ### `src/api/authStorage.ts`
 
@@ -71,11 +71,11 @@ VITE_API_BASE_URL=http://localhost:5001/api   # .env
 
 #### Endpoints
 
-| Function         | Method | Endpoint            |
-| ---------------- | ------ | ------------------- |
-| `login()`        | POST   | `/auth/login`       |
-| `register()`     | POST   | `/auth/register`    |
-| `refreshTokens()`| POST   | `/auth/refresh`     |
+| Function          | Method | Endpoint         |
+| ----------------- | ------ | ---------------- |
+| `login()`         | POST   | `/auth/login`    |
+| `register()`      | POST   | `/auth/register` |
+| `refreshTokens()` | POST   | `/auth/refresh`  |
 
 All functions throw the raw JSON body on non-2xx responses (cast to `ApiError` at the call site).
 
@@ -202,11 +202,11 @@ export const GuestGuard = () => {
 - On success: calls `storeTokens()`, sets `isAuthenticated(true)`, navigates to `/`
 - Error mapping:
 
-| API error code            | i18n key             |
-| ------------------------- | -------------------- |
+| API error code             | i18n key             |
+| -------------------------- | -------------------- |
 | `AUTH_INVALID_CREDENTIALS` | `invalidCredentials` |
 | `AUTH_USER_INACTIVE`       | `userInactive`       |
-| *(any other)*              | `genericError`       |
+| _(any other)_              | `genericError`       |
 
 ### RegisterPage
 
@@ -214,11 +214,11 @@ export const GuestGuard = () => {
 - On success: calls `storeTokens()`, sets `isAuthenticated(true)`, navigates to `/`
 - Error mapping:
 
-| API error code          | i18n key            | Target field   |
-| ----------------------- | ------------------- | -------------- |
+| API error code            | i18n key            | Target field   |
+| ------------------------- | ------------------- | -------------- |
 | `AUTH_DUPLICATE_EMAIL`    | `duplicateEmail`    | email field    |
 | `AUTH_DUPLICATE_USERNAME` | `duplicateUsername` | username field |
-| *(any other)*             | `genericError`      | form-level     |
+| _(any other)_             | `genericError`      | form-level     |
 
 ---
 

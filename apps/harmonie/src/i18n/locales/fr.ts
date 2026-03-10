@@ -2,6 +2,21 @@ export const fr = {
   app: {
     name: 'Harmonie',
   },
+  guild: {
+    createTitle: 'Créer une guilde',
+    noGuild: {
+      title: 'Bonjour {{name}}, bienvenue sur <brand>Harmonie</brand>',
+      subtitle: 'Crée ta première guilde pour commencer à discuter avec ta communauté.',
+      nameLabel: 'Nom de la guilde',
+      namePlaceholder: 'ex : Les Jardiniers',
+      createButton: 'Créer la guilde',
+      error: 'Impossible de créer la guilde. Réessaie.',
+    },
+    channels: {
+      text: 'Salons textuels',
+      voice: 'Salons vocaux',
+    },
+  },
   auth: {
     connect: 'Connexion',
     register: 'Inscription',

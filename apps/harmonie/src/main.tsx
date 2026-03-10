@@ -5,11 +5,14 @@ import './styles/index.css';
 import './i18n';
 import { router } from './routes';
 import { AuthProvider } from './features/auth/AuthContext';
+import { UserProvider } from './features/user/UserContext';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
-      <RouterProvider router={router} />
+      <UserProvider>
+        <RouterProvider router={router} />
+      </UserProvider>
     </AuthProvider>
   </StrictMode>
 );

@@ -2,6 +2,21 @@ export const en = {
   app: {
     name: 'Harmonie',
   },
+  guild: {
+    createTitle: 'Create a guild',
+    noGuild: {
+      title: 'Hello {{name}}, welcome to <brand>Harmonie</brand>',
+      subtitle: 'Create your first guild to start chatting with your community.',
+      nameLabel: 'Guild name',
+      namePlaceholder: 'e.g. The Gardener',
+      createButton: 'Create guild',
+      error: 'Unable to create the guild. Please try again.',
+    },
+    channels: {
+      text: 'Text channels',
+      voice: 'Voice channels',
+    },
+  },
   auth: {
     connect: 'Sign in',
     register: 'Register',
