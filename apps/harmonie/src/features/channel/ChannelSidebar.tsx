@@ -87,8 +87,8 @@ export const ChannelSidebar = () => {
     .sort((a, b) => a.position - b.position);
 
   return (
-    <aside className="flex flex-col w-60 bg-surface-1 border-r border-border-2 flex-shrink-0">
-      <header className="px-4 py-3 border-b border-border-2">
+    <aside className="flex flex-col w-60 bg-surface-1 rounded-sm shrink-0 border border-border-2">
+      <header className="px-4 py-3 border-b border-border-2 bg-surface-2 rounded-t-sm">
         <h2 className="font-semibold text-text-1 truncate">{guild?.name ?? guildId}</h2>
       </header>
 
@@ -130,7 +130,7 @@ export const ChannelSidebar = () => {
         )}
       </div>
 
-      <div className="border-t border-border-2 bg-surface-2">
+      <div className="border-t border-border-2 bg-surface-2 rounded-b-sm">
         <UserPanel />
       </div>
     </aside>

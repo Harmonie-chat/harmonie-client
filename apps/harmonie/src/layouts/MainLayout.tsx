@@ -8,10 +8,10 @@ const AppShell = () => {
   const hasGuilds = guilds.length > 0;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-screen bg-background p-2 gap-2 overflow-hidden">
       {hasGuilds && <GuildSidebar />}
       {hasGuilds && <ChannelSidebar />}
-      <main className="flex-1 overflow-hidden">
+      <main className="flex-1 overflow-hidden bg-surface-1 rounded-sm border border-border-2">
         <Outlet />
       </main>
     </div>

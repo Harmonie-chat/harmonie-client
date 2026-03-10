@@ -1,40 +1,34 @@
 import { Headphones, Mic, Settings } from 'lucide-react';
 import { useUser } from './UserContext';
-
-const getInitial = (displayName: string | null, username: string): string =>
-  (displayName ?? username).charAt(0).toUpperCase();
+import { Avatar, IconButton } from '@harmonie/ui';
 
 export const UserPanel = () => {
   const { user } = useUser();
 
-  const label = user ? (user.displayName ?? user.username) : '…';
+  const label = user ? (user.displayName ?? user.username) : '';
 
   return (
-    <div className="flex items-center gap-2 px-2 py-2">
-      <div className="flex-shrink-0">
-        {user?.avatarUrl ? (
-          <img src={user.avatarUrl} alt={label} className="w-8 h-8 rounded-full object-cover" />
-        ) : (
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-            <span className="text-primary-fg text-xs font-semibold">
-              {user ? getInitial(user.displayName, user.username) : '?'}
-            </span>
-          </div>
-        )}
-      </div>
+    <div className="flex items-center gap-2 px-3 py-2">
+      <Avatar
+        alt={label}
+        avatarUrl={user?.avatarUrl}
+        icon={user?.avatar?.icon ?? 'PawPrint'}
+        color={user?.avatar?.color ?? 'var(--color-cat-1-fg)'}
+        bg={user?.avatar?.bg ?? 'var(--color-cat-1)'}
+      />
 
       <span className="flex-1 text-sm font-medium text-text-1 truncate">{label}</span>
 
-      <div className="flex items-center gap-1">
-        <button className="p-1 rounded hover:bg-surface-hover text-text-3 hover:text-text-1 transition-colors">
+      <div className="flex items-center gap-2">
+        <IconButton size="small">
           <Mic size={16} />
-        </button>
-        <button className="p-1 rounded hover:bg-surface-hover text-text-3 hover:text-text-1 transition-colors">
+        </IconButton>
+        <IconButton size="small">
           <Headphones size={16} />
-        </button>
-        <button className="p-1 rounded hover:bg-surface-hover text-text-3 hover:text-text-1 transition-colors">
+        </IconButton>
+        <IconButton size="small">
           <Settings size={16} />
-        </button>
+        </IconButton>
       </div>
     </div>
   );

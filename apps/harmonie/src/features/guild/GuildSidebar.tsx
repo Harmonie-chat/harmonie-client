@@ -1,6 +1,4 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { Plus } from 'lucide-react';
 import { useGuilds } from './GuildContext';
 
 const GUILD_COLORS = [
@@ -22,13 +20,12 @@ const getInitials = (name: string): string =>
     .slice(0, 2);
 
 export const GuildSidebar = () => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { guildId: activeGuildId } = useParams<{ guildId: string }>();
   const { guilds } = useGuilds();
 
   return (
-    <nav className="flex flex-col items-center gap-2 w-16 py-3 bg-surface-1 border-r border-border-2 flex-shrink-0">
+    <nav className="flex flex-col items-center gap-2 w-16 py-3 bg-surface-1 border border-border-2 shrink-0 rounded-sm">
       <div className="flex flex-col items-center gap-2 flex-1 overflow-y-auto w-full px-2">
         {guilds.map((guild, i) => {
           const isActive = guild.guildId === activeGuildId;
@@ -48,17 +45,6 @@ export const GuildSidebar = () => {
             </button>
           );
         })}
-      </div>
-
-      <div className="flex flex-col items-center px-2 w-full">
-        <div className="w-8 h-px bg-border-2 mb-2" />
-        <button
-          onClick={() => navigate('/')}
-          title={t('guild.createTitle')}
-          className="w-10 h-10 rounded-[14px] flex items-center justify-center bg-surface-2 text-primary hover:bg-primary hover:text-primary-fg hover:rounded-[8px] transition-all"
-        >
-          <Plus size={20} />
-        </button>
       </div>
     </nav>
   );
