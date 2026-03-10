@@ -1,6 +1,9 @@
 export { Button } from './components/Button/Button';
 export type { ButtonProps, ButtonVariant } from './components/Button/Button';
 
+export { IconButton } from './components/IconButton/IconButton';
+export type { IconButtonProps, IconButtonSize } from './components/IconButton/IconButton';
+
 export { Input } from './components/Input/Input';
 export type { InputProps } from './components/Input/Input';
 
@@ -12,3 +15,6 @@ export type {
   LanguageSelectorProps,
   Language,
 } from './components/LanguageSelector/LanguageSelector';
+
+export { Avatar } from './components/Avatar/Avatar';
+export type { AvatarProps } from './components/Avatar/Avatar';
