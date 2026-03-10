@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { refreshTokens } from '@/api/auth';
 import { clearTokens, getRefreshToken, storeTokens } from '@/api/authStorage';
 import { setLogoutHandler } from '@/api/client';
@@ -22,7 +22,7 @@ const FATAL_REFRESH_CODES = new Set([
   'AUTH_USER_INACTIVE',
 ]);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
 

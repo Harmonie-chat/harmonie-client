@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { getMe } from '@/api/users';
 import type { UserProfile } from '@/api/users';
 import { useAuth } from '@/features/auth/AuthContext';
@@ -13,7 +13,7 @@ const UserContext = createContext<UserContextValue>({
   isLoading: false,
 });
 
-export const UserProvider = ({ children }: { children: React.ReactNode }) => {
+export const UserProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated } = useAuth();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
