@@ -3,10 +3,12 @@ import { Headphones, Mic, Settings } from 'lucide-react';
 import { useUser } from './UserContext';
 import { Avatar, IconButton } from '@harmonie/ui';
 import { SettingsPanel } from './SettingsPanel';
+import { useFileBlobUrl } from '@/hooks/useFileBlobUrl';
 
 export const UserPanel = () => {
   const { user } = useUser();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const avatarUrl = useFileBlobUrl(user?.avatarFileId);
 
   const label = user ? (user.displayName ?? user.username) : '';
 
@@ -15,7 +17,7 @@ export const UserPanel = () => {
       <div className="flex items-center gap-2 px-3 py-2">
         <Avatar
           alt={label}
-          avatarUrl={user?.avatarUrl}
+          avatarUrl={avatarUrl}
           icon={user?.avatar?.icon ?? 'PawPrint'}
           color={user?.avatar?.color ?? 'var(--color-cat-1-fg)'}
           bg={user?.avatar?.bg ?? 'var(--color-cat-1)'}

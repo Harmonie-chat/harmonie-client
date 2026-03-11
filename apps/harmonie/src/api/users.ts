@@ -13,10 +13,19 @@ export interface UserProfile {
   username: string;
   displayName?: string;
   bio?: string;
-  avatarUrl?: string;
+  avatarFileId?: string;
   avatar?: AvatarAppearance;
   theme: string;
-  language?: string;
+  language: string | null;
+}
+
+export interface PatchMyProfileInput {
+  displayName?: string | null;
+  bio?: string | null;
+  avatarFileId?: string | null;
+  avatar?: AvatarAppearance | null;
+  theme?: string | null;
+  language?: string | null;
 }
 
 export const getMe = (): Promise<UserProfile> =>
@@ -25,11 +34,7 @@ export const getMe = (): Promise<UserProfile> =>
     return res.json();
   });
 
-export const patchMe = (
-  data: Partial<
-    Pick<UserProfile, 'displayName' | 'bio' | 'avatarUrl' | 'language' | 'avatar' | 'theme'>
-  >
-): Promise<UserProfile> =>
+export const patchMe = (data: PatchMyProfileInput): Promise<UserProfile> =>
   apiFetch(`${API_BASE}/users/me`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -39,7 +44,7 @@ export const patchMe = (
     return res.json();
   });
 
-export const uploadAvatarImage = (file: File): Promise<{ avatarUrl: string }> => {
+export const uploadAvatarImage = (file: File): Promise<{ avatarFileId: string }> => {
   const formData = new FormData();
   formData.append('file', file);
   return apiFetch(`${API_BASE}/users/me/avatar`, {
@@ -52,9 +57,4 @@ export const uploadAvatarImage = (file: File): Promise<{ avatarUrl: string }> =>
 };
 
 export const removeAvatarImage = (): Promise<void> =>
-  apiFetch(`${API_BASE}/users/me/avatar`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-  }).then(async (res) => {
-    if (!res.ok) throw await res.json();
-  });
+  patchMe({ avatarFileId: null }).then(() => undefined);

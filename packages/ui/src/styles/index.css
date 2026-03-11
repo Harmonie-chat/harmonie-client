@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 @source '../components';
 
-@theme {
+@theme static {
   /* ── Brand colors ── */
   --color-primary: #8aad90;
   --color-primary-fg: #ffffff;

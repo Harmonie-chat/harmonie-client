@@ -8,6 +8,14 @@ export interface Guild {
   ownerUserId: string;
   role: string;
   joinedAtUtc: string;
+  iconUrl: string;
+  icon: GuildIcon;
+}
+
+export interface GuildIcon {
+  name: string;
+  color: string;
+  bg: string;
 }
 
 export interface Channel {
@@ -27,6 +35,8 @@ export interface CreateGuildResponse {
   guildId: string;
   name: string;
   ownerUserId: string;
+  iconUrl: string;
+  icon: GuildIcon;
 }
 
 export const listGuilds = (): Promise<{ guilds: Guild[] }> =>
@@ -35,9 +45,12 @@ export const listGuilds = (): Promise<{ guilds: Guild[] }> =>
 export const listChannels = (guildId: string): Promise<ChannelList> =>
   apiFetch(`${API_BASE}/guilds/${guildId}/channels`).then((r) => parseOrThrow<ChannelList>(r));
 
-export const createGuild = (name: string): Promise<CreateGuildResponse> =>
+export const createGuild = (
+  name: string,
+  logo: { iconUrl: string; icon: GuildIcon }
+): Promise<CreateGuildResponse> =>
   apiFetch(`${API_BASE}/guilds`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({ name, iconUrl: logo.iconUrl, icon: logo.icon }),
   }).then((r) => parseOrThrow<CreateGuildResponse>(r));

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Hash, Volume2 } from 'lucide-react';
+import { GuildAvatar } from '@harmonie/ui';
 import { listChannels } from '@/api/guilds';
 import type { Channel, ChannelList } from '@/api/guilds';
 import { useGuilds } from '@/features/guild/GuildContext';
@@ -89,7 +90,17 @@ export const ChannelSidebar = () => {
   return (
     <aside className="flex flex-col w-60 bg-surface-1 rounded-sm shrink-0 border border-border-2">
       <header className="px-4 py-3 border-b border-border-2 bg-surface-2 rounded-t-sm">
-        <h2 className="font-semibold text-text-1 truncate">{guild?.name ?? guildId}</h2>
+        <div className="flex items-center gap-2">
+          <GuildAvatar
+            iconUrl={guild?.iconUrl || undefined}
+            alt={guild?.name ?? guildId}
+            icon={guild?.icon?.name}
+            color={guild?.icon?.color}
+            bg={guild?.icon?.bg}
+            size={24}
+          />
+          <h2 className="font-semibold text-text-1 truncate">{guild?.name ?? guildId}</h2>
+        </div>
       </header>
 
       <div className="flex-1 overflow-y-auto px-2 py-2 flex flex-col gap-4">

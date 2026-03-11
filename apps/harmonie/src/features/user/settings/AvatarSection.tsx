@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Trash2, Upload, UserRound } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -6,6 +6,7 @@ import * as LucideIcons from 'lucide-react';
 import { Avatar, Button, ColorSwatches, IconButton, Tabs } from '@harmonie/ui';
 import type { UserProfile } from '@/api/users';
 import { patchMe, removeAvatarImage, uploadAvatarImage } from '@/api/users';
+import { useFileBlobUrl } from '@/hooks/useFileBlobUrl';
 import { AVATAR_ICONS, BG_COLORS, ICON_COLORS } from './constants';
 
 type AvatarTab = 'icon' | 'image';
@@ -26,7 +27,7 @@ const resolveColor = (cssVar: string): string => {
 
 export const AvatarSection = ({ user, updateUser }: AvatarSectionProps) => {
   const { t } = useTranslation();
-  const [tab, setTab] = useState<AvatarTab>(user?.avatarUrl ? 'image' : 'icon');
+  const [tab, setTab] = useState<AvatarTab>(user?.avatarFileId ? 'image' : 'icon');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -42,8 +43,16 @@ export const AvatarSection = ({ user, updateUser }: AvatarSectionProps) => {
 
   // Image tab state
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | undefined>(user?.avatarUrl);
+  const [localImagePreview, setLocalImagePreview] = useState<string>();
   const [imageSaving, setImageSaving] = useState(false);
+  const remoteImagePreview = useFileBlobUrl(user?.avatarFileId);
+  const imagePreview = localImagePreview ?? remoteImagePreview;
+
+  useEffect(() => {
+    return () => {
+      if (localImagePreview) URL.revokeObjectURL(localImagePreview);
+    };
+  }, [localImagePreview]);
 
   const handleIconSave = async () => {
     setIconSaving(true);
@@ -60,17 +69,20 @@ export const AvatarSection = ({ user, updateUser }: AvatarSectionProps) => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (localImagePreview) URL.revokeObjectURL(localImagePreview);
     setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+    setLocalImagePreview(URL.createObjectURL(file));
   };
 
   const handleImageSave = async () => {
     if (!imageFile) return;
     setImageSaving(true);
     try {
-      const { avatarUrl } = await uploadAvatarImage(imageFile);
-      if (user) updateUser({ ...user, avatarUrl });
+      const { avatarFileId } = await uploadAvatarImage(imageFile);
+      if (user) updateUser({ ...user, avatarFileId });
       setImageFile(null);
+      if (localImagePreview) URL.revokeObjectURL(localImagePreview);
+      setLocalImagePreview(undefined);
     } finally {
       setImageSaving(false);
     }
@@ -80,9 +92,10 @@ export const AvatarSection = ({ user, updateUser }: AvatarSectionProps) => {
     setImageSaving(true);
     try {
       await removeAvatarImage();
-      if (user) updateUser({ ...user, avatarUrl: undefined });
-      setImagePreview(undefined);
+      if (user) updateUser({ ...user, avatarFileId: undefined });
       setImageFile(null);
+      if (localImagePreview) URL.revokeObjectURL(localImagePreview);
+      setLocalImagePreview(undefined);
     } finally {
       setImageSaving(false);
     }

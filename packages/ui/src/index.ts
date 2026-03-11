@@ -23,6 +23,9 @@ export type {
 export { Avatar } from './components/Avatar/Avatar';
 export type { AvatarProps } from './components/Avatar/Avatar';
 
+export { GuildAvatar } from './components/GuildAvatar/GuildAvatar';
+export type { GuildAvatarProps } from './components/GuildAvatar/GuildAvatar';
+
 export { RadioCard } from './components/RadioCard/RadioCard';
 export type { RadioCardProps } from './components/RadioCard/RadioCard';
 
