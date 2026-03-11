@@ -2,15 +2,18 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { getMe } from '@/api/users';
 import type { UserProfile } from '@/api/users';
 import { useAuth } from '@/features/auth/AuthContext';
+import i18n from '@/i18n';
 
 interface UserContextValue {
   user: UserProfile | null;
   isLoading: boolean;
+  updateUser: (user: UserProfile) => void;
 }
 
 const UserContext = createContext<UserContextValue>({
   user: null,
   isLoading: false,
+  updateUser: () => {},
 });
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
@@ -25,12 +28,20 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
     setIsLoading(true);
     getMe()
-      .then(setUser)
+      .then((profile) => {
+        setUser(profile);
+        // Apply the user's saved language preference immediately
+        if (profile.language) i18n.changeLanguage(profile.language);
+      })
       .catch(() => setUser(null))
       .finally(() => setIsLoading(false));
   }, [isAuthenticated]);
 
-  return <UserContext.Provider value={{ user, isLoading }}>{children}</UserContext.Provider>;
+  return (
+    <UserContext.Provider value={{ user, isLoading, updateUser: setUser }}>
+      {children}
+    </UserContext.Provider>
+  );
 };
 
 export const useUser = () => useContext(UserContext);

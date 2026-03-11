@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { refreshTokens } from '@/api/auth';
+import { logout as logoutApi, refreshTokens } from '@/api/auth';
 import { clearTokens, getRefreshToken, storeTokens } from '@/api/authStorage';
 import { setLogoutHandler } from '@/api/client';
 import type { ApiError } from '@/api/errors';
@@ -8,12 +8,14 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isInitializing: boolean;
   setIsAuthenticated: (value: boolean) => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
   isAuthenticated: false,
   isInitializing: true,
   setIsAuthenticated: () => {},
+  logout: async () => {},
 });
 
 const FATAL_REFRESH_CODES = new Set([
@@ -58,8 +60,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     })();
   }, []);
 
+  const logout = async () => {
+    const refreshToken = getRefreshToken();
+    if (refreshToken) {
+      try {
+        await logoutApi({ refreshToken });
+      } catch (error) {
+        // Ignore backend logout errors and continue local logout.
+        void error;
+      }
+    }
+    clearTokens();
+    setIsAuthenticated(false);
+  };
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isInitializing, setIsAuthenticated }}>
+    <AuthContext.Provider value={{ isAuthenticated, isInitializing, setIsAuthenticated, logout }}>
       {children}
     </AuthContext.Provider>
   );
