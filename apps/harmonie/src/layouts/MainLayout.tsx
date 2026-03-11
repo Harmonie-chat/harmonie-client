@@ -11,7 +11,7 @@ const AppShell = () => {
     <div className="flex h-screen bg-background p-2 gap-2 overflow-hidden">
       {hasGuilds && <GuildSidebar />}
       {hasGuilds && <ChannelSidebar />}
-      <main className="flex-1 overflow-hidden bg-surface-1 rounded-sm border border-border-2">
+      <main className="flex-1 overflow-hidden bg-surface-1">
         <Outlet />
       </main>
     </div>

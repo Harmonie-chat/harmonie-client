@@ -35,10 +35,10 @@ export const GuildSidebar = () => {
               onClick={() => navigate(`/guilds/${guild.guildId}`)}
               title={guild.name}
               className={[
-                'w-10 h-10 rounded-[14px] flex items-center justify-center text-sm font-semibold transition-all flex-shrink-0',
+                'w-10 h-10 rounded-md flex items-center justify-center text-sm font-semibold transition-all shrink-0',
                 isActive
-                  ? 'bg-primary text-primary-fg rounded-[8px]'
-                  : `${guildColor(i)} text-text-1 hover:rounded-[8px]`,
+                  ? 'bg-primary text-primary-fg rounded-sm'
+                  : `${guildColor(i)} text-text-1 hover:rounded-sm`,
               ].join(' ')}
             >
               {getInitials(guild.name)}

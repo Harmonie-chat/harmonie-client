@@ -17,6 +17,43 @@ export const en = {
       voice: 'Voice channels',
     },
   },
+  settings: {
+    title: 'Settings',
+    close: 'Close settings',
+    nav: {
+      language: 'Language',
+      avatar: 'Avatar',
+      theme: 'Theme',
+    },
+    language: {
+      title: 'Language',
+      label: 'Interface language',
+    },
+    avatar: {
+      title: 'Avatar',
+      tabIcon: 'Icon',
+      tabImage: 'Image',
+      preview: 'Preview',
+      iconSection: 'Icon',
+      colorSection: 'Icon color',
+      bgSection: 'Background color',
+      uploadSection: 'Profile picture',
+      uploadButton: 'Choose an image',
+      change: 'Change',
+      deleteImage: 'Delete image',
+      customColor: 'Custom color',
+      save: 'Save',
+    },
+    theme: {
+      title: 'Theme',
+      label: 'Visual theme',
+      default: 'Default',
+      comingSoon: 'More themes coming soon.',
+    },
+  },
+  user: {
+    logout: 'Log out',
+  },
   auth: {
     connect: 'Sign in',
     register: 'Register',

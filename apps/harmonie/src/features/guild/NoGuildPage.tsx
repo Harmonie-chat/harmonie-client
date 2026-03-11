@@ -23,6 +23,7 @@ export const NoGuildPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = name.trim();
+    if (trimmed.length < 3) return;
 
     setIsLoading(true);
     setError(false);

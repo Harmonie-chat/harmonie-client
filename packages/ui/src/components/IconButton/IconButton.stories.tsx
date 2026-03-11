@@ -30,8 +30,16 @@ export const Small: Story = {
   args: { size: 'small' },
 };
 
-export const SmallDisabled: Story = {
-  args: { size: 'small', disabled: true },
+export const Medium: Story = {
+  args: { size: 'medium' },
+};
+
+export const Filled: Story = {
+  args: { size: 'medium', variant: 'filled' },
+};
+
+export const FilledSelected: Story = {
+  args: { size: 'medium', variant: 'filled', selected: true },
 };
 
 export const AllStates: Story = {
@@ -59,6 +67,18 @@ export const AllStates: Story = {
         </IconButton>
         <IconButton size="small" disabled>
           <Settings size={14} />
+        </IconButton>
+      </div>
+      <div className="flex items-center gap-8">
+        <span className="w-24 text-text-2 text-sm">Filled</span>
+        <IconButton size="medium" variant="filled">
+          <Settings size={16} />
+        </IconButton>
+        <IconButton size="medium" variant="filled" selected>
+          <Settings size={16} />
+        </IconButton>
+        <IconButton size="medium" variant="filled" disabled>
+          <Settings size={16} />
         </IconButton>
       </div>
     </div>

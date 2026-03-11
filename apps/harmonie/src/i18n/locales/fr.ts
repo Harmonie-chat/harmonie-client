@@ -17,6 +17,43 @@ export const fr = {
       voice: 'Salons vocaux',
     },
   },
+  settings: {
+    title: 'Paramètres',
+    close: 'Fermer les paramètres',
+    nav: {
+      language: 'Langue',
+      avatar: 'Avatar',
+      theme: 'Thème',
+    },
+    language: {
+      title: 'Langue',
+      label: "Langue de l'interface",
+    },
+    avatar: {
+      title: 'Avatar',
+      tabIcon: 'Icône',
+      tabImage: 'Image',
+      preview: 'Aperçu',
+      iconSection: 'Icône',
+      colorSection: "Couleur de l'icône",
+      bgSection: 'Couleur de fond',
+      uploadSection: 'Photo de profil',
+      uploadButton: 'Choisir une image',
+      change: 'Modifier',
+      deleteImage: "Supprimer l'image",
+      customColor: 'Couleur personnalisée',
+      save: 'Sauvegarder',
+    },
+    theme: {
+      title: 'Thème',
+      label: 'Thème visuel',
+      default: 'Défaut',
+      comingSoon: "D'autres thèmes arrivent bientôt.",
+    },
+  },
+  user: {
+    logout: 'Se déconnecter',
+  },
   auth: {
     connect: 'Connexion',
     register: 'Inscription',

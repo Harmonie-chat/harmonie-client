@@ -80,3 +80,15 @@ export const refreshTokens = async (body: RefreshRequest): Promise<RefreshRespon
 
   return response.json();
 };
+
+export interface LogoutRequest {
+  refreshToken: string;
+}
+
+export const logout = async (body: LogoutRequest): Promise<void> => {
+  await fetch(`${API_BASE}/auth/logout`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+};
