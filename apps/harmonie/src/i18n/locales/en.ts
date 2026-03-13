@@ -4,6 +4,17 @@ export const en = {
   },
   guild: {
     createTitle: 'Create a guild',
+    createJoin: {
+      title: 'Create or join a guild',
+      subtitle: 'Create a new space or join a guild with an invite code.',
+      close: 'Close',
+      createTab: 'Create',
+      joinTab: 'Join',
+      joinCodeLabel: 'Invite code',
+      joinCodePlaceholder: 'e.g. abc123xyz',
+      joinButton: 'Join guild',
+      joinError: 'Unable to join guild. Please check the code and try again.',
+    },
     noGuild: {
       title: 'Hello {{name}}, welcome to <brand>Harmonie</brand>',
       subtitle: 'Create your first guild to start chatting with your community.',

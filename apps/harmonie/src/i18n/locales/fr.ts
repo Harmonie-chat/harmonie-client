@@ -4,6 +4,17 @@ export const fr = {
   },
   guild: {
     createTitle: 'Créer une guilde',
+    createJoin: {
+      title: 'Créer ou rejoindre une guilde',
+      subtitle: 'Crée un nouvel espace ou rejoins une guilde avec un code d’invitation.',
+      close: 'Fermer',
+      createTab: 'Créer',
+      joinTab: 'Rejoindre',
+      joinCodeLabel: "Code d'invitation",
+      joinCodePlaceholder: 'ex : abc123xyz',
+      joinButton: 'Rejoindre la guilde',
+      joinError: 'Impossible de rejoindre la guilde. Vérifie le code et réessaie.',
+    },
     noGuild: {
       title: 'Bonjour {{name}}, bienvenue sur <brand>Harmonie</brand>',
       subtitle: 'Crée ta première guilde pour commencer à discuter avec ta communauté.',

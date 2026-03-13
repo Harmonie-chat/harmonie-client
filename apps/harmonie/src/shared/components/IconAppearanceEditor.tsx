@@ -34,32 +34,30 @@ export const IconAppearanceEditor = ({
   const { iconColors, bgColors } = useIconAppearancePalette();
 
   return (
-    <>
-      <div className="flex flex-col gap-2">
-        <p className="text-xs font-semibold text-text-3 uppercase tracking-wider">{iconLabel}</p>
-        <div className={`grid ${iconGridClassName} gap-1.5`}>
-          {AVATAR_ICONS.map((iconName) => {
-            const Icon = (LucideIcons as unknown as Record<string, LucideIcon>)[iconName];
-            if (!Icon) return null;
-            return (
-              <IconButton
-                key={iconName}
-                size="medium"
-                variant="filled"
-                selected={selectedIcon === iconName}
-                onClick={() => onSelectIcon(iconName)}
-                title={iconName}
-                type="button"
-                disabled={disabled}
-              >
-                <Icon size={16} />
-              </IconButton>
-            );
-          })}
-        </div>
+    <div className="flex flex-col gap-4">
+      <p className="text-xs font-semibold text-text-3 uppercase tracking-wider">{iconLabel}</p>
+      <div className={`grid ${iconGridClassName} gap-1`}>
+        {AVATAR_ICONS.map((iconName) => {
+          const Icon = (LucideIcons as unknown as Record<string, LucideIcon>)[iconName];
+          if (!Icon) return null;
+          return (
+            <IconButton
+              key={iconName}
+              size="medium"
+              variant="filled"
+              selected={selectedIcon === iconName}
+              onClick={() => onSelectIcon(iconName)}
+              title={iconName}
+              type="button"
+              disabled={disabled}
+            >
+              <Icon size={16} />
+            </IconButton>
+          );
+        })}
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1">
         <p className="text-xs font-semibold text-text-3 uppercase tracking-wider">{colorLabel}</p>
         <ColorSwatches
           colors={iconColors}
@@ -69,7 +67,7 @@ export const IconAppearanceEditor = ({
         />
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1">
         <p className="text-xs font-semibold text-text-3 uppercase tracking-wider">{bgLabel}</p>
         <ColorSwatches
           colors={bgColors}
@@ -78,6 +76,6 @@ export const IconAppearanceEditor = ({
           showCustomPicker
         />
       </div>
-    </>
+    </div>
   );
 };
