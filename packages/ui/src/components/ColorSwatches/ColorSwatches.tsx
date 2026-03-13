@@ -24,6 +24,7 @@ export const ColorSwatches = ({
       {colors.map((color) => (
         <button
           key={color}
+          type="button"
           onClick={() => onSelect(color)}
           className="w-7 h-7 rounded-full border-2 transition-all shrink-0 cursor-pointer"
           style={{
@@ -38,6 +39,7 @@ export const ColorSwatches = ({
       {showCustomPicker && (
         <>
           <button
+            type="button"
             onClick={() => pickerRef.current?.click()}
             className="relative w-7 h-7 rounded-full border-2 shrink-0 cursor-pointer flex items-center justify-center overflow-hidden transition-all"
             style={{

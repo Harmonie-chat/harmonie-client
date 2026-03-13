@@ -36,7 +36,7 @@ export const SettingsPanel = ({ onClose }: SettingsPanelProps) => {
     >
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
 
-      <div className="relative flex w-full max-w-2xl h-[80vh] max-h-155 rounded-md overflow-hidden shadow-xl border border-border-2">
+      <div className="relative flex w-full max-w-3xl h-[80vh] max-h-155 rounded-md overflow-hidden shadow-xl border border-border-2">
         {/* Left nav */}
         <nav className="w-52 bg-surface-2 border-r border-border-2 flex flex-col shrink-0 p-3 gap-1">
           <p className="text-xs font-semibold text-text-3 uppercase tracking-wider px-3 pt-1 pb-2">

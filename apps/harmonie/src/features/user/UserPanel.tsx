@@ -3,7 +3,7 @@ import { Headphones, Mic, Settings } from 'lucide-react';
 import { useUser } from './UserContext';
 import { Avatar, IconButton } from '@harmonie/ui';
 import { SettingsPanel } from './SettingsPanel';
-import { useFileBlobUrl } from '@/hooks/useFileBlobUrl';
+import { useFileBlobUrl } from '@/shared/hooks/useFileBlobUrl';
 
 export const UserPanel = () => {
   const { user } = useUser();

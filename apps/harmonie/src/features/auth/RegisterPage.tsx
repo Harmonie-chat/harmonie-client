@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, Input } from '@harmonie/ui';
 import { Eye, EyeOff } from 'lucide-react';
-import { isValidEmail, isValidPassword } from '@/utils/user';
+import { isValidEmail, isValidPassword } from '@/shared/utils/user';
 import { register } from '@/api/auth';
 import { storeTokens } from '@/api/authStorage';
 import type { ApiError } from '@/api/errors';
