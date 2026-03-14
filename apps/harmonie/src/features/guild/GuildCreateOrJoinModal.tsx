@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Input, Modal, Tabs } from '@harmonie/ui';
-import { GuildCreateForm } from './GuildCreateForm';
+import { GuildForm } from './GuildForm';
 
 type GuildAccessMode = 'create' | 'join';
 
@@ -35,7 +35,7 @@ export const GuildCreateOrJoinModal = ({ onClose }: GuildCreateOrJoinModalProps)
 
       <div>
         {mode === 'create' ? (
-          <GuildCreateForm autoFocus onSuccess={onClose} />
+          <GuildForm autoFocus onSuccess={onClose} />
         ) : (
           <form className="flex flex-col gap-6">
             <Input

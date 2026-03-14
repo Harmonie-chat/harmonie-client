@@ -2,18 +2,22 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChannelItem, ContextMenu, IconButton } from '@harmonie/ui';
-import { Plus, Pencil } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { listChannels } from '@/api/guilds';
 import type { Channel, ChannelList } from '@/api/guilds';
 import { useGuilds } from '@/features/guild/GuildContext';
 import { UserPanel } from '@/features/user/UserPanel';
 import { CreateChannelModal } from './CreateChannelModal';
-import { EditChannelModal } from './EditChannelModal';
+import { EditChannelModal, type EditChannelSection } from './EditChannelModal';
 
 type CreateModalState = { type: 'Text' | 'Voice' } | null;
 type ContextMenuState = {
   channel: Channel;
   position: { x: number; y: number };
+} | null;
+type EditModalState = {
+  channel: Channel;
+  section: EditChannelSection;
 } | null;
 
 export const ChannelSidebar = () => {
@@ -29,7 +33,7 @@ export const ChannelSidebar = () => {
   const [data, setData] = useState<ChannelList | null>(null);
   const [createModal, setCreateModal] = useState<CreateModalState>(null);
   const [contextMenu, setContextMenu] = useState<ContextMenuState>(null);
-  const [editChannel, setEditChannel] = useState<Channel | null>(null);
+  const [editModal, setEditModal] = useState<EditModalState>(null);
 
   const fetchChannels = useCallback(() => {
     if (!guildId) return;
@@ -60,14 +64,14 @@ export const ChannelSidebar = () => {
           }
         : prev
     );
-    setEditChannel(null);
+    setEditModal(null);
   };
 
   const handleChannelDeleted = (channelId: string) => {
     setData((prev) =>
       prev ? { ...prev, channels: prev.channels.filter((c) => c.channelId !== channelId) } : prev
     );
-    setEditChannel(null);
+    setEditModal(null);
     if (activeChannelId === channelId) {
       navigate(`/guilds/${guildId}`);
     }
@@ -76,6 +80,11 @@ export const ChannelSidebar = () => {
   const handleContextMenu = (e: React.MouseEvent, channel: Channel) => {
     e.preventDefault();
     setContextMenu({ channel, position: { x: e.clientX, y: e.clientY } });
+  };
+
+  const openEdit = (channel: Channel, section: EditChannelSection) => {
+    setContextMenu(null);
+    setEditModal({ channel, section });
   };
 
   if (!guildId) return null;
@@ -91,6 +100,24 @@ export const ChannelSidebar = () => {
     .sort((a, b) => a.position - b.position);
 
   const nextPosition = Math.max(...allChannels.map((c) => c.position), 0) + 1;
+
+  const buildContextMenuItems = (channel: Channel) => {
+    const items = [
+      {
+        label: t('guild.channels.contextMenu.rename'),
+        icon: <Pencil size={14} />,
+        onClick: () => openEdit(channel, 'rename'),
+      },
+    ];
+    if (!channel.isDefault) {
+      items.push({
+        label: t('guild.channels.contextMenu.delete'),
+        icon: <Trash2 size={14} />,
+        onClick: () => openEdit(channel, 'danger'),
+      });
+    }
+    return items;
+  };
 
   return (
     <>
@@ -170,16 +197,7 @@ export const ChannelSidebar = () => {
         <ContextMenu
           position={contextMenu.position}
           onClose={() => setContextMenu(null)}
-          items={[
-            {
-              label: t('guild.channels.contextMenu.edit'),
-              icon: <Pencil size={14} />,
-              onClick: () => {
-                setEditChannel(contextMenu.channel);
-                setContextMenu(null);
-              },
-            },
-          ]}
+          items={buildContextMenuItems(contextMenu.channel)}
         />
       )}
 
@@ -193,10 +211,11 @@ export const ChannelSidebar = () => {
         />
       )}
 
-      {editChannel && (
+      {editModal && (
         <EditChannelModal
-          channel={editChannel}
-          onClose={() => setEditChannel(null)}
+          channel={editModal.channel}
+          initialSection={editModal.section}
+          onClose={() => setEditModal(null)}
           onUpdated={handleChannelUpdated}
           onDeleted={handleChannelDeleted}
         />

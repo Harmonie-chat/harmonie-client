@@ -2,7 +2,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import { LanguageSelector } from '@harmonie/ui';
 import { useUser } from '@/features/user/UserContext';
 import { LANGUAGES } from '@/i18n/languages.ts';
-import { GuildCreateForm } from './GuildCreateForm';
+import { GuildForm } from './GuildForm';
 
 export const NoGuildPage = () => {
   const { t, i18n } = useTranslation();
@@ -36,7 +36,7 @@ export const NoGuildPage = () => {
             </div>
           </div>
 
-          <GuildCreateForm autoFocus />
+          <GuildForm autoFocus />
         </div>
       </div>
     </div>
