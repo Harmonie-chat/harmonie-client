@@ -45,6 +45,22 @@ export const en = {
         cancel: 'Cancel',
         error: 'Unable to create channel. Please try again.',
       },
+      edit: {
+        title: 'Edit channel',
+        nameLabel: 'Channel name',
+        save: 'Save',
+        cancel: 'Cancel',
+        error: 'Unable to update channel. Please try again.',
+        dangerZone: 'Danger zone',
+        deleteDescription: 'Deleting this channel is irreversible.',
+        deleteButton: 'Delete channel',
+        deleteConfirm: 'Confirm deletion',
+        deleteCancel: 'Cancel',
+        deleteError: 'Unable to delete channel. Please try again.',
+      },
+      contextMenu: {
+        edit: 'Edit channel',
+      },
     },
   },
   settings: {

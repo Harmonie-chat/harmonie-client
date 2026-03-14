@@ -45,6 +45,22 @@ export const fr = {
         cancel: 'Annuler',
         error: 'Impossible de créer le salon. Réessaie.',
       },
+      edit: {
+        title: 'Modifier le salon',
+        nameLabel: 'Nom du salon',
+        save: 'Sauvegarder',
+        cancel: 'Annuler',
+        error: 'Impossible de modifier le salon. Réessaie.',
+        dangerZone: 'Zone de danger',
+        deleteDescription: 'La suppression de ce salon est irréversible.',
+        deleteButton: 'Supprimer le salon',
+        deleteConfirm: 'Confirmer la suppression',
+        deleteCancel: 'Annuler',
+        deleteError: 'Impossible de supprimer le salon. Réessaie.',
+      },
+      contextMenu: {
+        edit: 'Modifier le salon',
+      },
     },
   },
   settings: {

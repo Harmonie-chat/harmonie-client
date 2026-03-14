@@ -1,0 +1,31 @@
+aside.EmojiPickerReact {
+  --epr-category-icon-active-color: var(--color-primary);
+  --epr-bg-color: var(--color-surface-1);
+  --epr-hover-bg-color: var(--color-surface-3);
+  --epr-picker-border-color: var(--color-border-2);
+  --epr-text-color: var(--color-text-3);
+  --epr-category-label-bg-color: var(--color-surface-1);
+  --epr-category-navigation-button-size: 25px;
+  --epr-category-label-height: 20px;
+  --epr-emoji-size: 25px;
+}
+
+aside.EmojiPickerReact .epr-cat-btn.epr-active {
+  border-radius: 999px;
+}
+
+aside.EmojiPickerReact .epr-cat-btn-custom-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+aside.EmojiPickerReact .epr-cat-btn-custom-icon > svg {
+  width: calc(var(--epr-category-navigation-button-size) * 0.62);
+  height: calc(var(--epr-category-navigation-button-size) * 0.62);
+}
+
+aside.EmojiPickerReact .epr-emoji-category-label {
+  font-size: 12px;
+}

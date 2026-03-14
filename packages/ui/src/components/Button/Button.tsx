@@ -1,7 +1,7 @@
 import { ButtonHTMLAttributes } from 'react';
 import { Loader2 } from 'lucide-react';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'tertiary';
+export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'danger';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -12,6 +12,7 @@ const variantClasses: Record<ButtonVariant, string> = {
   primary: 'bg-primary text-primary-fg hover:opacity-80',
   secondary: 'bg-secondary border border-secondary-fg text-secondary-fg hover:opacity-80',
   tertiary: 'bg-transparent border border-tertiary-fg text-tertiary-fg hover:bg-surface-3',
+  danger: 'bg-error text-error-fg hover:opacity-80',
 };
 
 export const Button = ({
