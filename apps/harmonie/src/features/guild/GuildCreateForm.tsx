@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Upload } from 'lucide-react';
-import { Button, GuildAvatar, Input } from '@harmonie/ui';
+import { Button, EmojiInput, GuildAvatar } from '@harmonie/ui';
 import { createGuild } from '@/api/guilds';
 import { uploadFile } from '@/api/files';
 import { IconAppearanceEditor } from '@/shared/components/IconAppearanceEditor';
@@ -69,12 +69,12 @@ export const GuildCreateForm = ({ autoFocus = false, onSuccess }: GuildCreateFor
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3 w-full h-full">
-      <Input
+      <EmojiInput
         label={t('guild.noGuild.nameLabel')}
         placeholder={t('guild.noGuild.namePlaceholder')}
         value={name}
-        onChange={(e) => {
-          setName(e.target.value);
+        onChange={(nextValue) => {
+          setName(nextValue);
           setError(false);
         }}
         error={error ? t('guild.noGuild.error') : undefined}

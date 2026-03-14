@@ -1,15 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChannelItem, IconButton } from '@harmonie/ui';
-import { Plus } from 'lucide-react';
+import { ChannelItem, ContextMenu, IconButton } from '@harmonie/ui';
+import { Plus, Pencil } from 'lucide-react';
 import { listChannels } from '@/api/guilds';
 import type { Channel, ChannelList } from '@/api/guilds';
 import { useGuilds } from '@/features/guild/GuildContext';
 import { UserPanel } from '@/features/user/UserPanel';
 import { CreateChannelModal } from './CreateChannelModal';
+import { EditChannelModal } from './EditChannelModal';
 
 type CreateModalState = { type: 'Text' | 'Voice' } | null;
+type ContextMenuState = {
+  channel: Channel;
+  position: { x: number; y: number };
+} | null;
 
 export const ChannelSidebar = () => {
   const { t } = useTranslation();
@@ -23,6 +28,8 @@ export const ChannelSidebar = () => {
   const isAdmin = guild?.role === 'Admin';
   const [data, setData] = useState<ChannelList | null>(null);
   const [createModal, setCreateModal] = useState<CreateModalState>(null);
+  const [contextMenu, setContextMenu] = useState<ContextMenuState>(null);
+  const [editChannel, setEditChannel] = useState<Channel | null>(null);
 
   const fetchChannels = useCallback(() => {
     if (!guildId) return;
@@ -42,6 +49,33 @@ export const ChannelSidebar = () => {
         ? { ...prev, channels: [...prev.channels, channel] }
         : { guildId: guildId ?? '', channels: [channel] }
     );
+  };
+
+  const handleChannelUpdated = (updated: Channel) => {
+    setData((prev) =>
+      prev
+        ? {
+            ...prev,
+            channels: prev.channels.map((c) => (c.channelId === updated.channelId ? updated : c)),
+          }
+        : prev
+    );
+    setEditChannel(null);
+  };
+
+  const handleChannelDeleted = (channelId: string) => {
+    setData((prev) =>
+      prev ? { ...prev, channels: prev.channels.filter((c) => c.channelId !== channelId) } : prev
+    );
+    setEditChannel(null);
+    if (activeChannelId === channelId) {
+      navigate(`/guilds/${guildId}`);
+    }
+  };
+
+  const handleContextMenu = (e: React.MouseEvent, channel: Channel) => {
+    e.preventDefault();
+    setContextMenu({ channel, position: { x: e.clientX, y: e.clientY } });
   };
 
   if (!guildId) return null;
@@ -90,6 +124,7 @@ export const ChannelSidebar = () => {
                   label={channel.name}
                   active={channel.channelId === activeChannelId}
                   onClick={() => navigate(`/guilds/${guildId}/channels/${channel.channelId}`)}
+                  onContextMenu={isAdmin ? (e) => handleContextMenu(e, channel) : undefined}
                 />
               ))}
             </div>
@@ -119,6 +154,7 @@ export const ChannelSidebar = () => {
                   label={channel.name}
                   active={channel.channelId === activeChannelId}
                   onClick={() => navigate(`/guilds/${guildId}/voice/${channel.channelId}`)}
+                  onContextMenu={isAdmin ? (e) => handleContextMenu(e, channel) : undefined}
                 />
               ))}
             </div>
@@ -130,6 +166,23 @@ export const ChannelSidebar = () => {
         </div>
       </aside>
 
+      {contextMenu && (
+        <ContextMenu
+          position={contextMenu.position}
+          onClose={() => setContextMenu(null)}
+          items={[
+            {
+              label: t('guild.channels.contextMenu.edit'),
+              icon: <Pencil size={14} />,
+              onClick: () => {
+                setEditChannel(contextMenu.channel);
+                setContextMenu(null);
+              },
+            },
+          ]}
+        />
+      )}
+
       {createModal && (
         <CreateChannelModal
           guildId={guildId}
@@ -137,6 +190,15 @@ export const ChannelSidebar = () => {
           nextPosition={nextPosition}
           onClose={() => setCreateModal(null)}
           onCreated={handleChannelCreated}
+        />
+      )}
+
+      {editChannel && (
+        <EditChannelModal
+          channel={editChannel}
+          onClose={() => setEditChannel(null)}
+          onUpdated={handleChannelUpdated}
+          onDeleted={handleChannelDeleted}
         />
       )}
     </>

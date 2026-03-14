@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import './emoji-picker.css';
 @source '../components';
 
 @theme static {
@@ -39,8 +40,8 @@
   --color-cat-5-fg: #a05050;
 
   /* ── Error states ── */
-  --color-error: #e8c0c0;
-  --color-error-fg: #e89090;
+  --color-error: #fae8e8;
+  --color-error-fg: #a05050;
 
   /* ── User status ── */
   --color-status-online: #72b882;
