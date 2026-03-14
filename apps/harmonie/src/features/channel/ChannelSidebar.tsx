@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChannelItem, ContextMenu, IconButton } from '@harmonie/ui';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { listChannels } from '@/api/guilds';
-import type { Channel, ChannelList } from '@/api/guilds';
+import type { Channel } from '@/api/guilds';
 import { useGuilds } from '@/features/guild/GuildContext';
 import { UserPanel } from '@/features/user/UserPanel';
+import { useChannels } from './ChannelContext';
 import { CreateChannelModal } from './CreateChannelModal';
 import { EditChannelModal, type EditChannelSection } from './EditChannelModal';
 
@@ -30,47 +30,23 @@ export const ChannelSidebar = () => {
   const { guilds } = useGuilds();
   const guild = guilds.find((g) => g.guildId === guildId) ?? null;
   const isAdmin = guild?.role === 'Admin';
-  const [data, setData] = useState<ChannelList | null>(null);
+  const { channels, addChannel, updateChannel, removeChannel } = useChannels();
   const [createModal, setCreateModal] = useState<CreateModalState>(null);
   const [contextMenu, setContextMenu] = useState<ContextMenuState>(null);
   const [editModal, setEditModal] = useState<EditModalState>(null);
 
-  const fetchChannels = useCallback(() => {
-    if (!guildId) return;
-    listChannels(guildId)
-      .then(setData)
-      .catch(() => {});
-  }, [guildId]);
-
-  useEffect(() => {
-    fetchChannels();
-  }, [fetchChannels]);
-
   const handleChannelCreated = (channel: Channel) => {
     setCreateModal(null);
-    setData((prev) =>
-      prev
-        ? { ...prev, channels: [...prev.channels, channel] }
-        : { guildId: guildId ?? '', channels: [channel] }
-    );
+    addChannel(channel);
   };
 
   const handleChannelUpdated = (updated: Channel) => {
-    setData((prev) =>
-      prev
-        ? {
-            ...prev,
-            channels: prev.channels.map((c) => (c.channelId === updated.channelId ? updated : c)),
-          }
-        : prev
-    );
+    updateChannel(updated);
     setEditModal(null);
   };
 
   const handleChannelDeleted = (channelId: string) => {
-    setData((prev) =>
-      prev ? { ...prev, channels: prev.channels.filter((c) => c.channelId !== channelId) } : prev
-    );
+    removeChannel(channelId);
     setEditModal(null);
     if (activeChannelId === channelId) {
       navigate(`/guilds/${guildId}`);
@@ -89,7 +65,8 @@ export const ChannelSidebar = () => {
 
   if (!guildId) return null;
 
-  const allChannels = data?.channels ?? [];
+  const isLoading = channels === null;
+  const allChannels = channels ?? [];
 
   const textChannels = allChannels
     .filter((c) => c.type === 'Text')
@@ -127,65 +104,84 @@ export const ChannelSidebar = () => {
         </header>
 
         <div className="flex-1 overflow-y-auto px-2 py-2 flex flex-col gap-5">
-          {/* Text channels section */}
-          <section>
-            <div className="flex justify-between text-text-3 mb-1 items-center">
-              <p className="text-xs font-semibold uppercase tracking-wide px-2">
-                {t('guild.channels.text')}
-              </p>
-              {isAdmin && (
-                <IconButton
-                  size="small"
-                  variant="ghost"
-                  onClick={() => setCreateModal({ type: 'Text' })}
-                >
-                  <Plus size={14} />
-                </IconButton>
-              )}
+          {isLoading ? (
+            // Skeleton shown while channels are being fetched for the new guild
+            <div className="flex flex-col gap-4 px-2 pt-1 animate-pulse">
+              <div className="flex flex-col gap-2">
+                <div className="h-2.5 w-24 rounded bg-border-2" />
+                <div className="h-7 rounded bg-border-2" />
+                <div className="h-7 rounded bg-border-2" />
+                <div className="h-7 rounded bg-border-2" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <div className="h-2.5 w-20 rounded bg-border-2" />
+                <div className="h-7 rounded bg-border-2" />
+                <div className="h-7 rounded bg-border-2" />
+              </div>
             </div>
-            <div className="flex flex-col gap-0.5">
-              {textChannels.map((channel) => (
-                <ChannelItem
-                  key={channel.channelId}
-                  type="text"
-                  label={channel.name}
-                  active={channel.channelId === activeChannelId}
-                  onClick={() => navigate(`/guilds/${guildId}/channels/${channel.channelId}`)}
-                  onContextMenu={isAdmin ? (e) => handleContextMenu(e, channel) : undefined}
-                />
-              ))}
-            </div>
-          </section>
+          ) : (
+            <>
+              {/* Text channels section */}
+              <section>
+                <div className="flex justify-between text-text-3 mb-1 items-center">
+                  <p className="text-xs font-semibold uppercase tracking-wide px-2">
+                    {t('guild.channels.text')}
+                  </p>
+                  {isAdmin && (
+                    <IconButton
+                      size="small"
+                      variant="ghost"
+                      onClick={() => setCreateModal({ type: 'Text' })}
+                    >
+                      <Plus size={14} />
+                    </IconButton>
+                  )}
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  {textChannels.map((channel) => (
+                    <ChannelItem
+                      key={channel.channelId}
+                      type="text"
+                      label={channel.name}
+                      active={channel.channelId === activeChannelId}
+                      onClick={() => navigate(`/guilds/${guildId}/channels/${channel.channelId}`)}
+                      onContextMenu={isAdmin ? (e) => handleContextMenu(e, channel) : undefined}
+                    />
+                  ))}
+                </div>
+              </section>
 
-          {/* Voice channels section */}
-          <section>
-            <div className="flex justify-between text-text-3 mb-1 items-center">
-              <p className="text-xs font-semibold uppercase tracking-wide px-2">
-                {t('guild.channels.voice')}
-              </p>
-              {isAdmin && (
-                <IconButton
-                  size="small"
-                  variant="ghost"
-                  onClick={() => setCreateModal({ type: 'Voice' })}
-                >
-                  <Plus size={14} />
-                </IconButton>
-              )}
-            </div>
-            <div className="flex flex-col gap-0.5">
-              {voiceChannels.map((channel) => (
-                <ChannelItem
-                  key={channel.channelId}
-                  type="voice"
-                  label={channel.name}
-                  active={channel.channelId === activeChannelId}
-                  onClick={() => navigate(`/guilds/${guildId}/voice/${channel.channelId}`)}
-                  onContextMenu={isAdmin ? (e) => handleContextMenu(e, channel) : undefined}
-                />
-              ))}
-            </div>
-          </section>
+              {/* Voice channels section */}
+              <section>
+                <div className="flex justify-between text-text-3 mb-1 items-center">
+                  <p className="text-xs font-semibold uppercase tracking-wide px-2">
+                    {t('guild.channels.voice')}
+                  </p>
+                  {isAdmin && (
+                    <IconButton
+                      size="small"
+                      variant="ghost"
+                      onClick={() => setCreateModal({ type: 'Voice' })}
+                    >
+                      <Plus size={14} />
+                    </IconButton>
+                  )}
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  {voiceChannels.map((channel) => (
+                    <ChannelItem
+                      key={channel.channelId}
+                      type="voice"
+                      label={channel.name}
+                      active={channel.channelId === activeChannelId}
+                      onClick={() => navigate(`/guilds/${guildId}/voice/${channel.channelId}`)}
+                      onContextMenu={isAdmin ? (e) => handleContextMenu(e, channel) : undefined}
+                    />
+                  ))}
+                </div>
+              </section>
+            </>
+          )}
         </div>
 
         <div className="border-t border-border-2 bg-surface-2 rounded-b-sm">

@@ -5,6 +5,8 @@ import { GuestGuard } from './GuestGuard';
 import { ConnectPage } from '../features/auth/ConnectPage';
 import { RegisterPage } from '../features/auth/RegisterPage';
 import { GuildIndexPage } from '../features/guild/GuildIndexPage';
+import { GuildRedirect } from '../features/guild/GuildRedirect';
+import { TextChannelView } from '../features/channel/TextChannelView';
 
 export const router = createBrowserRouter([
   {
@@ -41,11 +43,11 @@ export const router = createBrowserRouter([
             children: [
               {
                 index: true,
-                element: null,
+                element: <GuildRedirect />,
               },
               {
                 path: 'channels/:channelId',
-                element: null,
+                element: <TextChannelView />,
               },
               {
                 path: 'voice/:channelId',

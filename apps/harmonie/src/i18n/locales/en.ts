@@ -85,6 +85,13 @@ export const en = {
       error: 'Unable to update guild. Please try again.',
     },
   },
+  channel: {
+    messages: {
+      loading: 'Loading messages…',
+      empty: 'No messages yet.',
+      error: 'Unable to load messages. Please try again.',
+    },
+  },
   settings: {
     title: 'Settings',
     close: 'Close settings',

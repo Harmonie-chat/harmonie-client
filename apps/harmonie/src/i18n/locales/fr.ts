@@ -85,6 +85,13 @@ export const fr = {
       error: 'Impossible de modifier la guilde. Réessaie.',
     },
   },
+  channel: {
+    messages: {
+      loading: 'Chargement des messages…',
+      empty: 'Aucun message pour le moment.',
+      error: 'Impossible de charger les messages. Réessaie.',
+    },
+  },
   settings: {
     title: 'Paramètres',
     close: 'Fermer les paramètres',
