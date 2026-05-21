@@ -5,7 +5,7 @@ import { ColorSwatches } from './ColorSwatches';
 const PRESET_COLORS = ['#8AAD90', '#9B8FB0', '#C4876A', '#C4B06A', '#C47A8A'];
 
 const meta: Meta<typeof ColorSwatches> = {
-  title: 'Forms/Selection/ColorSwatches',
+  title: 'Forms/ColorSwatches',
   component: ColorSwatches,
   tags: ['autodocs'],
   args: {

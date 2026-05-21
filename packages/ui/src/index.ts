@@ -83,6 +83,8 @@ export type { AttachmentImageProps } from './components/AttachmentImage/Attachme
 
 export { AttachmentFileChip } from './components/AttachmentFileChip/AttachmentFileChip';
 export type { AttachmentFileChipProps } from './components/AttachmentFileChip/AttachmentFileChip';
+export { LinkPreview } from './components/LinkPreview/LinkPreview';
+export type { LinkPreviewProps } from './components/LinkPreview/LinkPreview';
 
 export { Modal } from './components/Modal/Modal';
 export type { ModalProps } from './components/Modal/Modal';

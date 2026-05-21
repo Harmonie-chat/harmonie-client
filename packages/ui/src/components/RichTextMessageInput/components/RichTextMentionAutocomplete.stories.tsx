@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { RichTextMentionAutocomplete } from './RichTextMentionAutocomplete';
 
 const meta = {
-  title: 'Components/RichTextMessageInput/RichTextMentionAutocomplete',
+  title: 'TextMessage/RichTextMentionAutocomplete',
   component: RichTextMentionAutocomplete,
   tags: ['autodocs'],
   parameters: {

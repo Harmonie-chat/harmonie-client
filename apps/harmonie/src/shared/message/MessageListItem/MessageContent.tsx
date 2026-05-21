@@ -21,10 +21,10 @@ const getMentionButton = (
   <button
     key={key}
     type="button"
-    className="inline-flex max-w-full items-center rounded-sm bg-primary/12 px-1.5 py-0.5 text-xs font-medium text-primary transition-colors selection:bg-primary/25 selection:text-text-1 hover:bg-primary/20"
+    className="inline-flex max-w-full items-center rounded-sm bg-primary/12 px-1.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
     onClick={(event) => onMentionClick?.(mention, event.currentTarget.getBoundingClientRect())}
   >
-    <span className="truncate selection:bg-primary/25 selection:text-text-1">@{label}</span>
+    <span className="truncate">@{label}</span>
   </button>
 );
 
@@ -122,7 +122,7 @@ export const MessageContent = ({
 
     return (
       <div
-        className="message-rich-content w-full max-w-full min-w-0 text-sm text-text-2 wrap-break-word space-y-2 selection:bg-primary/20 selection:text-text-1 [&_.ql-mention]:inline-flex [&_.ql-mention]:max-w-full [&_.ql-mention]:items-center [&_.ql-mention]:rounded-sm [&_.ql-mention]:bg-primary/12 [&_.ql-mention]:px-1.5 [&_.ql-mention]:py-0.5 [&_.ql-mention]:text-xs [&_.ql-mention]:font-medium [&_.ql-mention]:text-primary [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:m-0 [&_blockquote]:border-l-2 [&_blockquote]:border-border-2 [&_blockquote]:pl-3 [&_blockquote]:italic [&_code]:rounded-sm [&_code]:bg-surface-3 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_h1]:m-0 [&_h1]:text-lg [&_h1]:font-semibold [&_h1]:leading-snug [&_h2]:m-0 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:leading-snug [&_h3]:m-0 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:leading-snug [&_ol]:my-0 [&_ol]:pl-5 [&_ol]:list-none [&_p]:m-0 [&_pre]:m-0 [&_pre]:max-w-full [&_pre]:overflow-x-hidden [&_pre]:whitespace-pre-wrap [&_pre]:wrap-break-word [&_pre]:rounded-md [&_pre]:bg-surface-3 [&_pre]:px-3 [&_pre]:py-2 [&_pre]:font-mono [&_pre]:text-xs [&_pre_code]:whitespace-pre-wrap [&_pre_code]:wrap-break-word [&_strong]:font-semibold [&_ul]:my-0 [&_ul]:list-disc [&_ul]:pl-5 [&_ol>li:not([data-list])]:list-decimal [&_ol>li:not([data-list])]:ml-1 [&_li[data-list='ordered']]:list-decimal [&_li[data-list='bullet']]:list-disc [&_li[data-list='ordered']]:ml-1 [&_li[data-list='bullet']]:ml-1"
+        className="message-rich-content w-full max-w-full min-w-0 text-sm text-text-2 wrap-break-word space-y-2 [&_.ql-mention]:inline-flex [&_.ql-mention]:max-w-full [&_.ql-mention]:items-center [&_.ql-mention]:rounded-sm [&_.ql-mention]:bg-primary/12 [&_.ql-mention]:px-1.5 [&_.ql-mention]:py-0.5 [&_.ql-mention]:text-xs [&_.ql-mention]:font-medium [&_.ql-mention]:text-primary [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:m-0 [&_blockquote]:border-l-2 [&_blockquote]:border-border-2 [&_blockquote]:pl-3 [&_blockquote]:italic [&_code]:rounded-sm [&_code]:bg-surface-3 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_h1]:m-0 [&_h1]:text-lg [&_h1]:font-semibold [&_h1]:leading-snug [&_h2]:m-0 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:leading-snug [&_h3]:m-0 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:leading-snug [&_ol]:my-0 [&_ol]:pl-5 [&_ol]:list-none [&_p]:m-0 [&_pre]:m-0 [&_pre]:max-w-full [&_pre]:overflow-x-hidden [&_pre]:whitespace-pre-wrap [&_pre]:wrap-break-word [&_pre]:rounded-md [&_pre]:bg-surface-3 [&_pre]:px-3 [&_pre]:py-2 [&_pre]:font-mono [&_pre]:text-xs [&_pre_code]:whitespace-pre-wrap [&_pre_code]:wrap-break-word [&_strong]:font-semibold [&_ul]:my-0 [&_ul]:list-disc [&_ul]:pl-5 [&_ol>li:not([data-list])]:list-decimal [&_ol>li:not([data-list])]:ml-1 [&_li[data-list='ordered']]:list-decimal [&_li[data-list='bullet']]:list-disc [&_li[data-list='ordered']]:ml-1 [&_li[data-list='bullet']]:ml-1"
         dangerouslySetInnerHTML={{ __html: sanitized }}
       />
     );
@@ -132,7 +132,7 @@ export const MessageContent = ({
 
   return (
     <>
-      <p className="m-0 text-sm text-text-2 whitespace-pre-wrap wrap-break-word selection:bg-primary/20 selection:text-text-1">
+      <p className="m-0 text-sm text-text-2 whitespace-pre-wrap wrap-break-word">
         {parts.map((part, index) =>
           part.type === 'url' ? (
             <a

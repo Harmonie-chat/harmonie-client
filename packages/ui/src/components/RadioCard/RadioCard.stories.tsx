@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { RadioCard } from './RadioCard';
 
 const meta: Meta<typeof RadioCard> = {
-  title: 'Forms/Selection/RadioCard',
+  title: 'Forms/RadioCard',
   component: RadioCard,
   tags: ['autodocs'],
   args: {

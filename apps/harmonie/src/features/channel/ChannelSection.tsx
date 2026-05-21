@@ -43,7 +43,8 @@ const VoiceParticipantListItem = ({
   const label = getParticipantLabel(participant);
 
   const handleClick = (e: React.MouseEvent<HTMLLIElement>) => {
-    onClick?.(participant.userId, e.currentTarget.getBoundingClientRect());
+    const anchor = e.currentTarget.querySelector('[data-voice-participant-anchor]');
+    onClick?.(participant.userId, (anchor ?? e.currentTarget).getBoundingClientRect());
   };
 
   return (
@@ -56,32 +57,34 @@ const VoiceParticipantListItem = ({
         .join(' ')}
       onClick={onClick ? handleClick : undefined}
     >
-      <span
-        className={[
-          'shrink-0 rounded-full border-2 p-0.5 transition-all duration-150',
-          isSpeaking ? 'border-primary' : 'border-transparent',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-      >
-        <Avatar
-          avatarUrl={avatarUrl}
-          icon={participant.avatarIcon ?? undefined}
-          color={participant.avatarColor ?? undefined}
-          bg={participant.avatarBg ?? undefined}
-          alt={label}
-          size={22}
-        />
-      </span>
-      <span
-        className={[
-          'text-sm truncate transition-colors duration-150',
-          isSpeaking ? 'text-primary font-medium' : 'text-text-2',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-      >
-        {label}
+      <span data-voice-participant-anchor className="flex min-w-0 max-w-full items-center gap-2">
+        <span
+          className={[
+            'shrink-0 rounded-full border-2 p-0.5 transition-all duration-150',
+            isSpeaking ? 'border-primary' : 'border-transparent',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          <Avatar
+            avatarUrl={avatarUrl}
+            icon={participant.avatarIcon ?? undefined}
+            color={participant.avatarColor ?? undefined}
+            bg={participant.avatarBg ?? undefined}
+            alt={label}
+            size={22}
+          />
+        </span>
+        <span
+          className={[
+            'text-sm truncate transition-colors duration-150',
+            isSpeaking ? 'text-primary font-medium' : 'text-text-2',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          {label}
+        </span>
       </span>
     </li>
   );

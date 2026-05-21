@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { EmojiInput } from './EmojiInput';
 
 const meta: Meta<typeof EmojiInput> = {
-  title: 'Forms/Fields/EmojiInput',
+  title: 'Forms/EmojiInput',
   component: EmojiInput,
   tags: ['autodocs'],
   parameters: {

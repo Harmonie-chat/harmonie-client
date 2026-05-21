@@ -4,7 +4,7 @@ import { IconButton } from '../IconButton/IconButton';
 import { AttachmentFileChip } from './AttachmentFileChip';
 
 const meta: Meta<typeof AttachmentFileChip> = {
-  title: 'Display/Attachments/AttachmentFileChip',
+  title: 'Display/AttachmentFileChip',
   component: AttachmentFileChip,
   tags: ['autodocs'],
   parameters: { layout: 'centered' },
