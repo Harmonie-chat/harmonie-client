@@ -4,7 +4,7 @@ import { Smile } from 'lucide-react';
 import { Textarea } from './Textarea';
 
 const meta: Meta<typeof Textarea> = {
-  title: 'Forms/Fields/Textarea',
+  title: 'Forms/Textarea',
   component: Textarea,
   tags: ['autodocs'],
   args: {

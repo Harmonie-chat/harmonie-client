@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { EmojiPickerBase } from './EmojiPickerBase';
 
 const meta = {
-  title: 'Forms/Fields/EmojiPickerBase',
+  title: 'Forms/EmojiPickerBase',
   component: EmojiPickerBase,
   tags: ['autodocs'],
 } satisfies Meta<typeof EmojiPickerBase>;

@@ -5,7 +5,7 @@ import { AttachmentImage } from './AttachmentImage';
 const SAMPLE_IMAGE = 'https://picsum.photos/seed/attach/400/300';
 
 const meta: Meta<typeof AttachmentImage> = {
-  title: 'Display/Attachments/AttachmentImage',
+  title: 'Display/AttachmentImage',
   component: AttachmentImage,
   tags: ['autodocs'],
   parameters: { layout: 'centered' },

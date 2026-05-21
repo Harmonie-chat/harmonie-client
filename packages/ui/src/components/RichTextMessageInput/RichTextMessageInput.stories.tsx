@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { RichTextMessageInput } from './RichTextMessageInput';
 
 const meta: Meta<typeof RichTextMessageInput> = {
-  title: 'Forms/Fields/RichTextMessageInput',
+  title: 'TextMessage/RichTextMessageInput',
   component: RichTextMessageInput,
   tags: ['autodocs'],
   parameters: {

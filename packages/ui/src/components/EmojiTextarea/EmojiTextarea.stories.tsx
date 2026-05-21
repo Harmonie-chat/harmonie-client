@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { PlainEmojiTextarea } from './EmojiTextarea';
 
 const meta: Meta<typeof PlainEmojiTextarea> = {
-  title: 'Forms/Fields/PlainEmojiTextarea',
+  title: 'Forms/PlainEmojiTextarea',
   component: PlainEmojiTextarea,
   tags: ['autodocs'],
   parameters: {
