@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, Mic, MicVocal, X } from 'lucide-react';
+import { Check, Mic, MicVocal, SlidersHorizontal, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
-import { useAudioInput } from './AudioInputContext';
+import { useAudioInput, type AudioInputNoiseReductionLevel } from './AudioInputContext';
 import { useCoarsePointer } from '@/shared/hooks/useCoarsePointer';
 
 interface AudioInputPopoverProps {
@@ -12,8 +12,15 @@ interface AudioInputPopoverProps {
 
 export const AudioInputPopover = ({ anchorRef, onClose }: AudioInputPopoverProps) => {
   const { t } = useTranslation();
-  const { devices, selectedDeviceId, selectDevice, needsPermission, requestPermission } =
-    useAudioInput();
+  const {
+    devices,
+    selectedDeviceId,
+    selectDevice,
+    noiseReductionLevel,
+    setNoiseReductionLevel,
+    needsPermission,
+    requestPermission,
+  } = useAudioInput();
   const popoverRef = useRef<HTMLDivElement>(null);
   const isCoarsePointer = useCoarsePointer();
   const [style, setStyle] = useState<React.CSSProperties>({
@@ -67,7 +74,7 @@ export const AudioInputPopover = ({ anchorRef, onClose }: AudioInputPopoverProps
         position: 'fixed',
         left,
         top,
-        minWidth: 220,
+        minWidth: 260,
         maxWidth: `calc(100vw - ${viewportPadding * 2}px)`,
         maxHeight: `calc(100dvh - ${viewportPadding * 2}px)`,
         overflowY: 'auto',
@@ -109,6 +116,8 @@ export const AudioInputPopover = ({ anchorRef, onClose }: AudioInputPopoverProps
     if (device.deviceId === 'default') return t('audio.input.default');
     return device.label || t('audio.input.unknown');
   };
+
+  const noiseReductionOptions: AudioInputNoiseReductionLevel[] = ['off', 'standard', 'high'];
 
   return createPortal(
     <div
@@ -179,6 +188,38 @@ export const AudioInputPopover = ({ anchorRef, onClose }: AudioInputPopoverProps
           <span>{requesting ? t('audio.input.requesting') : t('audio.input.grantAccess')}</span>
         </button>
       )}
+
+      <div className="mt-1 border-t border-border-2 pt-1.5">
+        <div className="flex items-center gap-2 px-2 pb-1">
+          <SlidersHorizontal size={13} className="shrink-0 text-text-3" />
+          <p className="text-xs font-semibold text-text-3 uppercase tracking-wider">
+            {t('audio.input.noiseReduction.title')}
+          </p>
+        </div>
+        <div
+          role="radiogroup"
+          aria-label={t('audio.input.noiseReduction.title')}
+          className="grid grid-cols-3 gap-1 rounded-sm bg-surface-2 p-1"
+        >
+          {noiseReductionOptions.map((level) => (
+            <button
+              key={level}
+              type="button"
+              role="radio"
+              aria-checked={noiseReductionLevel === level}
+              onClick={() => setNoiseReductionLevel(level)}
+              className={[
+                'min-w-0 rounded-sm px-1.5 py-1 text-xs font-body font-medium transition-colors cursor-pointer',
+                noiseReductionLevel === level
+                  ? 'bg-surface-1 text-text-1 shadow-sm'
+                  : 'text-text-3 hover:text-text-2',
+              ].join(' ')}
+            >
+              {t(`audio.input.noiseReduction.levels.${level}`)}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>,
     document.body
   );

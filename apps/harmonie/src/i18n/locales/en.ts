@@ -372,11 +372,14 @@ export const en = {
     stopScreenShare: 'Stop screen share',
     screenShareUnavailable: 'Screen sharing is not available in this browser.',
     screenShareError: 'Unable to share your screen. Check browser permissions.',
+    screenShareAudioUnavailable:
+      'Screen sharing is active, but the browser did not provide an audio track.',
     screenSharingLabel: '{{name}} is sharing their screen',
     enterFullscreen: 'Fullscreen',
     exitFullscreen: 'Exit fullscreen',
     pinParticipant: 'Pin',
     unpinParticipant: 'Unpin',
+    participantVolume: "{{name}}'s volume",
     joining: 'Connecting…',
     readyToJoin: 'Do you want to join this voice channel?',
     joinError: 'Unable to join the voice channel. Please try again.',
@@ -391,11 +394,20 @@ export const en = {
   audio: {
     input: {
       title: 'Audio input',
+      select: 'Select audio input',
       default: 'Default input',
       unknown: 'Unknown device',
       noDevices: 'No devices detected',
       grantAccess: 'Show all devices…',
       requesting: 'Requesting access…',
+      noiseReduction: {
+        title: 'Noise reduction',
+        levels: {
+          off: 'Off',
+          standard: 'Standard',
+          high: 'High',
+        },
+      },
     },
     output: {
       title: 'Audio output',

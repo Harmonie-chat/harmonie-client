@@ -5,10 +5,14 @@ export interface AudioInputDevice {
   label: string;
 }
 
+export type AudioInputNoiseReductionLevel = 'off' | 'standard' | 'high';
+
 interface AudioInputContextValue {
   devices: AudioInputDevice[];
   selectedDeviceId: string;
   selectDevice: (deviceId: string) => void;
+  noiseReductionLevel: AudioInputNoiseReductionLevel;
+  setNoiseReductionLevel: (level: AudioInputNoiseReductionLevel) => void;
   needsPermission: boolean;
   requestPermission: () => Promise<void>;
   muted: boolean;
@@ -19,13 +23,25 @@ interface AudioInputContextValue {
 const AudioInputContext = createContext<AudioInputContextValue | null>(null);
 
 const STORAGE_KEY = 'harmonie:audioInputDeviceId';
+const NOISE_REDUCTION_STORAGE_KEY = 'harmonie:audioInputNoiseReductionLevel';
 const DEFAULT_DEVICE_ID = 'default';
+const DEFAULT_NOISE_REDUCTION_LEVEL: AudioInputNoiseReductionLevel = 'standard';
+
+const isAudioInputNoiseReductionLevel = (
+  value: string | null
+): value is AudioInputNoiseReductionLevel =>
+  value === 'off' || value === 'standard' || value === 'high';
 
 export const AudioInputProvider = ({ children }: { children: ReactNode }) => {
   const [devices, setDevices] = useState<AudioInputDevice[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>(
     () => localStorage.getItem(STORAGE_KEY) ?? DEFAULT_DEVICE_ID
   );
+  const [noiseReductionLevel, setNoiseReductionLevelState] =
+    useState<AudioInputNoiseReductionLevel>(() => {
+      const stored = localStorage.getItem(NOISE_REDUCTION_STORAGE_KEY);
+      return isAudioInputNoiseReductionLevel(stored) ? stored : DEFAULT_NOISE_REDUCTION_LEVEL;
+    });
   const [needsPermission, setNeedsPermission] = useState(false);
   const [muted, setMuted] = useState(false);
 
@@ -68,6 +84,11 @@ export const AudioInputProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem(STORAGE_KEY, deviceId);
   }, []);
 
+  const setNoiseReductionLevel = useCallback((level: AudioInputNoiseReductionLevel) => {
+    setNoiseReductionLevelState(level);
+    localStorage.setItem(NOISE_REDUCTION_STORAGE_KEY, level);
+  }, []);
+
   const requestPermission = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -88,6 +109,8 @@ export const AudioInputProvider = ({ children }: { children: ReactNode }) => {
         devices,
         selectedDeviceId,
         selectDevice,
+        noiseReductionLevel,
+        setNoiseReductionLevel,
         needsPermission,
         requestPermission,
         muted,

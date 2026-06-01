@@ -20,12 +20,15 @@ interface VoiceActiveStageProps {
   pinnedParticipant?: VoiceParticipantCardData;
   pinnedScreenShare?: VoiceScreenShare;
   hasPinnedItem: boolean;
+  currentUserId?: string;
   isMuted: boolean;
   isCameraEnabled: boolean;
   isScreenSharing: boolean;
   screenShareError: string | null;
   cameraError: string | null;
   onTogglePin: (targetId: string) => void;
+  getParticipantVolume: (participantId: string) => number;
+  onParticipantVolumeChange: (participantId: string, volume: number) => void;
   onToggleMute: () => void;
   onToggleCamera: () => void;
   onToggleScreenShare: () => void;
@@ -46,12 +49,15 @@ export const VoiceActiveStage = ({
   pinnedParticipant,
   pinnedScreenShare,
   hasPinnedItem,
+  currentUserId,
   isMuted,
   isCameraEnabled,
   isScreenSharing,
   screenShareError,
   cameraError,
   onTogglePin,
+  getParticipantVolume,
+  onParticipantVolumeChange,
   onToggleMute,
   onToggleCamera,
   onToggleScreenShare,
@@ -81,6 +87,9 @@ export const VoiceActiveStage = ({
               labelsByUserId={labelsByUserId}
               pinnedParticipant={pinnedParticipant}
               pinnedScreenShare={pinnedScreenShare}
+              currentUserId={currentUserId}
+              getParticipantVolume={getParticipantVolume}
+              onParticipantVolumeChange={onParticipantVolumeChange}
               onTogglePin={onTogglePin}
             />
           ) : (
@@ -94,6 +103,9 @@ export const VoiceActiveStage = ({
               cameraTracksByUserId={cameraTracksByUserId}
               labelsByUserId={labelsByUserId}
               activePinnedTargetId={activePinnedTargetId}
+              currentUserId={currentUserId}
+              getParticipantVolume={getParticipantVolume}
+              onParticipantVolumeChange={onParticipantVolumeChange}
               onTogglePin={onTogglePin}
             />
           )}
@@ -124,6 +136,9 @@ interface PinnedVoiceStageProps {
   labelsByUserId: Map<string, string>;
   pinnedParticipant?: VoiceParticipantCardData;
   pinnedScreenShare?: VoiceScreenShare;
+  currentUserId?: string;
+  getParticipantVolume: (participantId: string) => number;
+  onParticipantVolumeChange: (participantId: string, volume: number) => void;
   onTogglePin: (targetId: string) => void;
 }
 
@@ -136,6 +151,9 @@ const PinnedVoiceStage = ({
   labelsByUserId,
   pinnedParticipant,
   pinnedScreenShare,
+  currentUserId,
+  getParticipantVolume,
+  onParticipantVolumeChange,
   onTogglePin,
 }: PinnedVoiceStageProps) => (
   <div className="flex h-full w-full flex-col gap-4">
@@ -159,7 +177,12 @@ const PinnedVoiceStage = ({
           isSpeaking={speakingUserIds.has(pinnedParticipant.userId)}
           cameraTrack={cameraTracksByUserId.get(pinnedParticipant.userId)}
           isPinned
+          canAdjustVolume={pinnedParticipant.userId !== currentUserId}
+          participantVolume={getParticipantVolume(pinnedParticipant.userId)}
           onTogglePin={() => onTogglePin(getPinTargetId('participant', pinnedParticipant.userId))}
+          onParticipantVolumeChange={(volume) =>
+            onParticipantVolumeChange(pinnedParticipant.userId, volume)
+          }
         />
       ) : null}
     </div>
@@ -190,7 +213,10 @@ const PinnedVoiceStage = ({
               isSpeaking={speakingUserIds.has(card.userId)}
               cameraTrack={cameraTracksByUserId.get(card.userId)}
               isPinned={false}
+              canAdjustVolume={card.userId !== currentUserId}
+              participantVolume={getParticipantVolume(card.userId)}
               onTogglePin={() => onTogglePin(getPinTargetId('participant', card.userId))}
+              onParticipantVolumeChange={(volume) => onParticipantVolumeChange(card.userId, volume)}
             />
           ))}
       </div>
@@ -208,6 +234,9 @@ interface VoiceGridStageProps {
   cameraTracksByUserId: Map<string, VoiceCameraTrack>;
   labelsByUserId: Map<string, string>;
   activePinnedTargetId: string | null;
+  currentUserId?: string;
+  getParticipantVolume: (participantId: string) => number;
+  onParticipantVolumeChange: (participantId: string, volume: number) => void;
   onTogglePin: (targetId: string) => void;
 }
 
@@ -221,6 +250,9 @@ const VoiceGridStage = ({
   cameraTracksByUserId,
   labelsByUserId,
   activePinnedTargetId,
+  currentUserId,
+  getParticipantVolume,
+  onParticipantVolumeChange,
   onTogglePin,
 }: VoiceGridStageProps) => (
   <div className="flex h-full w-full justify-center">
@@ -254,7 +286,12 @@ const VoiceGridStage = ({
                 isSpeaking={speakingUserIds.has(card.userId)}
                 cameraTrack={cameraTracksByUserId.get(card.userId)}
                 isPinned={activePinnedTargetId === getPinTargetId('participant', card.userId)}
+                canAdjustVolume={card.userId !== currentUserId}
+                participantVolume={getParticipantVolume(card.userId)}
                 onTogglePin={() => onTogglePin(getPinTargetId('participant', card.userId))}
+                onParticipantVolumeChange={(volume) =>
+                  onParticipantVolumeChange(card.userId, volume)
+                }
               />
             ))}
           </div>

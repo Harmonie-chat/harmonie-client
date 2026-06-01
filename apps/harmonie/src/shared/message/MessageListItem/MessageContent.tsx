@@ -10,7 +10,15 @@ interface MessageContentProps {
   onMentionClick?: (mention: MessageAuthor, rect: DOMRect) => void;
 }
 
+const ASCII_ARROW = '->';
+const NON_BREAKING_ASCII_ARROW = '-\u2060>';
+
 const getMentionLabel = (mention: MessageAuthor) => mention.displayName ?? mention.username;
+
+const preserveAsciiArrows = (content: string) =>
+  content.split(ASCII_ARROW).join(NON_BREAKING_ASCII_ARROW);
+
+const preserveAsciiArrowsInHtml = (content: string) => content.split('-&gt;').join('-&#8288;&gt;');
 
 const getMentionButton = (
   mention: MessageAuthor,
@@ -69,7 +77,7 @@ const renderTextWithMentions = (
     ).values()
   ).sort((a, b) => b.label.length - a.label.length);
 
-  if (uniqueCandidates.length === 0) return text;
+  if (uniqueCandidates.length === 0) return preserveAsciiArrows(text);
 
   const nodes: ReactNode[] = [];
   let lastIndex = 0;
@@ -85,7 +93,7 @@ const renderTextWithMentions = (
     if (!candidate) continue;
 
     if (index > lastIndex) {
-      nodes.push(text.slice(lastIndex, index));
+      nodes.push(preserveAsciiArrows(text.slice(lastIndex, index)));
     }
     const mentionEnd = getMentionEnd(text, index + candidate.label.length + 1);
     nodes.push(
@@ -101,7 +109,7 @@ const renderTextWithMentions = (
   }
 
   if (lastIndex < text.length) {
-    nodes.push(text.slice(lastIndex));
+    nodes.push(preserveAsciiArrows(text.slice(lastIndex)));
   }
 
   return nodes.length > 0 ? nodes : text;
@@ -118,7 +126,7 @@ export const MessageContent = ({
     .filter((mention): mention is MessageAuthor => Boolean(mention));
 
   if (isHtmlMessage(content)) {
-    const sanitized = sanitizeMessageHtml(content);
+    const sanitized = preserveAsciiArrowsInHtml(sanitizeMessageHtml(content));
 
     return (
       <div

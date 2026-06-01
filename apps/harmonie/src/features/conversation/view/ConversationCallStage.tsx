@@ -86,12 +86,15 @@ export const ConversationCallStage = ({ conversationId, onLeave }: ConversationC
         pinnedParticipant={pinnedParticipant}
         pinnedScreenShare={pinnedScreenShare}
         hasPinnedItem={Boolean(pinnedParticipant || pinnedScreenShare)}
+        currentUserId={user?.userId}
         isMuted={voice.isMuted}
         isCameraEnabled={voice.isCameraEnabled}
         isScreenSharing={voice.isScreenSharing}
         screenShareError={voice.screenShareError}
         cameraError={voice.cameraError}
         onTogglePin={handleTogglePin}
+        getParticipantVolume={voice.getParticipantVolume}
+        onParticipantVolumeChange={voice.setParticipantVolume}
         onToggleMute={voice.toggleMute}
         onToggleCamera={() => void voice.toggleCamera()}
         onToggleScreenShare={() => void voice.toggleScreenShare()}
