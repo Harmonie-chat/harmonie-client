@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Room, RoomEvent, Track, type Participant } from 'livekit-client';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Room, RoomEvent, Track, type AudioCaptureOptions, type Participant } from 'livekit-client';
 import { joinVoiceChannel } from '@/api/channels';
 import { joinConversationVoiceCall } from '@/api/conversations';
 import { useAudioInput } from '@/features/user/audio/AudioInputContext';
@@ -12,6 +12,78 @@ import type {
   VoiceScreenShare,
 } from '@/types/voice';
 import { buildIceServers, getJoinErrorKey, hasRelayServer } from '../voiceUtils';
+import { playVoiceConnectSound } from '../voiceConnectSound';
+import { playVoiceDisconnectSound } from '../voiceDisconnectSound';
+
+const PARTICIPANT_VOLUME_STORAGE_KEY = 'harmonie:voiceParticipantVolumes';
+const DEFAULT_PARTICIPANT_VOLUME = 0.5;
+
+type DisplayMediaOptionsWithAudioHints = DisplayMediaStreamOptions & {
+  selfBrowserSurface?: 'include' | 'exclude';
+  surfaceSwitching?: 'include' | 'exclude';
+  systemAudio?: 'include' | 'exclude';
+  windowAudio?: 'exclude' | 'window' | 'system';
+  preferCurrentTab?: boolean;
+};
+
+const SCREEN_SHARE_CAPTURE_OPTIONS: DisplayMediaOptionsWithAudioHints = {
+  audio: true,
+  video: true,
+  surfaceSwitching: 'include',
+  systemAudio: 'include',
+  windowAudio: 'system',
+};
+
+const publishScreenShareWithAudio = async (room: Room): Promise<boolean> => {
+  const stream = await navigator.mediaDevices.getDisplayMedia(SCREEN_SHARE_CAPTURE_OPTIONS);
+  const [videoTrack] = stream.getVideoTracks();
+  const [audioTrack] = stream.getAudioTracks();
+
+  if (!videoTrack) {
+    stream.getTracks().forEach((track) => track.stop());
+    throw new Error('Screen share did not provide a video track.');
+  }
+
+  const streamName = stream.id || `screen-share-${room.localParticipant.identity}`;
+  let audioPublished = false;
+
+  try {
+    await room.localParticipant.publishTrack(videoTrack, {
+      source: Track.Source.ScreenShare,
+      stream: streamName,
+    });
+
+    if (audioTrack) {
+      try {
+        await room.localParticipant.publishTrack(audioTrack, {
+          source: Track.Source.ScreenShareAudio,
+          stream: streamName,
+          dtx: false,
+          red: false,
+        });
+        audioPublished = true;
+      } catch (error) {
+        audioTrack.stop();
+        console.error('[Voice] Failed to publish screen share audio track', { error });
+      }
+    }
+  } catch (error) {
+    stream.getTracks().forEach((track) => track.stop());
+    throw error;
+  }
+
+  videoTrack.addEventListener(
+    'ended',
+    () => {
+      void room.localParticipant.setScreenShareEnabled(false).catch((error) => {
+        console.error('[Voice] Failed to stop screen share after capture ended', { error });
+      });
+    },
+    { once: true }
+  );
+
+  return audioPublished;
+};
 
 interface UseVoiceRoomParams {
   seedParticipantsFromJoin: (roomId: string, initial: VoiceParticipantInit[]) => void;
@@ -35,6 +107,7 @@ export const useVoiceRoom = ({
 }: UseVoiceRoomParams) => {
   const {
     selectedDeviceId: selectedInputDeviceId,
+    noiseReductionLevel,
     muted: inputMuted,
     setMuted: setInputMuted,
   } = useAudioInput();
@@ -60,9 +133,89 @@ export const useVoiceRoom = ({
   const [cameraTracks, setCameraTracks] = useState<VoiceCameraTrack[]>([]);
   const [isCameraEnabled, setIsCameraEnabled] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [participantVolumes, setParticipantVolumes] = useState<Record<string, number>>(() => {
+    if (typeof window === 'undefined') return {};
+    try {
+      const stored = window.localStorage.getItem(PARTICIPANT_VOLUME_STORAGE_KEY);
+      if (!stored) return {};
+      const parsed = JSON.parse(stored) as Record<string, unknown>;
+      return Object.fromEntries(
+        Object.entries(parsed)
+          .filter(([, value]) => typeof value === 'number' && Number.isFinite(value))
+          .map(([participantId, value]) => [
+            participantId,
+            Math.min(1, Math.max(0, value as number)),
+          ])
+      );
+    } catch {
+      return {};
+    }
+  });
 
   const roomRef = useRef<Room | null>(null);
   const remoteAudioElementsRef = useRef<Map<string, HTMLAudioElement>>(new Map());
+  const participantVolumesRef = useRef(participantVolumes);
+  const outputMutedRef = useRef(outputMuted);
+  const microphoneCaptureOptions = useMemo<AudioCaptureOptions>(() => {
+    const deviceId =
+      selectedInputDeviceId && selectedInputDeviceId !== 'default'
+        ? { exact: selectedInputDeviceId }
+        : { ideal: 'default' };
+
+    if (noiseReductionLevel === 'off') {
+      return {
+        deviceId,
+        autoGainControl: true,
+        echoCancellation: true,
+        noiseSuppression: false,
+        voiceIsolation: false,
+      };
+    }
+
+    return {
+      deviceId,
+      autoGainControl: true,
+      echoCancellation: true,
+      noiseSuppression: true,
+      voiceIsolation: noiseReductionLevel === 'high',
+    };
+  }, [noiseReductionLevel, selectedInputDeviceId]);
+
+  useEffect(() => {
+    participantVolumesRef.current = participantVolumes;
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(PARTICIPANT_VOLUME_STORAGE_KEY, JSON.stringify(participantVolumes));
+  }, [participantVolumes]);
+
+  useEffect(() => {
+    outputMutedRef.current = outputMuted;
+  }, [outputMuted]);
+
+  const getParticipantVolume = useCallback(
+    (participantId: string) => participantVolumes[participantId] ?? DEFAULT_PARTICIPANT_VOLUME,
+    [participantVolumes]
+  );
+
+  const applyParticipantVolume = useCallback((participantId: string, volume: number) => {
+    remoteAudioElementsRef.current.forEach((audioEl) => {
+      if (audioEl.dataset.participantId === participantId) {
+        audioEl.volume = volume;
+      }
+    });
+  }, []);
+
+  const setParticipantVolume = useCallback(
+    (participantId: string, volume: number) => {
+      const nextVolume = Math.min(1, Math.max(0, volume));
+      setParticipantVolumes((prev) => {
+        const next = { ...prev, [participantId]: nextVolume };
+        participantVolumesRef.current = next;
+        return next;
+      });
+      applyParticipantVolume(participantId, nextVolume);
+    },
+    [applyParticipantVolume]
+  );
 
   const upsertScreenShare = useCallback((screenShare: VoiceScreenShare) => {
     setScreenShares((prev) => {
@@ -134,8 +287,11 @@ export const useVoiceRoom = ({
   }, []);
 
   const leaveCall = useCallback(() => {
+    if (roomRef.current) {
+      playVoiceDisconnectSound(applySinkId, outputMutedRef.current);
+    }
     void disconnectRoom();
-  }, [disconnectRoom]);
+  }, [applySinkId, disconnectRoom]);
 
   const joinTarget = useCallback(
     async ({ kind, targetId, targetName, guildId, guildName, join }: JoinVoiceTargetParams) => {
@@ -157,6 +313,8 @@ export const useVoiceRoom = ({
         }
 
         const room = new Room();
+        let shouldPlayRemoteConnectSound = false;
+        let shouldPlayRemoteDisconnectSound = false;
 
         room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
           if (track.kind === Track.Kind.Video && publication.source === Track.Source.ScreenShare) {
@@ -185,8 +343,12 @@ export const useVoiceRoom = ({
           audioElement.autoplay = true;
           audioElement.dataset.participantId = participant.identity;
           audioElement.dataset.trackSid = publication.trackSid;
-          audioElement.muted = outputMuted;
+          audioElement.muted = outputMutedRef.current;
+          audioElement.volume =
+            participantVolumesRef.current[participant.identity] ?? DEFAULT_PARTICIPANT_VOLUME;
+          audioElement.style.display = 'none';
           applySinkId(audioElement);
+          document.body.append(audioElement);
           remoteAudioElementsRef.current.set(publication.trackSid, audioElement);
 
           void audioElement.play().catch((error) => {
@@ -310,9 +472,15 @@ export const useVoiceRoom = ({
 
         room.on(RoomEvent.ParticipantConnected, () => {
           syncParticipantsFromRoom(targetId, room);
+          if (shouldPlayRemoteConnectSound) {
+            playVoiceConnectSound(applySinkId, outputMutedRef.current);
+          }
         });
         room.on(RoomEvent.ParticipantDisconnected, () => {
           syncParticipantsFromRoom(targetId, room);
+          if (shouldPlayRemoteDisconnectSound) {
+            playVoiceDisconnectSound(applySinkId, outputMutedRef.current);
+          }
         });
         room.on(RoomEvent.Connected, () => {
           syncParticipantsFromRoom(targetId, room);
@@ -362,13 +530,10 @@ export const useVoiceRoom = ({
           ...(resolvedIceServers ? { rtcConfig: { iceServers: resolvedIceServers } } : {}),
           peerConnectionTimeout: 30000,
         });
-        if (selectedInputDeviceId && selectedInputDeviceId !== 'default') {
-          await room.switchActiveDevice('audioinput', selectedInputDeviceId);
-        }
         if (selectedVideoInputDeviceId && selectedVideoInputDeviceId !== VIDEO_DEFAULT_DEVICE_ID) {
           await room.switchActiveDevice('videoinput', selectedVideoInputDeviceId);
         }
-        await room.localParticipant.setMicrophoneEnabled(!inputMuted);
+        await room.localParticipant.setMicrophoneEnabled(!inputMuted, microphoneCaptureOptions);
 
         roomRef.current = room;
         setActiveTargetKind(kind);
@@ -379,6 +544,9 @@ export const useVoiceRoom = ({
         setActiveGuildId(kind === 'channel' ? (guildId ?? null) : null);
         setActiveGuildName(kind === 'channel' ? (guildName ?? null) : null);
         setIsMuted(inputMuted);
+        shouldPlayRemoteConnectSound = true;
+        shouldPlayRemoteDisconnectSound = true;
+        playVoiceConnectSound(applySinkId, outputMutedRef.current);
 
         const measurePing = async () => {
           const report = await room.engine.pcManager?.publisher.getStats();
@@ -407,11 +575,10 @@ export const useVoiceRoom = ({
       applySinkId,
       disconnectRoom,
       inputMuted,
-      outputMuted,
+      microphoneCaptureOptions,
       removeScreenShare,
       removeCameraTrack,
       seedParticipantsFromJoin,
-      selectedInputDeviceId,
       selectedVideoInputDeviceId,
       syncParticipantsFromRoom,
       upsertCameraTrack,
@@ -449,10 +616,10 @@ export const useVoiceRoom = ({
     const room = roomRef.current;
     if (!room) return;
     const nextMuted = !isMuted;
-    void room.localParticipant.setMicrophoneEnabled(!nextMuted);
+    void room.localParticipant.setMicrophoneEnabled(!nextMuted, microphoneCaptureOptions);
     setInputMuted(nextMuted);
     setIsMuted(nextMuted);
-  }, [isMuted, setInputMuted]);
+  }, [isMuted, microphoneCaptureOptions, setInputMuted]);
 
   const toggleScreenShare = useCallback(async () => {
     const room = roomRef.current;
@@ -462,8 +629,17 @@ export const useVoiceRoom = ({
     setScreenShareError(null);
 
     try {
-      await room.localParticipant.setScreenShareEnabled(nextEnabled);
+      let audioPublished = true;
+      if (nextEnabled) {
+        audioPublished = await publishScreenShareWithAudio(room);
+      } else {
+        await room.localParticipant.setScreenShareEnabled(false);
+      }
+
       setIsScreenSharing(room.localParticipant.isScreenShareEnabled);
+      if (nextEnabled && !audioPublished) {
+        setScreenShareError('voice.screenShareAudioUnavailable');
+      }
     } catch (error) {
       console.error('[Voice] Failed to toggle screen share', { error });
       setScreenShareError('voice.screenShareError');
@@ -498,17 +674,37 @@ export const useVoiceRoom = ({
     }
   }, [isCameraEnabled, removeCameraTrack, selectedVideoInputDeviceId]);
 
-  // Sync audio input device when it changes
+  // Sync microphone capture constraints when the device or processing level changes
   useEffect(() => {
     const room = roomRef.current;
-    if (!room || selectedInputDeviceId === 'default') return;
-    void room.switchActiveDevice('audioinput', selectedInputDeviceId).catch((error) => {
-      console.error('[Voice] Failed to switch audio input device', {
-        deviceId: selectedInputDeviceId,
-        error,
+    if (!room) return;
+
+    const microphonePublication = room.localParticipant.getTrackPublication(
+      Track.Source.Microphone
+    );
+
+    if (microphonePublication?.audioTrack) {
+      void microphonePublication.audioTrack
+        .restartTrack(microphoneCaptureOptions)
+        .catch((error) => {
+          console.error('[Voice] Failed to update microphone capture options', {
+            deviceId: selectedInputDeviceId,
+            noiseReductionLevel,
+            error,
+          });
+        });
+      return;
+    }
+
+    void room
+      .switchActiveDevice('audioinput', selectedInputDeviceId, selectedInputDeviceId !== 'default')
+      .catch((error) => {
+        console.error('[Voice] Failed to update inactive audio input device', {
+          deviceId: selectedInputDeviceId,
+          error,
+        });
       });
-    });
-  }, [selectedInputDeviceId]);
+  }, [microphoneCaptureOptions, noiseReductionLevel, selectedInputDeviceId]);
 
   // Sync camera input device when it changes
   useEffect(() => {
@@ -529,11 +725,13 @@ export const useVoiceRoom = ({
   useEffect(() => {
     const room = roomRef.current;
     if (!room) return;
-    void room.localParticipant.setMicrophoneEnabled(!inputMuted).catch((error) => {
-      console.error('[Voice] Failed to sync microphone mute state', { inputMuted, error });
-    });
+    void room.localParticipant
+      .setMicrophoneEnabled(!inputMuted, microphoneCaptureOptions)
+      .catch((error) => {
+        console.error('[Voice] Failed to sync microphone mute state', { inputMuted, error });
+      });
     setIsMuted(inputMuted);
-  }, [inputMuted]);
+  }, [inputMuted, microphoneCaptureOptions]);
 
   // Sync output mute state across all remote audio elements
   useEffect(() => {
@@ -580,6 +778,9 @@ export const useVoiceRoom = ({
     cameraTracks,
     isCameraEnabled,
     cameraError,
+    participantVolumes,
+    getParticipantVolume,
+    setParticipantVolume,
     joinChannel,
     joinConversation,
     leaveChannel: leaveCall,

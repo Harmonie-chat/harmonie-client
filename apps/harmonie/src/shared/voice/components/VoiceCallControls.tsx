@@ -11,6 +11,7 @@ import {
   VideoOff,
 } from 'lucide-react';
 import { Button, IconButton, SplitIconButton } from '@harmonie/ui';
+import { AudioInputPopover } from '@/features/user/audio/AudioInputPopover';
 import { VideoInputPopover } from '@/features/user/video/VideoInputPopover';
 
 interface VoiceCallControlsProps {
@@ -38,27 +39,57 @@ export const VoiceCallControls = ({
 }: VoiceCallControlsProps) => {
   const { t } = useTranslation();
   const controlError = cameraError ?? screenShareError;
+  const [audioInputPopoverOpen, setAudioInputPopoverOpen] = useState(false);
   const [videoInputPopoverOpen, setVideoInputPopoverOpen] = useState(false);
+  const audioInputChevronRef = useRef<HTMLButtonElement>(null);
   const videoInputChevronRef = useRef<HTMLButtonElement>(null);
   const canShareScreen = Boolean(navigator.mediaDevices?.getDisplayMedia);
+
+  const handleToggleMute = () => {
+    setAudioInputPopoverOpen(false);
+    onToggleMute();
+  };
 
   const handleToggleCamera = () => {
     setVideoInputPopoverOpen(false);
     onToggleCamera();
   };
 
+  const handleAudioInputPopoverToggle = () => {
+    setVideoInputPopoverOpen(false);
+    setAudioInputPopoverOpen((open) => !open);
+  };
+
+  const handleVideoInputPopoverToggle = () => {
+    setAudioInputPopoverOpen(false);
+    setVideoInputPopoverOpen((open) => !open);
+  };
+
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center px-4 pb-6 pt-16">
       <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-border-2 bg-surface-1 px-3 py-3 shadow-[0_4px_16px_rgba(61,53,48,0.10)]">
-        <IconButton
+        <SplitIconButton
+          ref={audioInputChevronRef}
           size="medium"
-          variant={isMuted ? 'danger' : 'filled'}
-          onClick={onToggleMute}
-          aria-label={isMuted ? t('voice.unmute') : t('voice.mute')}
-          title={isMuted ? t('voice.unmute') : t('voice.mute')}
-        >
-          {isMuted ? <MicOff size={20} /> : <Mic size={20} />}
-        </IconButton>
+          selected={isMuted}
+          selectedVariant="danger"
+          open={audioInputPopoverOpen}
+          primaryLabel={isMuted ? t('voice.unmute') : t('voice.mute')}
+          secondaryLabel={t('audio.input.select')}
+          primaryIcon={isMuted ? <MicOff size={20} /> : <Mic size={20} />}
+          secondaryIcon={
+            <ChevronUp
+              size={12}
+              className={
+                audioInputPopoverOpen
+                  ? 'transition-transform duration-150'
+                  : 'rotate-180 transition-transform duration-150'
+              }
+            />
+          }
+          onPrimaryClick={handleToggleMute}
+          onSecondaryClick={handleAudioInputPopoverToggle}
+        />
 
         <SplitIconButton
           ref={videoInputChevronRef}
@@ -80,7 +111,7 @@ export const VoiceCallControls = ({
             />
           }
           onPrimaryClick={handleToggleCamera}
-          onSecondaryClick={() => setVideoInputPopoverOpen((open) => !open)}
+          onSecondaryClick={handleVideoInputPopoverToggle}
         />
 
         <IconButton
@@ -122,6 +153,12 @@ export const VoiceCallControls = ({
         <p className="pointer-events-auto absolute bottom-1 text-xs font-medium text-error">
           {t(controlError)}
         </p>
+      )}
+      {audioInputPopoverOpen && (
+        <AudioInputPopover
+          anchorRef={audioInputChevronRef}
+          onClose={() => setAudioInputPopoverOpen(false)}
+        />
       )}
       {videoInputPopoverOpen && (
         <VideoInputPopover

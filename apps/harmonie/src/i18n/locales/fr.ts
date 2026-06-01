@@ -375,11 +375,14 @@ export const fr = {
     stopScreenShare: "Arrêter le partage d'écran",
     screenShareUnavailable: "Le partage d'écran n'est pas disponible sur ce navigateur.",
     screenShareError: "Impossible de partager l'écran. Vérifie les autorisations du navigateur.",
+    screenShareAudioUnavailable:
+      "Le partage d'écran est actif, mais aucune piste audio n'a été fournie par le navigateur.",
     screenSharingLabel: '{{name}} partage son écran',
     enterFullscreen: 'Plein écran',
     exitFullscreen: 'Quitter le plein écran',
     pinParticipant: 'Épingler',
     unpinParticipant: 'Désépingler',
+    participantVolume: 'Volume de {{name}}',
     joining: 'Connexion…',
     readyToJoin: 'Voulez-vous rejoindre ce salon vocal ?',
     joinError: 'Impossible de rejoindre le canal vocal. Réessaie.',
@@ -395,11 +398,20 @@ export const fr = {
   audio: {
     input: {
       title: 'Entrée audio',
+      select: "Choisir l'entrée audio",
       default: 'Entrée par défaut',
       unknown: 'Périphérique inconnu',
       noDevices: 'Aucun périphérique détecté',
       grantAccess: 'Voir tous les périphériques…',
       requesting: 'Demande en cours…',
+      noiseReduction: {
+        title: 'Réduction de bruit',
+        levels: {
+          off: 'Désactivée',
+          standard: 'Standard',
+          high: 'Élevée',
+        },
+      },
     },
     output: {
       title: 'Sortie audio',
