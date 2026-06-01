@@ -10,6 +10,7 @@ import { useVoiceRoom } from '../hooks/useVoiceRoom';
 
 interface VoicePresenceContextValue {
   getParticipants: (roomId: string) => VoiceParticipant[];
+  getConversationParticipants: (conversationId: string) => VoiceParticipant[];
   seedFromChannelList: (
     channels: { channelId: string; participants: VoiceParticipantInit[] | null | undefined }[]
   ) => void;
@@ -53,6 +54,7 @@ interface VoicePresenceContextValue {
 
 const VoicePresenceContext = createContext<VoicePresenceContextValue>({
   getParticipants: () => [],
+  getConversationParticipants: () => [],
   seedFromChannelList: () => {},
   seedParticipants: () => {},
   activeTargetKind: null,
@@ -90,6 +92,7 @@ const VoicePresenceContext = createContext<VoicePresenceContextValue>({
 export const VoicePresenceProvider = ({ children }: { children: ReactNode }) => {
   const {
     getParticipants,
+    getConversationParticipants,
     seedParticipantsFromJoin,
     seedFromChannelList,
     syncParticipantsFromRoom,
@@ -131,8 +134,10 @@ export const VoicePresenceProvider = ({ children }: { children: ReactNode }) => 
     <VoicePresenceContext.Provider
       value={{
         getParticipants,
+        getConversationParticipants,
         seedFromChannelList,
-        seedParticipants: seedParticipantsFromJoin,
+        seedParticipants: (roomId, participants) =>
+          seedParticipantsFromJoin('channel', roomId, participants),
         activeTargetKind,
         activeChannelId,
         activeChannelName,

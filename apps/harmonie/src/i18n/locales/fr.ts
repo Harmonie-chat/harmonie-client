@@ -474,6 +474,12 @@ export const fr = {
     participantsTitle: 'Membres',
     call: {
       start: 'Démarrer un appel',
+      active: 'Appel en cours',
+      show: "Voir l'appel",
+      showChat: 'Afficher le chat',
+      join: "Rejoindre l'appel",
+      inCall: "Dans l'appel",
+      notInCall: 'Hors appel',
       readyToJoin: 'Prêt à rejoindre cet appel ?',
       incomingTitle: 'Appel de {{name}}',
       answer: 'Répondre',

@@ -470,6 +470,12 @@ export const en = {
     participantsTitle: 'Members',
     call: {
       start: 'Start call',
+      active: 'Call in progress',
+      show: 'Show call',
+      showChat: 'Show chat',
+      join: 'Join call',
+      inCall: 'In call',
+      notInCall: 'Not in call',
       readyToJoin: 'Ready to join this call?',
       incomingTitle: 'Call from {{name}}',
       answer: 'Answer',

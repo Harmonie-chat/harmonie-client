@@ -1,12 +1,19 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MessageCircle, X } from 'lucide-react';
-import { IconButton, UserListItem, UserPopover, type UserPopoverAction } from '@harmonie/ui';
+import { MessageCircle, MicOff, PhoneCall, ScreenShare, Video, X } from 'lucide-react';
+import {
+  IconButton,
+  Tooltip,
+  UserListItem,
+  UserPopover,
+  type UserPopoverAction,
+} from '@harmonie/ui';
 import { useFileBlobUrl } from '@/shared/hooks/useFileBlobUrl';
 import type { ConversationParticipant } from '@/types/conversation';
 import { useTheme } from '@/features/user/ThemeContext';
 import { getUserGradient } from '@/shared/utils/user';
 import { useUser } from '@/features/user/UserContext';
+import { useVoicePresence } from '@/shared/voice/context/VoicePresenceContext';
 import { useOpenDirectConversation } from '../useOpenDirectConversation';
 
 interface SelectedParticipant {
@@ -16,24 +23,91 @@ interface SelectedParticipant {
 
 const ConversationParticipantItem = ({
   participant,
+  showCallPresence,
+  isInCall,
+  isMuted,
+  isCameraEnabled,
+  isScreenSharing,
   onSelect,
 }: {
   participant: ConversationParticipant;
+  showCallPresence: boolean;
+  isInCall: boolean;
+  isMuted: boolean;
+  isCameraEnabled: boolean;
+  isScreenSharing: boolean;
   onSelect: (participant: ConversationParticipant, rect: DOMRect) => void;
 }) => {
+  const { t } = useTranslation();
   const avatarUrl = useFileBlobUrl(participant.avatarFileId ?? null);
   const label = participant.displayName ?? participant.username;
+  const usernameSubtitle = participant.displayName ? `@${participant.username}` : undefined;
+  const callSubtitle = showCallPresence
+    ? t(isInCall ? 'conversation.call.inCall' : 'conversation.call.notInCall')
+    : undefined;
+  const subtitle = callSubtitle ?? usernameSubtitle;
+  const hasVoiceStatus = isInCall || isMuted || isCameraEnabled || isScreenSharing;
 
   return (
     <UserListItem
       user={participant}
       label={label}
-      subtitle={participant.displayName ? `@${participant.username}` : undefined}
+      subtitle={subtitle}
       avatarUrl={avatarUrl}
       avatarIcon={participant.avatar?.icon ?? 'PawPrint'}
       avatarColor={participant.avatar?.color ?? 'var(--color-cat-1-fg)'}
       avatarBg={participant.avatar?.bg ?? 'var(--color-cat-1)'}
       onSelect={onSelect}
+      trailing={
+        hasVoiceStatus ? (
+          <span className="flex shrink-0 items-center gap-1 text-text-3/80">
+            {isInCall && (
+              <Tooltip content={t('conversation.call.inCall')} side="top">
+                <span
+                  className="inline-flex h-4 w-4 items-center justify-center rounded-full text-primary"
+                  aria-label={t('conversation.call.inCall')}
+                  role="img"
+                >
+                  <PhoneCall size={12} />
+                </span>
+              </Tooltip>
+            )}
+            {isMuted && (
+              <Tooltip content={t('voice.participantMuted', { name: label })} side="top">
+                <span
+                  className="inline-flex h-4 w-4 items-center justify-center rounded-full"
+                  aria-label={t('voice.participantMuted', { name: label })}
+                  role="img"
+                >
+                  <MicOff size={12} />
+                </span>
+              </Tooltip>
+            )}
+            {isCameraEnabled && (
+              <Tooltip content={t('voice.participantCameraOn', { name: label })} side="top">
+                <span
+                  className="inline-flex h-4 w-4 items-center justify-center rounded-full"
+                  aria-label={t('voice.participantCameraOn', { name: label })}
+                  role="img"
+                >
+                  <Video size={12} />
+                </span>
+              </Tooltip>
+            )}
+            {isScreenSharing && (
+              <Tooltip content={t('voice.screenSharingLabel', { name: label })} side="top">
+                <span
+                  className="inline-flex h-4 w-4 items-center justify-center rounded-full"
+                  aria-label={t('voice.screenSharingLabel', { name: label })}
+                  role="img"
+                >
+                  <ScreenShare size={12} />
+                </span>
+              </Tooltip>
+            )}
+          </span>
+        ) : undefined
+      }
     />
   );
 };
@@ -90,16 +164,37 @@ export const ConversationParticipantPopover = ({
 };
 
 interface ConversationParticipantsPanelProps {
+  conversationId: string;
   participants: ConversationParticipant[];
   onClose: () => void;
 }
 
 export const ConversationParticipantsPanel = ({
+  conversationId,
   participants,
   onClose,
 }: ConversationParticipantsPanelProps) => {
   const { t } = useTranslation();
+  const { user } = useUser();
+  const voice = useVoicePresence();
   const [selected, setSelected] = useState<SelectedParticipant | null>(null);
+  const remoteVoiceParticipantIds = voice
+    .getConversationParticipants(conversationId)
+    .map((participant) => participant.userId);
+  const isCurrentConversationCall = voice.activeConversationId === conversationId;
+  const showVoiceStatus = isCurrentConversationCall || remoteVoiceParticipantIds.length > 0;
+  const cameraUserIds = showVoiceStatus
+    ? new Set(voice.cameraTracks.map((cameraTrack) => cameraTrack.participantId))
+    : new Set<string>();
+  const screenSharingUserIds = showVoiceStatus
+    ? new Set(voice.screenShares.map((screenShare) => screenShare.participantId))
+    : new Set<string>();
+  const voiceParticipantIds = showVoiceStatus
+    ? new Set([
+        ...remoteVoiceParticipantIds,
+        ...(isCurrentConversationCall && user?.userId ? [user.userId] : []),
+      ])
+    : new Set<string>();
 
   const handleSelect = (participant: ConversationParticipant, rect: DOMRect) => {
     setSelected((prev) =>
@@ -123,6 +218,11 @@ export const ConversationParticipantsPanel = ({
             <ConversationParticipantItem
               key={participant.userId}
               participant={participant}
+              showCallPresence={showVoiceStatus}
+              isInCall={voiceParticipantIds.has(participant.userId)}
+              isMuted={showVoiceStatus && voice.mutedUserIds.has(participant.userId)}
+              isCameraEnabled={cameraUserIds.has(participant.userId)}
+              isScreenSharing={screenSharingUserIds.has(participant.userId)}
               onSelect={handleSelect}
             />
           ))}

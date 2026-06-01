@@ -6,6 +6,7 @@ import { Pencil, Plus, X } from 'lucide-react';
 import { deleteConversation, updateConversationName } from '@/api/conversations';
 import { useMessageActivity } from '@/features/realtime/MessageActivityContext';
 import { useUser } from '@/features/user/UserContext';
+import { useVoicePresence } from '@/shared/voice/context/VoicePresenceContext';
 import type { Conversation } from '@/types/conversation';
 import { useConversations } from './ConversationContext';
 import { ConversationAvatar } from './avatar/ConversationAvatar';
@@ -27,6 +28,7 @@ export const ConversationSidebar = () => {
     useConversations();
   const { hasUnreadConversation } = useMessageActivity();
   const { user } = useUser();
+  const voice = useVoicePresence();
   const [showNewConversation, setShowNewConversation] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenuState>(null);
   const [renamingConversation, setRenamingConversation] = useState<Conversation | null>(null);
@@ -148,6 +150,13 @@ export const ConversationSidebar = () => {
           ) : (
             conversations.map((conv) => {
               const label = getConversationLabel(conv, user.userId);
+              const voiceParticipants = voice.getConversationParticipants(conv.conversationId);
+              const hasRemoteVoiceParticipant = voiceParticipants.some(
+                (participant) => participant.userId !== user.userId
+              );
+              const hasActiveCall =
+                conv.conversationId === voice.activeConversationId || hasRemoteVoiceParticipant;
+
               return (
                 <ConversationItem
                   key={conv.conversationId}
@@ -161,6 +170,8 @@ export const ConversationSidebar = () => {
                   label={label}
                   active={conv.conversationId === activeConversationId}
                   unread={hasUnreadConversation(conv.conversationId)}
+                  callActive={hasActiveCall}
+                  callLabel={t('conversation.call.active')}
                   onClick={() => navigate(`/conversations/${conv.conversationId}`)}
                   onContextMenu={(e) => handleContextMenu(e, conv)}
                   onLongPress={(position) => handleLongPress(position, conv)}

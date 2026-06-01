@@ -1,6 +1,8 @@
-# Voice Channel Feature
+# Shared Voice Feature
 
-This folder contains the voice channel experience for Harmonie. It handles joining a LiveKit room, rendering connected participants, showing active speakers, screen sharing, pinning, fullscreen screen shares, and the persistent voice connection bar.
+This folder contains the shared voice experience for Harmonie. It is used by guild voice channels and private/group conversation calls.
+
+It handles joining a LiveKit room, rendering connected participants, showing active speakers, screen sharing, camera tracks, pinning, fullscreen screen shares, participant volume, and the persistent voice connection bar.
 
 ## Folder Structure
 
@@ -8,6 +10,9 @@ This folder contains the voice channel experience for Harmonie. It handles joini
 voice/
 ├── VoiceChannelView.tsx
 ├── VoiceConnectionBar.tsx
+├── screenSharePublishing.ts
+├── voiceConnectSound.ts
+├── voiceDisconnectSound.ts
 ├── voiceUtils.ts
 ├── components/
 ├── context/
@@ -27,17 +32,17 @@ Keep this file focused on orchestration. Avoid putting low-level LiveKit logic o
 
 ### `VoiceConnectionBar.tsx`
 
-Small persistent connection bar shown outside the voice channel view while the user is connected to a voice channel.
+Small persistent connection bar shown outside the active voice view while the user is connected to a voice room.
 
-It displays connection state, ping, the current guild/channel label, and the leave button.
+It displays connection state, ping, the current channel or conversation label, and the leave button.
 
 ### `components/`
 
 Small UI pieces used by the voice feature.
 
 - `ScreenShareTile.tsx`: renders a local or remote screen share track, with pin and fullscreen controls.
-- `VoiceParticipantTile.tsx`: renders a participant card, including avatar, speaking state, and pin control.
-- `VoiceCallControls.tsx`: renders microphone, screen share, and leave controls.
+- `VoiceParticipantTile.tsx`: renders a participant card, including avatar, camera video, mute state, speaking state, pin control, and participant volume control.
+- `VoiceCallControls.tsx`: renders microphone, camera, screen share, and leave controls.
 - `VoiceJoinPrompt.tsx`: renders the pre-join state for a voice channel.
 
 These components should stay presentational. They can handle local DOM behavior, such as attaching a video track or toggling fullscreen, but should not own room-level state.
@@ -53,14 +58,24 @@ Layout composition for the active call.
 
 React hooks that own the voice plumbing.
 
-- `useVoiceRoom.ts`: owns the LiveKit room lifecycle, microphone state, remote audio elements, active speakers, ping measurement, and screen share track state.
+- `useVoiceRoom.ts`: owns the LiveKit room lifecycle, active target metadata, mute/camera/screen-share state, remote audio elements, active speakers, ping measurement, and room event wiring.
 - `useVoiceParticipants.ts`: owns participant presence, combining SignalR events, join-response snapshots, profile updates, and LiveKit room state.
+- `useMicrophoneCaptureOptions.ts`: builds LiveKit microphone capture options from the selected input device and noise reduction setting.
+- `useParticipantVolumes.ts`: stores participant volume preferences, persists them in local storage, and applies them to remote audio elements.
+
+`useVoiceRoom.ts` is still the main room lifecycle hook. Keep newly added device, media publishing, or persistence helpers outside of it when they can be isolated without changing the room event flow.
 
 ### `context/`
 
 Shared voice state for the app.
 
-- `VoicePresenceContext.tsx`: combines participant presence and room state, then exposes a single API for joining, leaving, muting, screen sharing, participant lookup, and active channel metadata.
+- `VoicePresenceContext.tsx`: combines participant presence and room state, then exposes a single API for joining, leaving, muting, camera toggling, screen sharing, participant lookup, and active target metadata.
+
+### Root Helpers
+
+- `screenSharePublishing.ts`: captures and publishes screen share video plus optional system/window audio using `getDisplayMedia`.
+- `voiceConnectSound.ts` and `voiceDisconnectSound.ts`: generate and play local feedback sounds for voice room join/leave and remote participant changes.
+- `voiceUtils.ts`: shared utility helpers for ICE server resolution and join error mapping.
 
 ## Data Flow
 
@@ -68,13 +83,23 @@ Shared voice state for the app.
 2. It calls `joinChannel` from `useVoicePresence` when the user is not already active in that channel.
 3. `useVoiceRoom` calls the backend join endpoint, connects to LiveKit, enables the microphone, and listens for room events.
 4. `useVoiceParticipants` keeps participant metadata in sync from the join response, SignalR events, LiveKit room state, and profile update events.
-5. Screen share tracks are collected in `useVoiceRoom` and exposed through `VoicePresenceContext`.
+5. Camera and screen share tracks are collected in `useVoiceRoom` and exposed through `VoicePresenceContext`.
 6. `VoiceActiveStage` renders screen shares and participants, defaulting the first screen share to the large pinned stage.
+
+For conversation calls, the feature entry point lives under `features/conversation`, but it consumes the same `VoicePresenceContext`, `VoiceActiveStage`, controls, participant cards, and room lifecycle.
 
 ## Screen Sharing
 
-Screen sharing is controlled with LiveKit `setScreenShareEnabled`.
+Screen sharing is published through `screenSharePublishing.ts` so the app can request screen audio hints alongside the video track.
 
 Remote and local screen share video tracks are exposed as `VoiceScreenShare` items. The UI attaches each track inside `ScreenShareTile`.
 
 By default, the first available screen share is shown in the large stage. Users can pin another participant or screen share, or unpin the current item to return to the grid layout.
+
+If the browser does not provide an audio track for the share, the video share still starts and `voice.screenShareAudioUnavailable` is exposed through `screenShareError`.
+
+## Participant Volume
+
+Remote participant audio elements are created in `useVoiceRoom` when audio tracks are subscribed. Per-participant volume values are owned by `useParticipantVolumes`, persisted in local storage, and applied to matching audio elements through their `data-participant-id`.
+
+The current user cannot adjust their own participant volume in the UI.

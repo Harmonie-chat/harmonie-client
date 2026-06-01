@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button, IconButton } from '@harmonie/ui';
-import { ArrowLeft, Phone, PhoneOff, Users } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Phone, PhoneOff, Users } from 'lucide-react';
 import {
   getConversationParticipants,
   getConversationPinnedMessages,
@@ -14,7 +14,6 @@ import { useUser } from '@/features/user/UserContext';
 import { MessageThread, useMessageThreadRefs } from '@/shared/message/MessageThread';
 import { useVoicePresence } from '@/shared/voice/context/VoicePresenceContext';
 import type { ConversationParticipant } from '@/types/conversation';
-import type { VoiceParticipantInit } from '@/types/voice';
 import { useConversation, useConversationMembersPanel } from '../ConversationContext';
 import { sendStartConversationCall } from '../conversationCallRealtime';
 import { getConversationLabel } from '../conversationUtils';
@@ -37,7 +36,6 @@ export const ConversationView = () => {
   const { user } = useUser();
   const { connection } = useRealtime();
   const voice = useVoicePresence();
-  const { seedParticipants } = voice;
   const conversation = useConversation(conversationId);
   const { membersOpen, setMembersOpen, toggleMembersOpen } =
     useConversationMembersPanel(conversationId);
@@ -47,6 +45,7 @@ export const ConversationView = () => {
     ConversationParticipant[]
   >([]);
   const [callPanelConversationId, setCallPanelConversationId] = useState<string | null>(null);
+  const [callPanelVisible, setCallPanelVisible] = useState(false);
   const threadRefs = useMessageThreadRefs();
 
   const {
@@ -102,22 +101,17 @@ export const ConversationView = () => {
     return getConversationLabel(conversation, user?.userId);
   }, [conversation, conversationId, user?.userId]);
 
-  const conversationVoiceParticipants = useMemo<VoiceParticipantInit[]>(() => {
-    if (!conversation?.participants) return [];
-
-    return conversation.participants.map((participant) => ({
-      userId: participant.userId,
-      username: participant.username,
-      displayName: participant.displayName ?? null,
-      avatarFileId: participant.avatarFileId ?? null,
-      avatarBg: participant.avatar?.bg ?? null,
-      avatarColor: participant.avatar?.color ?? null,
-      avatarIcon: participant.avatar?.icon ?? null,
-    }));
-  }, [conversation]);
-
   const isActiveConversationCall = voice.activeConversationId === conversationId;
-  const isCallPanelOpen = isActiveConversationCall || callPanelConversationId === conversationId;
+  const voiceParticipants = conversationId ? voice.getConversationParticipants(conversationId) : [];
+  const hasRemoteVoiceParticipant = voiceParticipants.some(
+    (participant) => participant.userId !== user?.userId
+  );
+  const hasJoinableConversationCall = !isActiveConversationCall && hasRemoteVoiceParticipant;
+  const hasConversationCall =
+    isActiveConversationCall ||
+    hasJoinableConversationCall ||
+    callPanelConversationId === conversationId;
+  const isCallPanelOpen = hasConversationCall && callPanelVisible;
 
   const handleAvatarClick = (participant: ConversationParticipant, rect: DOMRect) => {
     setSelectedParticipant((prev) =>
@@ -129,6 +123,7 @@ export const ConversationView = () => {
     setSelectedParticipant(null);
     setCallPanelConversationId(null);
     setAutocompleteParticipants([]);
+    setCallPanelVisible(false);
   }, [conversationId]);
 
   useEffect(() => {
@@ -149,11 +144,6 @@ export const ConversationView = () => {
   }, [conversation?.participants, conversationId]);
 
   useEffect(() => {
-    if (!conversationId || conversationVoiceParticipants.length === 0) return;
-    seedParticipants(conversationId, conversationVoiceParticipants);
-  }, [conversationId, conversationVoiceParticipants, seedParticipants]);
-
-  useEffect(() => {
     if (
       callPanelConversationId === conversationId &&
       !isActiveConversationCall &&
@@ -170,12 +160,19 @@ export const ConversationView = () => {
     voice.joinError,
   ]);
 
+  useEffect(() => {
+    if (isActiveConversationCall) {
+      setCallPanelVisible(true);
+    }
+  }, [isActiveConversationCall]);
+
   if (!conversationId) return null;
 
   const isGroup = conversation?.type === 'Group';
 
   const joinConversationCall = async () => {
     if (!conversationId) return;
+    setCallPanelVisible(true);
     setCallPanelConversationId(conversationId);
     await voice.joinConversation(conversationId, conversationTitle);
     voice.updateActiveConversationMeta(conversationTitle);
@@ -188,68 +185,117 @@ export const ConversationView = () => {
 
   const handleLeaveConversationCall = () => {
     setCallPanelConversationId(null);
+    setCallPanelVisible(false);
     voice.leaveCall();
   };
+
+  const renderCallAction = () => {
+    if (isCallPanelOpen) return null;
+    if (isActiveConversationCall) {
+      return (
+        <Button size="small" variant="tertiary" onClick={() => setCallPanelVisible(true)}>
+          <Phone size={14} />
+          <span>{t('conversation.call.show')}</span>
+        </Button>
+      );
+    }
+    if (hasJoinableConversationCall) {
+      return (
+        <Button size="small" variant="primary" onClick={() => void joinConversationCall()}>
+          <Phone size={14} />
+          <span>{t('conversation.call.join')}</span>
+        </Button>
+      );
+    }
+    return null;
+  };
+
+  const renderMembersAction = () =>
+    isGroup ? (
+      <IconButton
+        size="small"
+        aria-label={t('conversation.participantsTitle')}
+        title={t('conversation.participantsTitle')}
+        tooltipSide="bottom"
+        onClick={toggleMembersOpen}
+      >
+        <Users size={16} />
+      </IconButton>
+    ) : null;
+
+  const callPanel = isCallPanelOpen ? (
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-surface-1 md:rounded-md">
+      <header className="flex h-14 shrink-0 items-center justify-between bg-surface-2 px-4 md:rounded-t-md">
+        <div className="flex min-w-0 items-center gap-2">
+          <IconButton
+            className="md:hidden"
+            size="small"
+            variant="ghost"
+            aria-label={t('conversation.backToConversations')}
+            title={t('conversation.backToConversations')}
+            tooltipSide="bottom"
+            onClick={() => navigate('/conversations')}
+          >
+            <ArrowLeft size={16} />
+          </IconButton>
+          <Phone size={16} className="shrink-0 text-text-3" />
+          <span className="truncate text-sm font-semibold text-text-1">{conversationTitle}</span>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button size="small" variant="tertiary" onClick={() => setCallPanelVisible(false)}>
+            <MessageSquare size={14} />
+            <span>{t('conversation.call.showChat')}</span>
+          </Button>
+          {renderMembersAction()}
+        </div>
+      </header>
+      {isActiveConversationCall ? (
+        <ConversationCallStage
+          conversationId={conversationId}
+          onLeave={handleLeaveConversationCall}
+        />
+      ) : (
+        <div className="flex min-h-0 flex-1 items-center justify-center p-6">
+          <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-md border border-border-2 bg-surface-2 px-8 py-10 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-fg">
+              <Phone size={26} />
+            </div>
+            <span className="text-sm font-medium text-primary">
+              {voice.isJoining ? t('voice.joining') : t('conversation.call.readyToJoin')}
+            </span>
+            {voice.joinError && <p className="text-sm text-error">{t(voice.joinError)}</p>}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="tertiary"
+                onClick={() => {
+                  setCallPanelConversationId(null);
+                  setCallPanelVisible(false);
+                }}
+              >
+                <PhoneOff size={16} />
+                <span>{t('voice.leave')}</span>
+              </Button>
+              <Button
+                variant="primary"
+                isLoading={voice.isJoining}
+                onClick={() => void joinConversationCall()}
+              >
+                <Phone size={16} />
+                <span>{t('voice.join')}</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  ) : null;
 
   return (
     <>
       <div className="flex h-full gap-2">
         <div className="flex min-w-0 flex-1 flex-col gap-2">
-          {isCallPanelOpen ? (
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-surface-1 md:rounded-md">
-              <header className="flex h-14 shrink-0 items-center justify-between bg-surface-2 px-4">
-                <div className="flex min-w-0 items-center gap-2">
-                  <IconButton
-                    className="md:hidden"
-                    size="small"
-                    variant="ghost"
-                    aria-label={t('conversation.backToConversations')}
-                    title={t('conversation.backToConversations')}
-                    tooltipSide="bottom"
-                    onClick={() => navigate('/conversations')}
-                  >
-                    <ArrowLeft size={16} />
-                  </IconButton>
-                  <Phone size={16} className="shrink-0 text-text-3" />
-                  <span className="truncate text-sm font-semibold text-text-1">
-                    {conversationTitle}
-                  </span>
-                </div>
-              </header>
-              {isActiveConversationCall ? (
-                <ConversationCallStage
-                  conversationId={conversationId}
-                  onLeave={handleLeaveConversationCall}
-                />
-              ) : (
-                <div className="flex flex-1 items-center justify-center p-6">
-                  <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-md border border-border-2 bg-surface-2 px-8 py-10 text-center">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-fg">
-                      <Phone size={26} />
-                    </div>
-                    <span className="text-sm font-medium text-primary">
-                      {voice.isJoining ? t('voice.joining') : t('conversation.call.readyToJoin')}
-                    </span>
-                    {voice.joinError && <p className="text-sm text-error">{t(voice.joinError)}</p>}
-                    <div className="flex items-center gap-2">
-                      <Button variant="tertiary" onClick={() => setCallPanelConversationId(null)}>
-                        <PhoneOff size={16} />
-                        <span>{t('voice.leave')}</span>
-                      </Button>
-                      <Button
-                        variant="primary"
-                        isLoading={voice.isJoining}
-                        onClick={() => void joinConversationCall()}
-                      >
-                        <Phone size={16} />
-                        <span>{t('voice.join')}</span>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
+          {callPanel}
+          <div className={['min-h-0 flex-1', isCallPanelOpen ? 'hidden' : 'block'].join(' ')}>
             <MessageThread
               resetKey={conversationId}
               title={conversationTitle}
@@ -268,26 +314,19 @@ export const ConversationView = () => {
               }
               afterPinActions={
                 <>
-                  <IconButton
-                    size="small"
-                    aria-label={t('conversation.call.start')}
-                    title={t('conversation.call.start')}
-                    tooltipSide="bottom"
-                    onClick={() => void handleStartCall()}
-                  >
-                    <Phone size={16} />
-                  </IconButton>
-                  {isGroup && (
+                  {renderCallAction()}
+                  {!hasConversationCall && (
                     <IconButton
                       size="small"
-                      aria-label={t('conversation.participantsTitle')}
-                      title={t('conversation.participantsTitle')}
+                      aria-label={t('conversation.call.start')}
+                      title={t('conversation.call.start')}
                       tooltipSide="bottom"
-                      onClick={toggleMembersOpen}
+                      onClick={() => void handleStartCall()}
                     >
-                      <Users size={16} />
+                      <Phone size={16} />
                     </IconButton>
                   )}
+                  {renderMembersAction()}
                 </>
               }
               refs={threadRefs}
@@ -339,11 +378,12 @@ export const ConversationView = () => {
               toggleReaction={toggleReaction}
               onAvatarClick={handleAvatarClick}
             />
-          )}
+          </div>
         </div>
 
         {isGroup && membersOpen && conversation && (
           <ConversationParticipantsPanel
+            conversationId={conversationId}
             participants={conversation.participants}
             onClose={() => setMembersOpen(false)}
           />

@@ -13,17 +13,21 @@ import type {
 import type { UserProfileUpdatedEvent } from '@/types/user';
 import { applyVoiceParticipantProfileUpdate } from '@/features/realtime/userProfileRealtime';
 
+type VoiceRoomKind = 'channel' | 'conversation';
+
+const getRoomKey = (kind: VoiceRoomKind, roomId: string) => `${kind}:${roomId}`;
+
 export const useVoiceParticipants = () => {
   const { connection } = useRealtime();
   const [participants, setParticipants] = useState<Map<string, VoiceParticipant[]>>(new Map());
 
   // Seed from join response (full avatar data available)
   const seedParticipantsFromJoin = useCallback(
-    (channelId: string, initial: VoiceParticipantInit[]) => {
+    (kind: VoiceRoomKind, roomId: string, initial: VoiceParticipantInit[]) => {
       setParticipants((prev) => {
         const next = new Map(prev);
         next.set(
-          channelId,
+          getRoomKey(kind, roomId),
           initial.map((p) => ({ ...p }))
         );
         return next;
@@ -41,9 +45,10 @@ export const useVoiceParticipants = () => {
         const next = new Map(prev);
         for (const { channelId, participants } of channels) {
           if (!participants || participants.length === 0) continue;
-          if (next.has(channelId)) continue;
+          const roomKey = getRoomKey('channel', channelId);
+          if (next.has(roomKey)) continue;
           next.set(
-            channelId,
+            roomKey,
             participants.map((p) => ({ ...p }))
           );
         }
@@ -54,28 +59,32 @@ export const useVoiceParticipants = () => {
   );
 
   // Sync from LiveKit room state, preserving avatar data from SignalR/join
-  const syncParticipantsFromRoom = useCallback((channelId: string, room: Room) => {
-    setParticipants((prev) => {
-      const next = new Map(prev);
-      const existingById = new Map((next.get(channelId) ?? []).map((p) => [p.userId, p]));
-      const remoteParticipants: VoiceParticipant[] = Array.from(
-        room.remoteParticipants.values()
-      ).map((participant) => {
-        const existing = existingById.get(participant.identity);
-        return {
-          userId: participant.identity,
-          username: existing?.username ?? participant.name?.trim() ?? participant.identity,
-          displayName: existing?.displayName ?? null,
-          avatarFileId: existing?.avatarFileId ?? null,
-          avatarBg: existing?.avatarBg ?? null,
-          avatarColor: existing?.avatarColor ?? null,
-          avatarIcon: existing?.avatarIcon ?? null,
-        };
+  const syncParticipantsFromRoom = useCallback(
+    (kind: VoiceRoomKind, roomId: string, room: Room) => {
+      setParticipants((prev) => {
+        const roomKey = getRoomKey(kind, roomId);
+        const next = new Map(prev);
+        const existingById = new Map((next.get(roomKey) ?? []).map((p) => [p.userId, p]));
+        const remoteParticipants: VoiceParticipant[] = Array.from(
+          room.remoteParticipants.values()
+        ).map((participant) => {
+          const existing = existingById.get(participant.identity);
+          return {
+            userId: participant.identity,
+            username: existing?.username ?? participant.name?.trim() ?? participant.identity,
+            displayName: existing?.displayName ?? null,
+            avatarFileId: existing?.avatarFileId ?? null,
+            avatarBg: existing?.avatarBg ?? null,
+            avatarColor: existing?.avatarColor ?? null,
+            avatarIcon: existing?.avatarIcon ?? null,
+          };
+        });
+        next.set(roomKey, remoteParticipants);
+        return next;
       });
-      next.set(channelId, remoteParticipants);
-      return next;
-    });
-  }, []);
+    },
+    []
+  );
 
   // Listen to SignalR presence events
   useEffect(() => {
@@ -84,7 +93,8 @@ export const useVoiceParticipants = () => {
     const handleJoined = (event: VoiceParticipantJoinedEvent) => {
       setParticipants((prev) => {
         const next = new Map(prev);
-        const current = next.get(event.channelId) ?? [];
+        const roomKey = getRoomKey('channel', event.channelId);
+        const current = next.get(roomKey) ?? [];
         const incoming: VoiceParticipant = {
           userId: event.userId,
           username: event.username,
@@ -96,30 +106,32 @@ export const useVoiceParticipants = () => {
         };
         const existingIndex = current.findIndex((p) => p.userId === event.userId);
         if (existingIndex === -1) {
-          next.set(event.channelId, [...current, incoming]);
+          next.set(roomKey, [...current, incoming]);
         } else {
           const updated = [...current];
           updated[existingIndex] = incoming;
-          next.set(event.channelId, updated);
+          next.set(roomKey, updated);
         }
         return next;
       });
     };
 
     const upsertParticipant = (
+      kind: VoiceRoomKind,
       roomId: string,
       incoming: VoiceParticipant,
       prev: Map<string, VoiceParticipant[]>
     ) => {
       const next = new Map(prev);
-      const current = next.get(roomId) ?? [];
+      const roomKey = getRoomKey(kind, roomId);
+      const current = next.get(roomKey) ?? [];
       const existingIndex = current.findIndex((p) => p.userId === incoming.userId);
       if (existingIndex === -1) {
-        next.set(roomId, [...current, incoming]);
+        next.set(roomKey, [...current, incoming]);
       } else {
         const updated = [...current];
         updated[existingIndex] = incoming;
-        next.set(roomId, updated);
+        next.set(roomKey, updated);
       }
       return next;
     };
@@ -127,6 +139,7 @@ export const useVoiceParticipants = () => {
     const handleConversationJoined = (event: ConversationVoiceParticipantJoinedEvent) => {
       setParticipants((prev) =>
         upsertParticipant(
+          'conversation',
           event.conversationId,
           {
             userId: event.userId,
@@ -145,9 +158,10 @@ export const useVoiceParticipants = () => {
     const handleLeft = (event: VoiceParticipantLeftEvent) => {
       setParticipants((prev) => {
         const next = new Map(prev);
-        const current = next.get(event.channelId) ?? [];
+        const roomKey = getRoomKey('channel', event.channelId);
+        const current = next.get(roomKey) ?? [];
         next.set(
-          event.channelId,
+          roomKey,
           current.filter((p) => p.userId !== event.userId)
         );
         return next;
@@ -157,9 +171,10 @@ export const useVoiceParticipants = () => {
     const handleConversationLeft = (event: ConversationVoiceParticipantLeftEvent) => {
       setParticipants((prev) => {
         const next = new Map(prev);
-        const current = next.get(event.conversationId) ?? [];
+        const roomKey = getRoomKey('conversation', event.conversationId);
+        const current = next.get(roomKey) ?? [];
         next.set(
-          event.conversationId,
+          roomKey,
           current.filter((p) => p.userId !== event.userId)
         );
         return next;
@@ -170,9 +185,9 @@ export const useVoiceParticipants = () => {
       setParticipants((prev) => {
         let changed = false;
         const next = new Map<string, VoiceParticipant[]>();
-        prev.forEach((participants, channelId) => {
+        prev.forEach((participants, roomKey) => {
           next.set(
-            channelId,
+            roomKey,
             participants.map((participant) => {
               if (participant.userId !== event.userId) return participant;
               changed = true;
@@ -209,12 +224,20 @@ export const useVoiceParticipants = () => {
   }, [connection]);
 
   const getParticipants = useCallback(
-    (channelId: string): VoiceParticipant[] => participants.get(channelId) ?? [],
+    (channelId: string): VoiceParticipant[] =>
+      participants.get(getRoomKey('channel', channelId)) ?? [],
+    [participants]
+  );
+
+  const getConversationParticipants = useCallback(
+    (conversationId: string): VoiceParticipant[] =>
+      participants.get(getRoomKey('conversation', conversationId)) ?? [],
     [participants]
   );
 
   return {
     getParticipants,
+    getConversationParticipants,
     seedParticipantsFromJoin,
     seedFromChannelList,
     syncParticipantsFromRoom,

@@ -12,15 +12,13 @@ const INCOMING_CALL_EVENTS = [
   'IncomingConversationCall',
   'VoiceCallIncoming',
 ] as const;
-const CLOSED_CALL_EVENTS = [
+const DISMISSED_CALL_EVENTS = [
   'ConversationCallAccepted',
   'ConversationVoiceCallAccepted',
   'ConversationCallDeclined',
   'ConversationVoiceCallDeclined',
-  'ConversationCallEnded',
-  'ConversationVoiceCallEnded',
-  'ConversationVoiceParticipantLeft',
 ] as const;
+const ENDED_CALL_EVENTS = ['ConversationCallEnded', 'ConversationVoiceCallEnded'] as const;
 
 type RealtimePayload = Record<string, unknown>;
 
@@ -64,7 +62,7 @@ export const normalizeConversationCallIncoming = (
     ),
     conversationName: getString(event, 'conversationName', 'ConversationName'),
     conversationType: getString(event, 'conversationType', 'ConversationType') ?? '',
-    startedAtUtc: getString(event, 'startedAtUtc', 'StartedAtUtc') ?? new Date().toISOString(),
+    startedAtUtc: getString(event, 'startedAtUtc', 'StartedAtUtc') ?? '',
   };
 };
 
@@ -119,23 +117,30 @@ export const subscribeConversationCallEvents = (
   connection: HubConnection,
   handlers: {
     onIncoming: (event: ConversationCallIncomingEvent) => void;
-    onClosed: (event: { conversationId: string }) => void;
+    onDismissed: (event: { conversationId: string }) => void;
+    onEnded: (event: { conversationId: string }) => void;
   }
 ) => {
   const handleIncoming = (payload: unknown) => {
     const event = normalizeConversationCallIncoming(payload);
     if (event) handlers.onIncoming(event);
   };
-  const handleClosed = (payload: unknown) => {
+  const handleDismissed = (payload: unknown) => {
     const event = normalizeConversationCallClosed(payload);
-    if (event) handlers.onClosed(event);
+    if (event) handlers.onDismissed(event);
+  };
+  const handleEnded = (payload: unknown) => {
+    const event = normalizeConversationCallClosed(payload);
+    if (event) handlers.onEnded(event);
   };
 
   INCOMING_CALL_EVENTS.forEach((eventName) => connection.on(eventName, handleIncoming));
-  CLOSED_CALL_EVENTS.forEach((eventName) => connection.on(eventName, handleClosed));
+  DISMISSED_CALL_EVENTS.forEach((eventName) => connection.on(eventName, handleDismissed));
+  ENDED_CALL_EVENTS.forEach((eventName) => connection.on(eventName, handleEnded));
 
   return () => {
     INCOMING_CALL_EVENTS.forEach((eventName) => connection.off(eventName, handleIncoming));
-    CLOSED_CALL_EVENTS.forEach((eventName) => connection.off(eventName, handleClosed));
+    DISMISSED_CALL_EVENTS.forEach((eventName) => connection.off(eventName, handleDismissed));
+    ENDED_CALL_EVENTS.forEach((eventName) => connection.off(eventName, handleEnded));
   };
 };
