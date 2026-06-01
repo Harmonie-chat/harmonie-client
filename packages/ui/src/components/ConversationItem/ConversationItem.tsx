@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { X } from 'lucide-react';
+import { PhoneCall, X } from 'lucide-react';
 import { IconButton } from '../IconButton/IconButton';
+import { Tooltip } from '../Tooltip/Tooltip';
 import { useLongPress, type LongPressPoint } from '../../hooks/useLongPress';
 
 export interface ConversationItemProps {
@@ -8,6 +9,8 @@ export interface ConversationItemProps {
   label: string;
   active?: boolean;
   unread?: boolean;
+  callActive?: boolean;
+  callLabel?: string;
   onClick: () => void;
   onContextMenu?: (e: React.MouseEvent<HTMLDivElement>) => void;
   onLongPress?: (position: LongPressPoint) => void;
@@ -20,6 +23,8 @@ export const ConversationItem = ({
   label,
   active = false,
   unread = false,
+  callActive = false,
+  callLabel,
   onClick,
   onContextMenu,
   onLongPress,
@@ -61,6 +66,21 @@ export const ConversationItem = ({
         </span>
         <span className="truncate flex-1">{label}</span>
       </button>
+
+      {callActive && (
+        <Tooltip content={callLabel} side="right">
+          <span
+            className={[
+              'flex h-6 w-6 shrink-0 items-center justify-center rounded-full',
+              active ? 'text-secondary-fg' : 'text-primary',
+            ].join(' ')}
+            aria-label={callLabel}
+            role="img"
+          >
+            <PhoneCall size={14} />
+          </span>
+        </Tooltip>
+      )}
 
       {onDeleteClick && (
         <IconButton

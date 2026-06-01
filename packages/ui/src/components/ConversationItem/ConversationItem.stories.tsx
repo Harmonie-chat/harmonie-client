@@ -76,6 +76,18 @@ export const GroupUnread: Story = {
   },
 };
 
+export const ActiveCall: Story = {
+  args: {
+    avatar: <DmAvatar name="Nyx" />,
+    label: 'Nyx',
+    active: false,
+    unread: false,
+    callActive: true,
+    callLabel: 'Call in progress',
+    onClick: () => {},
+  },
+};
+
 export const WithDelete: Story = {
   args: {
     avatar: <DmAvatar name="Nyx" />,

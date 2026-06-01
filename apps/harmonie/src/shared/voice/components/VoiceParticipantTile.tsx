@@ -111,19 +111,17 @@ export const VoiceParticipantTile = ({
         />
       )}
       {card.isMuted && (
-        <Tooltip
-          className="absolute left-2 top-2"
-          content={t('voice.participantMuted', { name: card.label })}
-          side="bottom"
-        >
-          <div
-            className="flex h-7 w-7 items-center justify-center rounded-full border border-border-2/50 bg-surface-1/70 text-text-2/80 shadow-sm backdrop-blur-sm"
-            aria-label={t('voice.participantMuted', { name: card.label })}
-            role="img"
-          >
-            <MicOff size={15} />
-          </div>
-        </Tooltip>
+        <div className="absolute left-2 top-2">
+          <Tooltip content={t('voice.participantMuted', { name: card.label })} side="bottom">
+            <div
+              className="flex h-7 w-7 items-center justify-center rounded-full border border-border-2/50 bg-surface-1/70 text-text-2/80 shadow-sm backdrop-blur-sm"
+              aria-label={t('voice.participantMuted', { name: card.label })}
+              role="img"
+            >
+              <MicOff size={15} />
+            </div>
+          </Tooltip>
+        </div>
       )}
       <div className="absolute right-3 top-3 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
         <IconButton
