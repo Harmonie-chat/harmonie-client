@@ -1,7 +1,7 @@
 import { useEffect, useRef, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pin, PinOff, Volume2, VolumeX } from 'lucide-react';
-import { IconButton, VoiceParticipantCard } from '@harmonie/ui';
+import { MicOff, Pin, PinOff, Volume2, VolumeX } from 'lucide-react';
+import { IconButton, Tooltip, VoiceParticipantCard } from '@harmonie/ui';
 import { useFileBlobUrl } from '@/shared/hooks/useFileBlobUrl';
 import { getUserGradient } from '@/shared/utils/user';
 import type { VoiceCameraTrack } from '@/types/voice';
@@ -12,6 +12,8 @@ interface VoiceParticipantTileProps {
   cardSizes: VoiceCardSizes;
   isDarkTheme: boolean;
   cardWidth?: string;
+  className?: string;
+  cameraFit?: 'cover' | 'contain';
   isSpeaking: boolean;
   cameraTrack?: VoiceCameraTrack;
   isPinned: boolean;
@@ -26,6 +28,8 @@ export const VoiceParticipantTile = ({
   cardSizes,
   isDarkTheme,
   cardWidth,
+  className = '',
+  cameraFit = 'cover',
   isSpeaking,
   cameraTrack,
   isPinned,
@@ -37,6 +41,7 @@ export const VoiceParticipantTile = ({
   const { t } = useTranslation();
   const avatarUrl = useFileBlobUrl(card.avatarFileId);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const isCompactTile = cardSizes.avatarSize <= 48;
 
   useEffect(() => {
     const videoEl = videoRef.current;
@@ -49,7 +54,10 @@ export const VoiceParticipantTile = ({
   }, [cameraTrack]);
 
   return (
-    <div className="group relative min-w-0 flex-none" style={{ width: cardWidth }}>
+    <div
+      className={['group relative min-w-0 flex-none', className].filter(Boolean).join(' ')}
+      style={{ width: cardWidth }}
+    >
       {cameraTrack ? (
         <div
           className={[
@@ -64,9 +72,17 @@ export const VoiceParticipantTile = ({
             autoPlay
             playsInline
             muted={cameraTrack.isLocal}
-            className="h-full w-full object-cover"
+            className={[
+              'absolute inset-0 h-full w-full',
+              cameraFit === 'contain' ? 'bg-black object-contain' : 'object-cover',
+            ].join(' ')}
           />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-4 pb-4 pt-10">
+          <div
+            className={[
+              'pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent',
+              isCompactTile ? 'px-3 pb-3 pt-8' : 'px-4 pb-4 pt-10',
+            ].join(' ')}
+          >
             <p
               className={[
                 'max-w-full truncate font-medium text-white',
@@ -93,6 +109,21 @@ export const VoiceParticipantTile = ({
             background: getUserGradient(card.userId, isDarkTheme),
           }}
         />
+      )}
+      {card.isMuted && (
+        <Tooltip
+          className="absolute left-2 top-2"
+          content={t('voice.participantMuted', { name: card.label })}
+          side="bottom"
+        >
+          <div
+            className="flex h-7 w-7 items-center justify-center rounded-full border border-border-2/50 bg-surface-1/70 text-text-2/80 shadow-sm backdrop-blur-sm"
+            aria-label={t('voice.participantMuted', { name: card.label })}
+            role="img"
+          >
+            <MicOff size={15} />
+          </div>
+        </Tooltip>
       )}
       <div className="absolute right-3 top-3 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
         <IconButton

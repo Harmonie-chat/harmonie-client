@@ -124,6 +124,7 @@ export const useVoiceRoom = ({
   const [ping, setPing] = useState<number | null>(null);
   const pingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [isMuted, setIsMuted] = useState(false);
+  const [mutedUserIds, setMutedUserIds] = useState<Set<string>>(new Set());
   const [isJoining, setIsJoining] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [speakingUserIds, setSpeakingUserIds] = useState<Set<string>>(new Set());
@@ -252,6 +253,31 @@ export const useVoiceRoom = ({
     setCameraTracks((prev) => prev.filter((track) => track.trackSid !== trackSid));
   }, []);
 
+  const setParticipantMuted = useCallback((participantId: string, muted: boolean) => {
+    setMutedUserIds((prev) => {
+      const next = new Set(prev);
+      if (muted) {
+        next.add(participantId);
+      } else {
+        next.delete(participantId);
+      }
+      return next;
+    });
+  }, []);
+
+  const syncMutedParticipantsFromRoom = useCallback((room: Room) => {
+    const nextMutedUserIds = new Set<string>();
+    if (!room.localParticipant.isMicrophoneEnabled) {
+      nextMutedUserIds.add(room.localParticipant.identity);
+    }
+    room.remoteParticipants.forEach((participant) => {
+      if (!participant.isMicrophoneEnabled) {
+        nextMutedUserIds.add(participant.identity);
+      }
+    });
+    setMutedUserIds(nextMutedUserIds);
+  }, []);
+
   const disconnectRoom = useCallback(async () => {
     remoteAudioElementsRef.current.forEach((audioEl) => {
       audioEl.pause();
@@ -277,6 +303,7 @@ export const useVoiceRoom = ({
       pingIntervalRef.current = null;
     }
     setIsMuted(false);
+    setMutedUserIds(new Set());
     setSpeakingUserIds(new Set());
     setScreenShares([]);
     setIsScreenSharing(false);
@@ -403,6 +430,14 @@ export const useVoiceRoom = ({
         });
 
         room.on(RoomEvent.TrackMuted, (publication, participant) => {
+          if (publication.source === Track.Source.Microphone) {
+            setParticipantMuted(participant.identity, true);
+            if (participant.isLocal) {
+              setIsMuted(true);
+            }
+            return;
+          }
+
           if (publication.source !== Track.Source.Camera) return;
           removeCameraTrack(publication.trackSid);
           if (participant.isLocal) {
@@ -411,6 +446,14 @@ export const useVoiceRoom = ({
         });
 
         room.on(RoomEvent.TrackUnmuted, (publication, participant) => {
+          if (publication.source === Track.Source.Microphone) {
+            setParticipantMuted(participant.identity, false);
+            if (participant.isLocal) {
+              setIsMuted(false);
+            }
+            return;
+          }
+
           if (
             publication.source !== Track.Source.Camera ||
             publication.kind !== Track.Kind.Video ||
@@ -472,21 +515,25 @@ export const useVoiceRoom = ({
 
         room.on(RoomEvent.ParticipantConnected, () => {
           syncParticipantsFromRoom(targetId, room);
+          syncMutedParticipantsFromRoom(room);
           if (shouldPlayRemoteConnectSound) {
             playVoiceConnectSound(applySinkId, outputMutedRef.current);
           }
         });
         room.on(RoomEvent.ParticipantDisconnected, () => {
           syncParticipantsFromRoom(targetId, room);
+          syncMutedParticipantsFromRoom(room);
           if (shouldPlayRemoteDisconnectSound) {
             playVoiceDisconnectSound(applySinkId, outputMutedRef.current);
           }
         });
         room.on(RoomEvent.Connected, () => {
           syncParticipantsFromRoom(targetId, room);
+          syncMutedParticipantsFromRoom(room);
         });
         room.on(RoomEvent.Reconnected, () => {
           syncParticipantsFromRoom(targetId, room);
+          syncMutedParticipantsFromRoom(room);
         });
 
         room.on(RoomEvent.ActiveSpeakersChanged, (speakers: Participant[]) => {
@@ -519,6 +566,7 @@ export const useVoiceRoom = ({
             pingIntervalRef.current = null;
           }
           setIsMuted(false);
+          setMutedUserIds(new Set());
           setScreenShares([]);
           setIsScreenSharing(false);
           setCameraTracks([]);
@@ -544,6 +592,7 @@ export const useVoiceRoom = ({
         setActiveGuildId(kind === 'channel' ? (guildId ?? null) : null);
         setActiveGuildName(kind === 'channel' ? (guildName ?? null) : null);
         setIsMuted(inputMuted);
+        setParticipantMuted(room.localParticipant.identity, inputMuted);
         shouldPlayRemoteConnectSound = true;
         shouldPlayRemoteDisconnectSound = true;
         playVoiceConnectSound(applySinkId, outputMutedRef.current);
@@ -580,6 +629,8 @@ export const useVoiceRoom = ({
       removeCameraTrack,
       seedParticipantsFromJoin,
       selectedVideoInputDeviceId,
+      setParticipantMuted,
+      syncMutedParticipantsFromRoom,
       syncParticipantsFromRoom,
       upsertCameraTrack,
       upsertScreenShare,
@@ -619,7 +670,8 @@ export const useVoiceRoom = ({
     void room.localParticipant.setMicrophoneEnabled(!nextMuted, microphoneCaptureOptions);
     setInputMuted(nextMuted);
     setIsMuted(nextMuted);
-  }, [isMuted, microphoneCaptureOptions, setInputMuted]);
+    setParticipantMuted(room.localParticipant.identity, nextMuted);
+  }, [isMuted, microphoneCaptureOptions, setInputMuted, setParticipantMuted]);
 
   const toggleScreenShare = useCallback(async () => {
     const room = roomRef.current;
@@ -731,7 +783,8 @@ export const useVoiceRoom = ({
         console.error('[Voice] Failed to sync microphone mute state', { inputMuted, error });
       });
     setIsMuted(inputMuted);
-  }, [inputMuted, microphoneCaptureOptions]);
+    setParticipantMuted(room.localParticipant.identity, inputMuted);
+  }, [inputMuted, microphoneCaptureOptions, setParticipantMuted]);
 
   // Sync output mute state across all remote audio elements
   useEffect(() => {
@@ -769,6 +822,7 @@ export const useVoiceRoom = ({
     updateActiveChannelMeta,
     updateActiveConversationMeta,
     isMuted,
+    mutedUserIds,
     isJoining,
     joinError,
     speakingUserIds,

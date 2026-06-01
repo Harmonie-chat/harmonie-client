@@ -14,6 +14,9 @@
   --color-surface-3: #322d42;
   --color-surface-hover: #322d42;
   --color-rich-text-input-background: #211d2c;
+  --color-tooltip-background: #322d42;
+  --color-tooltip-foreground: #eeeaf8;
+  --color-tooltip-border: rgba(200, 185, 230, 0.12);
 
   /* ── Borders ── */
   --color-border-1: #e0d8f0;

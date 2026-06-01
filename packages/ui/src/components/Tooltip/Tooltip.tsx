@@ -129,7 +129,7 @@ export const Tooltip = ({
             id={tooltipId}
             role="tooltip"
             className={[
-              'pointer-events-none fixed z-[9999] w-max max-w-56 rounded-sm border border-border-2 bg-text-1 px-2.5 py-1.5 text-xs font-medium leading-snug text-surface-1 shadow-lg',
+              'pointer-events-none fixed z-[9999] w-max max-w-56 rounded-sm border border-tooltip-border bg-tooltip-background px-2.5 py-1.5 text-xs font-medium leading-snug text-tooltip-foreground shadow-lg',
               transformClasses[side],
             ].join(' ')}
             style={position}
