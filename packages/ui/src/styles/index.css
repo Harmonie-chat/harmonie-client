@@ -20,6 +20,9 @@
   --color-surface-3: #eee9e2;
   --color-surface-hover: #eee9e2;
   --color-rich-text-input-background: #faf7f2;
+  --color-tooltip-background: #3d3530;
+  --color-tooltip-foreground: #fdfbf8;
+  --color-tooltip-border: rgba(61, 53, 48, 0.14);
 
   /* ── Borders ── */
   --color-border-1: #3d3530;
@@ -80,6 +83,9 @@
   --color-surface-3: #eee9e2;
   --color-surface-hover: #eee9e2;
   --color-rich-text-input-background: #faf7f2;
+  --color-tooltip-background: #3d3530;
+  --color-tooltip-foreground: #fdfbf8;
+  --color-tooltip-border: rgba(61, 53, 48, 0.14);
   --color-border-1: #3d3530;
   --color-border-2: rgba(61, 53, 48, 0.14);
   --color-text-1: #3d3530;

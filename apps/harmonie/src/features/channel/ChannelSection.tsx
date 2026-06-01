@@ -11,7 +11,9 @@ import {
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers';
 import { CSS } from '@dnd-kit/utilities';
-import { Avatar, ChannelItem } from '@harmonie/ui';
+import { MicOff, ScreenShare, Video } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Avatar, ChannelItem, Tooltip } from '@harmonie/ui';
 import type { Channel, GuildMember } from '@/types/guild';
 import type { VoiceParticipant } from '@/types/voice';
 import { useUser } from '@/features/user/UserContext';
@@ -33,12 +35,19 @@ function getParticipantLabel(
 const VoiceParticipantListItem = ({
   participant,
   isSpeaking,
+  isMuted,
+  isCameraEnabled,
+  isScreenSharing,
   onClick,
 }: {
   participant: VoiceParticipant;
   isSpeaking: boolean;
+  isMuted: boolean;
+  isCameraEnabled: boolean;
+  isScreenSharing: boolean;
   onClick?: (userId: string, rect: DOMRect) => void;
 }) => {
+  const { t } = useTranslation();
   const avatarUrl = useFileBlobUrl(participant.avatarFileId);
   const label = getParticipantLabel(participant);
 
@@ -75,15 +84,54 @@ const VoiceParticipantListItem = ({
             size={22}
           />
         </span>
-        <span
-          className={[
-            'text-sm truncate transition-colors duration-150',
-            isSpeaking ? 'text-primary font-medium' : 'text-text-2',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-        >
-          {label}
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span
+            className={[
+              'min-w-0 truncate text-sm transition-colors duration-150',
+              isSpeaking ? 'text-primary font-medium' : 'text-text-2',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            {label}
+          </span>
+          {(isMuted || isCameraEnabled || isScreenSharing) && (
+            <span className="flex shrink-0 items-center gap-1 text-text-3/80">
+              {isMuted && (
+                <Tooltip content={t('voice.participantMuted', { name: label })} side="top">
+                  <span
+                    className="inline-flex h-4 w-4 items-center justify-center rounded-full"
+                    aria-label={t('voice.participantMuted', { name: label })}
+                    role="img"
+                  >
+                    <MicOff size={12} />
+                  </span>
+                </Tooltip>
+              )}
+              {isCameraEnabled && (
+                <Tooltip content={t('voice.participantCameraOn', { name: label })} side="top">
+                  <span
+                    className="inline-flex h-4 w-4 items-center justify-center rounded-full"
+                    aria-label={t('voice.participantCameraOn', { name: label })}
+                    role="img"
+                  >
+                    <Video size={12} />
+                  </span>
+                </Tooltip>
+              )}
+              {isScreenSharing && (
+                <Tooltip content={t('voice.screenSharingLabel', { name: label })} side="top">
+                  <span
+                    className="inline-flex h-4 w-4 items-center justify-center rounded-full"
+                    aria-label={t('voice.screenSharingLabel', { name: label })}
+                    role="img"
+                  >
+                    <ScreenShare size={12} />
+                  </span>
+                </Tooltip>
+              )}
+            </span>
+          )}
         </span>
       </span>
     </li>
@@ -103,6 +151,9 @@ interface SortableChannelItemProps {
   menuLabel?: string;
   voiceParticipants?: VoiceParticipant[];
   speakingUserIds?: Set<string>;
+  mutedUserIds?: Set<string>;
+  cameraUserIds?: Set<string>;
+  screenSharingUserIds?: Set<string>;
   onParticipantClick?: (userId: string, rect: DOMRect) => void;
 }
 
@@ -119,6 +170,9 @@ const SortableChannelItem = ({
   menuLabel,
   voiceParticipants,
   speakingUserIds,
+  mutedUserIds,
+  cameraUserIds,
+  screenSharingUserIds,
   onParticipantClick,
 }: SortableChannelItemProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -158,6 +212,9 @@ const SortableChannelItem = ({
               key={p.userId}
               participant={p}
               isSpeaking={speakingUserIds?.has(p.userId) ?? false}
+              isMuted={mutedUserIds?.has(p.userId) ?? false}
+              isCameraEnabled={cameraUserIds?.has(p.userId) ?? false}
+              isScreenSharing={screenSharingUserIds?.has(p.userId) ?? false}
               onClick={onParticipantClick}
             />
           ))}
@@ -195,7 +252,14 @@ export const ChannelSection = ({
   const navigate = useNavigate();
   const { channels, applyReorder } = useChannels();
   const { user } = useUser();
-  const { getParticipants, activeChannelId, speakingUserIds } = useVoicePresence();
+  const {
+    getParticipants,
+    activeChannelId,
+    cameraTracks,
+    mutedUserIds,
+    screenShares,
+    speakingUserIds,
+  } = useVoicePresence();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const members = useGuildMembers(guildId);
   const [popover, setPopover] = useState<{ member: GuildMember; rect: DOMRect } | null>(null);
@@ -207,6 +271,10 @@ export const ChannelSection = ({
 
   const ids = sectionChannels.map((c) => c.channelId);
   const isTextSection = type === 'Text';
+  const cameraUserIds = new Set(cameraTracks.map((cameraTrack) => cameraTrack.participantId));
+  const screenSharingUserIds = new Set(
+    screenShares.map((screenShare) => screenShare.participantId)
+  );
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -282,6 +350,17 @@ export const ChannelSection = ({
                     : undefined
                 }
                 speakingUserIds={channel.type === 'Voice' ? speakingUserIds : undefined}
+                mutedUserIds={channel.type === 'Voice' ? mutedUserIds : undefined}
+                cameraUserIds={
+                  channel.type === 'Voice' && channel.channelId === activeChannelId
+                    ? cameraUserIds
+                    : undefined
+                }
+                screenSharingUserIds={
+                  channel.type === 'Voice' && channel.channelId === activeChannelId
+                    ? screenSharingUserIds
+                    : undefined
+                }
                 onParticipantClick={handleParticipantClick}
               />
             ))}

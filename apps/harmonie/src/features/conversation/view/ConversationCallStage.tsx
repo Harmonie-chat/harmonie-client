@@ -23,7 +23,7 @@ export const ConversationCallStage = ({ conversationId, onLeave }: ConversationC
   const voice = useVoicePresence();
 
   const participants = voice.getParticipants(conversationId);
-  const cards = buildParticipantCards(participants, user);
+  const cards = buildParticipantCards(participants, user, voice.mutedUserIds);
   const rows = getParticipantRows(cards);
   const cardSizes = getCardSizes(cards.length);
   const maxCols = Math.max(1, ...rows.map((r) => r.length));

@@ -9,6 +9,7 @@ export interface VoiceParticipantCardData {
   avatarIcon: string | null;
   avatarColor: string | null;
   avatarBg: string | null;
+  isMuted: boolean;
 }
 
 export interface VoiceCardSizes {
@@ -54,7 +55,8 @@ export const getPinTargetId = (kind: 'participant' | 'screenShare', id: string) 
 
 export function buildParticipantCards(
   participants: VoiceParticipant[],
-  currentUser: UserProfile | null
+  currentUser: UserProfile | null,
+  mutedUserIds: Set<string> = new Set()
 ): VoiceParticipantCardData[] {
   const visibleParticipants: VoiceParticipant[] = currentUser
     ? [
@@ -79,5 +81,6 @@ export function buildParticipantCards(
     avatarIcon: participant.avatarIcon,
     avatarColor: participant.avatarColor,
     avatarBg: participant.avatarBg,
+    isMuted: mutedUserIds.has(participant.userId),
   }));
 }

@@ -25,6 +25,7 @@ interface VoicePresenceContextValue {
   updateActiveChannelMeta: (channelName: string, guildName: string) => void;
   updateActiveConversationMeta: (conversationName: string) => void;
   isMuted: boolean;
+  mutedUserIds: Set<string>;
   speakingUserIds: Set<string>;
   screenShares: VoiceScreenShare[];
   isScreenSharing: boolean;
@@ -65,6 +66,7 @@ const VoicePresenceContext = createContext<VoicePresenceContextValue>({
   updateActiveChannelMeta: () => {},
   updateActiveConversationMeta: () => {},
   isMuted: false,
+  mutedUserIds: new Set(),
   speakingUserIds: new Set(),
   screenShares: [],
   isScreenSharing: false,
@@ -104,6 +106,7 @@ export const VoicePresenceProvider = ({ children }: { children: ReactNode }) => 
     updateActiveChannelMeta,
     updateActiveConversationMeta,
     isMuted,
+    mutedUserIds,
     isJoining,
     joinError,
     speakingUserIds,
@@ -141,6 +144,7 @@ export const VoicePresenceProvider = ({ children }: { children: ReactNode }) => 
         updateActiveChannelMeta,
         updateActiveConversationMeta,
         isMuted,
+        mutedUserIds,
         speakingUserIds,
         screenShares,
         isScreenSharing,

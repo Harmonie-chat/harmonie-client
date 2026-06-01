@@ -70,7 +70,7 @@ export const VoiceChannelView = () => {
   if (!channelId || !guildId) return <Navigate to="/" replace />;
 
   const participants = voice.getParticipants(channelId);
-  const cards = buildParticipantCards(participants, isActive ? user : null);
+  const cards = buildParticipantCards(participants, isActive ? user : null, voice.mutedUserIds);
   const rows = getParticipantRows(cards);
   const cardSizes = getCardSizes(cards.length);
   const maxCols = Math.max(1, ...rows.map((r) => r.length));
@@ -118,8 +118,8 @@ export const VoiceChannelView = () => {
   };
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-md bg-surface-1">
-      <header className="flex shrink-0 items-center justify-between px-4 h-14 bg-surface-2 rounded-t-md">
+    <div className="flex h-full flex-col overflow-hidden bg-surface-1 md:rounded-md">
+      <header className="flex h-14 shrink-0 items-center justify-between bg-surface-2 px-4 md:rounded-t-md">
         <div className="flex items-center gap-2 min-w-0">
           <IconButton
             className="md:hidden"
