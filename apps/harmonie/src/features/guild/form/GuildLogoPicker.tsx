@@ -5,7 +5,7 @@ import { GuildAvatar } from '@harmonie/ui';
 import { IconAppearanceEditor } from '@/shared/components/IconAppearanceEditor';
 
 interface GuildLogoPickerProps {
-  fileInputRef: RefObject<HTMLInputElement>;
+  fileInputRef: RefObject<HTMLInputElement | null>;
   logoPreview: string | undefined;
   effectiveRemoteLogoPreview: string | undefined;
   isLoading: boolean;

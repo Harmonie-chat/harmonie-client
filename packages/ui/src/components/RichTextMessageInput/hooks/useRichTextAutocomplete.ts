@@ -7,7 +7,7 @@ import {
 } from '../../EmojiTextarea/emojiReplacer';
 import type { QuillRange } from '../types';
 
-export const useRichTextAutocomplete = (editorHostRef: RefObject<HTMLDivElement>) => {
+export const useRichTextAutocomplete = (editorHostRef: RefObject<HTMLDivElement | null>) => {
   const [autocompleteResults, setAutocompleteResults] = useState<AutocompleteResult[]>([]);
   const [autocompleteSelectedIndex, setAutocompleteSelectedIndex] = useState(0);
   const [autocompletePos, setAutocompletePos] = useState<{

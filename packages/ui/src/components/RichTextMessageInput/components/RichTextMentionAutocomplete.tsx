@@ -7,7 +7,7 @@ interface RichTextMentionAutocompleteProps {
   selectedIndex: number;
   pos: { bottom: number; left: number; width: number };
   onSelect: (result: RichTextMentionOption) => void;
-  containerRef: RefObject<HTMLDivElement>;
+  containerRef: RefObject<HTMLDivElement | null>;
 }
 
 const ITEM_H = 40;

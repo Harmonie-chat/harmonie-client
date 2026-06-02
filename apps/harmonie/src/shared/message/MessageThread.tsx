@@ -25,8 +25,8 @@ import { scheduleCenterMessageIfOutsideView } from './utils/scrollMessageIntoVie
 const PINNED_MESSAGE_HIGHLIGHT_MS = 1200;
 
 export interface MessageThreadRefs {
-  scrollRef: RefObject<HTMLDivElement>;
-  messagesContentRef: RefObject<HTMLDivElement>;
+  scrollRef: RefObject<HTMLDivElement | null>;
+  messagesContentRef: RefObject<HTMLDivElement | null>;
   scrollAnchorRef: MutableRefObject<{ scrollTop: number; scrollHeight: number } | null>;
   previousMessageCountRef: MutableRefObject<number>;
   suppressNextScrollEffectsRef: MutableRefObject<boolean>;

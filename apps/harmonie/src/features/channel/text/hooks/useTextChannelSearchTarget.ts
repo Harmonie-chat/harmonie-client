@@ -23,7 +23,7 @@ interface UseTextChannelSearchTargetParams {
   messages: Message[];
   loading: boolean;
   error: boolean;
-  scrollRef: RefObject<HTMLDivElement>;
+  scrollRef: RefObject<HTMLDivElement | null>;
   previousMessageCountRef: MutableRefObject<number>;
   suppressNextScrollEffectsRef: MutableRefObject<boolean>;
   loadUntilMessage: (messageId: string) => Promise<boolean>;

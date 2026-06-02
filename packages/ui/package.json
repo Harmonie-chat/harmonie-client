@@ -21,8 +21,8 @@
     "build-storybook": "storybook build"
   },
   "peerDependencies": {
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@storybook/addon-essentials": "^8.6.18",
@@ -30,11 +30,12 @@
     "@storybook/react-vite": "^8.6.18",
     "@tailwindcss/vite": "^4.2.1",
     "@types/node": "^22.19.15",
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0",
+    "@types/react": "^19.2.16",
+    "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.7.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0",
+    "babel-plugin-react-compiler": "^1.0.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
     "storybook": "^8.6.18",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.0.0",

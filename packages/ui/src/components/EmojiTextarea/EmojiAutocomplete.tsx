@@ -7,7 +7,7 @@ interface EmojiAutocompleteProps {
   selectedIndex: number;
   pos: { bottom: number; left: number; width: number };
   onSelect: (result: AutocompleteResult) => void;
-  containerRef: RefObject<HTMLDivElement>;
+  containerRef: RefObject<HTMLDivElement | null>;
 }
 
 const ITEM_H = 36;

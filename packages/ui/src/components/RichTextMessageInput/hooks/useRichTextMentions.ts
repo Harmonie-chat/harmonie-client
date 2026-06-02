@@ -5,7 +5,7 @@ import type { QuillRange, RichTextMentionOption } from '../types';
 const PARTIAL_MENTION_RE = /(?:^|\s)@([\p{L}\p{N}_.-]{0,32})$/u;
 
 export const useRichTextMentions = (
-  editorHostRef: RefObject<HTMLDivElement>,
+  editorHostRef: RefObject<HTMLDivElement | null>,
   mentionOptions: RichTextMentionOption[],
   onMentionSelected?: (mention: RichTextMentionOption) => void
 ) => {
