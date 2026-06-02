@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { GuildAvatar } from './GuildAvatar';
 
 const meta: Meta<typeof GuildAvatar> = {

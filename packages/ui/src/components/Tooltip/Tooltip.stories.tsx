@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Copy, Settings } from 'lucide-react';
 import { IconButton } from '../IconButton/IconButton';
 import { Button } from '../Button/Button';

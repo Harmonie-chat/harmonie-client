@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Download, X } from 'lucide-react';
 import { IconButton } from '../IconButton/IconButton';
 import { AttachmentFileChip } from './AttachmentFileChip';

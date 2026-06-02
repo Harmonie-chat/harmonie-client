@@ -1,5 +1,5 @@
 import { useState, type CSSProperties } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Volume2, VolumeX } from 'lucide-react';
 import { VoiceParticipantCard } from './VoiceParticipantCard';
 

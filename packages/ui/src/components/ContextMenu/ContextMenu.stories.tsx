@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Volume2, Pencil, Trash2 } from 'lucide-react';
 import { ContextMenu } from './ContextMenu';
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Preview, Decorator } from '@storybook/react';
+import type { Preview, Decorator } from '@storybook/react-vite';
 import { LIGHT_THEMES, DARK_THEMES } from '../src/themes';
 import '../src/styles/index.css';
 
@@ -47,7 +47,7 @@ const preview: Preview = {
         date: /Date$/i,
       },
     },
-    backgrounds: { disable: true },
+    backgrounds: { disabled: true },
   },
 };
 
