@@ -164,6 +164,7 @@ export const VoiceChannelView = () => {
             onTogglePin={handleTogglePin}
             getParticipantVolume={voice.getParticipantVolume}
             onParticipantVolumeChange={voice.setParticipantVolume}
+            onToggleParticipantMute={voice.toggleParticipantMute}
             onToggleMute={voice.toggleMute}
             onToggleCamera={() => void voice.toggleCamera()}
             onToggleScreenShare={() => void voice.toggleScreenShare()}

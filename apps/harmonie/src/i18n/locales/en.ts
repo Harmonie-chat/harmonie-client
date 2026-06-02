@@ -384,6 +384,8 @@ export const en = {
     participantMuted: '{{name}} is muted',
     participantCameraOn: "{{name}}'s camera is on",
     participantVolume: "{{name}}'s volume",
+    muteParticipant: 'Mute {{name}}',
+    unmuteParticipant: 'Restore {{name}} sound',
     joining: 'Connecting…',
     readyToJoin: 'Do you want to join this voice channel?',
     joinError: 'Unable to join the voice channel. Please try again.',

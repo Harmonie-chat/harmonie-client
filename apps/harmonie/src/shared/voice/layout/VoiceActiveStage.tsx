@@ -30,6 +30,7 @@ interface VoiceActiveStageProps {
   onTogglePin: (targetId: string) => void;
   getParticipantVolume: (participantId: string) => number;
   onParticipantVolumeChange: (participantId: string, volume: number) => void;
+  onToggleParticipantMute: (participantId: string) => void;
   onToggleMute: () => void;
   onToggleCamera: () => void;
   onToggleScreenShare: () => void;
@@ -59,6 +60,7 @@ export const VoiceActiveStage = ({
   onTogglePin,
   getParticipantVolume,
   onParticipantVolumeChange,
+  onToggleParticipantMute,
   onToggleMute,
   onToggleCamera,
   onToggleScreenShare,
@@ -91,6 +93,7 @@ export const VoiceActiveStage = ({
               currentUserId={currentUserId}
               getParticipantVolume={getParticipantVolume}
               onParticipantVolumeChange={onParticipantVolumeChange}
+              onToggleParticipantMute={onToggleParticipantMute}
               onTogglePin={onTogglePin}
             />
           ) : (
@@ -107,6 +110,7 @@ export const VoiceActiveStage = ({
               currentUserId={currentUserId}
               getParticipantVolume={getParticipantVolume}
               onParticipantVolumeChange={onParticipantVolumeChange}
+              onToggleParticipantMute={onToggleParticipantMute}
               onTogglePin={onTogglePin}
             />
           )}
@@ -140,6 +144,7 @@ interface PinnedVoiceStageProps {
   currentUserId?: string;
   getParticipantVolume: (participantId: string) => number;
   onParticipantVolumeChange: (participantId: string, volume: number) => void;
+  onToggleParticipantMute: (participantId: string) => void;
   onTogglePin: (targetId: string) => void;
 }
 
@@ -155,6 +160,7 @@ const PinnedVoiceStage = ({
   currentUserId,
   getParticipantVolume,
   onParticipantVolumeChange,
+  onToggleParticipantMute,
   onTogglePin,
 }: PinnedVoiceStageProps) => {
   const { t } = useTranslation();
@@ -222,6 +228,7 @@ const PinnedVoiceStage = ({
             onParticipantVolumeChange={(volume) =>
               onParticipantVolumeChange(pinnedParticipant.userId, volume)
             }
+            onToggleParticipantMute={() => onToggleParticipantMute(pinnedParticipant.userId)}
           />
         ) : null}
       </div>
@@ -259,6 +266,7 @@ const PinnedVoiceStage = ({
                 onParticipantVolumeChange={(volume) =>
                   onParticipantVolumeChange(card.userId, volume)
                 }
+                onToggleParticipantMute={() => onToggleParticipantMute(card.userId)}
               />
             ))}
           </div>
@@ -305,6 +313,7 @@ interface VoiceGridStageProps {
   currentUserId?: string;
   getParticipantVolume: (participantId: string) => number;
   onParticipantVolumeChange: (participantId: string, volume: number) => void;
+  onToggleParticipantMute: (participantId: string) => void;
   onTogglePin: (targetId: string) => void;
 }
 
@@ -321,6 +330,7 @@ const VoiceGridStage = ({
   currentUserId,
   getParticipantVolume,
   onParticipantVolumeChange,
+  onToggleParticipantMute,
   onTogglePin,
 }: VoiceGridStageProps) => (
   <div className="flex h-full w-full justify-center">
@@ -360,6 +370,7 @@ const VoiceGridStage = ({
                 onParticipantVolumeChange={(volume) =>
                   onParticipantVolumeChange(card.userId, volume)
                 }
+                onToggleParticipantMute={() => onToggleParticipantMute(card.userId)}
               />
             ))}
           </div>

@@ -387,6 +387,8 @@ export const fr = {
     participantMuted: '{{name}} a coupé son micro',
     participantCameraOn: '{{name}} a activé sa caméra',
     participantVolume: 'Volume de {{name}}',
+    muteParticipant: 'Couper le son de {{name}}',
+    unmuteParticipant: 'Rétablir le son de {{name}}',
     joining: 'Connexion…',
     readyToJoin: 'Voulez-vous rejoindre ce salon vocal ?',
     joinError: 'Impossible de rejoindre le canal vocal. Réessaie.',

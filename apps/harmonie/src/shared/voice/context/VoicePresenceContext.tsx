@@ -36,6 +36,7 @@ interface VoicePresenceContextValue {
   cameraError: string | null;
   getParticipantVolume: (participantId: string) => number;
   setParticipantVolume: (participantId: string, volume: number) => void;
+  toggleParticipantMute: (participantId: string) => void;
   joinChannel: (
     channelId: string,
     channelName?: string,
@@ -78,6 +79,7 @@ const VoicePresenceContext = createContext<VoicePresenceContextValue>({
   cameraError: null,
   getParticipantVolume: () => 1,
   setParticipantVolume: () => {},
+  toggleParticipantMute: () => {},
   joinChannel: async () => {},
   joinConversation: async () => {},
   leaveChannel: () => {},
@@ -121,6 +123,7 @@ export const VoicePresenceProvider = ({ children }: { children: ReactNode }) => 
     cameraError,
     getParticipantVolume,
     setParticipantVolume,
+    toggleParticipantMute,
     joinChannel,
     joinConversation,
     leaveChannel,
@@ -159,6 +162,7 @@ export const VoicePresenceProvider = ({ children }: { children: ReactNode }) => 
         cameraError,
         getParticipantVolume,
         setParticipantVolume,
+        toggleParticipantMute,
         joinChannel,
         joinConversation,
         leaveChannel,

@@ -21,6 +21,7 @@ interface VoiceParticipantTileProps {
   participantVolume?: number;
   onTogglePin: () => void;
   onParticipantVolumeChange?: (volume: number) => void;
+  onToggleParticipantMute?: () => void;
 }
 
 export const VoiceParticipantTile = ({
@@ -37,11 +38,17 @@ export const VoiceParticipantTile = ({
   participantVolume = 1,
   onTogglePin,
   onParticipantVolumeChange,
+  onToggleParticipantMute,
 }: VoiceParticipantTileProps) => {
   const { t } = useTranslation();
   const avatarUrl = useFileBlobUrl(card.avatarFileId);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const isCompactTile = cardSizes.avatarSize <= 48;
+  const participantVolumePercent = Math.round(participantVolume * 100);
+  const volumeToggleLabel = t(
+    participantVolume === 0 ? 'voice.unmuteParticipant' : 'voice.muteParticipant',
+    { name: card.label }
+  );
 
   useEffect(() => {
     const videoEl = videoRef.current;
@@ -137,33 +144,34 @@ export const VoiceParticipantTile = ({
       </div>
       {canAdjustVolume && onParticipantVolumeChange && (
         <div className="absolute inset-x-3 bottom-6 flex items-center gap-2 rounded-full border border-border-2 bg-surface-1/95 px-3 py-2 shadow-[0_4px_16px_rgba(61,53,48,0.14)] opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
-          {participantVolume === 0 ? (
-            <VolumeX size={15} className="shrink-0 text-text-3" />
-          ) : (
-            <Volume2 size={15} className="shrink-0 text-text-3" />
-          )}
+          <IconButton
+            size="small"
+            variant="ghost"
+            className="h-6 min-h-6 w-6 min-w-6 shrink-0"
+            onClick={onToggleParticipantMute}
+            aria-label={volumeToggleLabel}
+            title={volumeToggleLabel}
+          >
+            {participantVolume === 0 ? <VolumeX size={15} /> : <Volume2 size={15} />}
+          </IconButton>
           <input
             type="range"
             min={0}
             max={100}
             step={5}
-            value={Math.round(participantVolume * 100)}
+            value={participantVolumePercent}
             onChange={(event) => onParticipantVolumeChange(Number(event.target.value) / 100)}
             className="h-1 min-w-0 flex-1 cursor-pointer appearance-none rounded-full bg-transparent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary/35 [&::-moz-range-progress]:h-1 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-primary [&::-moz-range-thumb]:h-2.5 [&::-moz-range-thumb]:w-2.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:shadow-none [&::-moz-range-track]:h-1 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-border-1/25 [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-transparent [&::-webkit-slider-thumb]:mt-[-3px] [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-0 [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow-none"
             style={
               {
-                background: `linear-gradient(to right, var(--color-primary) 0 ${Math.round(
-                  participantVolume * 100
-                )}%, rgb(from var(--color-border-1) r g b / 0.24) ${Math.round(
-                  participantVolume * 100
-                )}% 100%)`,
+                background: `linear-gradient(to right, var(--color-primary) 0 ${participantVolumePercent}%, rgb(from var(--color-border-1) r g b / 0.24) ${participantVolumePercent}% 100%)`,
               } as CSSProperties
             }
             aria-label={t('voice.participantVolume', { name: card.label })}
             title={t('voice.participantVolume', { name: card.label })}
           />
           <span className="w-9 text-right text-xs tabular-nums text-text-2">
-            {Math.round(participantVolume * 100)}%
+            {participantVolumePercent}%
           </span>
         </div>
       )}
