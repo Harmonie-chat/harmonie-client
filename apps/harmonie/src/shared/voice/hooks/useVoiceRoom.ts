@@ -75,8 +75,13 @@ export const useVoiceRoom = ({
   const roomRef = useRef<Room | null>(null);
   const remoteAudioElementsRef = useRef<Map<string, HTMLAudioElement>>(new Map());
   const outputMutedRef = useRef(outputMuted);
-  const { participantVolumes, participantVolumesRef, getParticipantVolume, setParticipantVolume } =
-    useParticipantVolumes(remoteAudioElementsRef);
+  const {
+    participantVolumes,
+    participantVolumesRef,
+    getParticipantVolume,
+    setParticipantVolume,
+    toggleParticipantMute,
+  } = useParticipantVolumes(remoteAudioElementsRef);
   const microphoneCaptureOptions = useMicrophoneCaptureOptions(
     selectedInputDeviceId,
     noiseReductionLevel
@@ -704,6 +709,7 @@ export const useVoiceRoom = ({
     participantVolumes,
     getParticipantVolume,
     setParticipantVolume,
+    toggleParticipantMute,
     joinChannel,
     joinConversation,
     leaveChannel: leaveCall,

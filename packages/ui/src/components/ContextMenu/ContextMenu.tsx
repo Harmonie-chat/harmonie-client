@@ -2,9 +2,10 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 export interface ContextMenuItem {
   label: string;
-  onClick: () => void;
+  onClick?: () => void;
   icon?: React.ReactNode;
   hideOnTouch?: boolean;
+  content?: React.ReactNode;
 }
 
 export interface ContextMenuProps {
@@ -155,31 +156,47 @@ export const ContextMenu = ({
       {!(isTouchMenu && touchExpanded) &&
         items
           .filter((item) => !(isTouchMenu && item.hideOnTouch))
-          .map((item, i) => (
-            <button
-              key={i}
-              role="menuitem"
-              className={[
-                'flex w-full items-center gap-2 rounded-sm font-body text-text-2 hover:bg-surface-2 hover:text-text-1 cursor-pointer transition-colors text-left',
-                isTouchMenu ? 'px-4 py-4 text-base' : 'px-3 py-1.5 text-sm',
-              ].join(' ')}
-              onClick={() => {
-                item.onClick();
-                onClose();
-              }}
-            >
-              {item.icon && (
-                <span
-                  className={['shrink-0 text-text-3', isTouchMenu ? '[&_svg]:size-5' : ''].join(
-                    ' '
-                  )}
-                >
-                  {item.icon}
-                </span>
-              )}
-              {item.label}
-            </button>
-          ))}
+          .map((item, i) =>
+            item.content ? (
+              <div
+                key={i}
+                role="group"
+                aria-label={item.label}
+                className={isTouchMenu ? 'px-4 py-4' : 'px-3 py-2'}
+                onClick={(event) => event.stopPropagation()}
+                onKeyDown={(event) => event.stopPropagation()}
+                onMouseDown={(event) => event.stopPropagation()}
+                onPointerDown={(event) => event.stopPropagation()}
+                onTouchStart={(event) => event.stopPropagation()}
+              >
+                {item.content}
+              </div>
+            ) : (
+              <button
+                key={i}
+                role="menuitem"
+                className={[
+                  'flex w-full items-center gap-2 rounded-sm font-body text-text-2 hover:bg-surface-2 hover:text-text-1 cursor-pointer transition-colors text-left',
+                  isTouchMenu ? 'px-4 py-4 text-base' : 'px-3 py-1.5 text-sm',
+                ].join(' ')}
+                onClick={() => {
+                  item.onClick?.();
+                  onClose();
+                }}
+              >
+                {item.icon && (
+                  <span
+                    className={['shrink-0 text-text-3', isTouchMenu ? '[&_svg]:size-5' : ''].join(
+                      ' '
+                    )}
+                  >
+                    {item.icon}
+                  </span>
+                )}
+                {item.label}
+              </button>
+            )
+          )}
     </div>
   );
 

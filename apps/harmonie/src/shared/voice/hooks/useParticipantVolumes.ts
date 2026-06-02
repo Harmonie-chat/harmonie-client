@@ -25,6 +25,9 @@ export const useParticipantVolumes = (
     }
   });
   const participantVolumesRef = useRef(participantVolumes);
+  const previousNonZeroParticipantVolumesRef = useRef<Record<string, number>>(
+    Object.fromEntries(Object.entries(participantVolumes).filter(([, volume]) => volume > 0))
+  );
 
   useEffect(() => {
     participantVolumesRef.current = participantVolumes;
@@ -51,6 +54,9 @@ export const useParticipantVolumes = (
   const setParticipantVolume = useCallback(
     (participantId: string, volume: number) => {
       const nextVolume = Math.min(1, Math.max(0, volume));
+      if (nextVolume > 0) {
+        previousNonZeroParticipantVolumesRef.current[participantId] = nextVolume;
+      }
       setParticipantVolumes((prev) => {
         const next = { ...prev, [participantId]: nextVolume };
         participantVolumesRef.current = next;
@@ -61,10 +67,30 @@ export const useParticipantVolumes = (
     [applyParticipantVolume]
   );
 
+  const toggleParticipantMute = useCallback(
+    (participantId: string) => {
+      const currentVolume =
+        participantVolumesRef.current[participantId] ?? DEFAULT_PARTICIPANT_VOLUME;
+
+      if (currentVolume === 0) {
+        setParticipantVolume(
+          participantId,
+          previousNonZeroParticipantVolumesRef.current[participantId] ?? DEFAULT_PARTICIPANT_VOLUME
+        );
+        return;
+      }
+
+      previousNonZeroParticipantVolumesRef.current[participantId] = currentVolume;
+      setParticipantVolume(participantId, 0);
+    },
+    [setParticipantVolume]
+  );
+
   return {
     participantVolumes,
     participantVolumesRef,
     getParticipantVolume,
     setParticipantVolume,
+    toggleParticipantMute,
   };
 };
