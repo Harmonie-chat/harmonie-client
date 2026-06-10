@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Volume2 } from 'lucide-react';
 import type { VoiceCameraTrack, VoiceScreenShare } from '@/types/voice';
@@ -12,21 +12,27 @@ interface VoiceActiveStageProps {
   rows: VoiceParticipantCardData[][];
   cardSizes: VoiceCardSizes;
   cardWidth: string;
-  isDarkTheme: boolean;
+  stageState: {
+    isDarkTheme: boolean;
+  };
   speakingUserIds: Set<string>;
   screenShares: VoiceScreenShare[];
   cameraTracksByUserId: Map<string, VoiceCameraTrack>;
   labelsByUserId: Map<string, string>;
-  activePinnedTargetId: string | null;
-  pinnedParticipant?: VoiceParticipantCardData;
-  pinnedScreenShare?: VoiceScreenShare;
-  hasPinnedItem: boolean;
+  pinning: {
+    activePinnedTargetId: string | null;
+    pinnedParticipant?: VoiceParticipantCardData;
+    pinnedScreenShare?: VoiceScreenShare;
+    hasPinnedItem: boolean;
+  };
   currentUserId?: string;
-  isMuted: boolean;
-  isCameraEnabled: boolean;
-  isScreenSharing: boolean;
-  screenShareError: string | null;
-  cameraError: string | null;
+  localMedia: {
+    isMuted: boolean;
+    isCameraEnabled: boolean;
+    isScreenSharing: boolean;
+    screenShareError: string | null;
+    cameraError: string | null;
+  };
   onTogglePin: (targetId: string) => void;
   getParticipantVolume: (participantId: string) => number;
   onParticipantVolumeChange: (participantId: string, volume: number) => void;
@@ -42,21 +48,14 @@ export const VoiceActiveStage = ({
   rows,
   cardSizes,
   cardWidth,
-  isDarkTheme,
+  stageState,
   speakingUserIds,
   screenShares,
   cameraTracksByUserId,
   labelsByUserId,
-  activePinnedTargetId,
-  pinnedParticipant,
-  pinnedScreenShare,
-  hasPinnedItem,
+  pinning,
   currentUserId,
-  isMuted,
-  isCameraEnabled,
-  isScreenSharing,
-  screenShareError,
-  cameraError,
+  localMedia,
   onTogglePin,
   getParticipantVolume,
   onParticipantVolumeChange,
@@ -74,22 +73,22 @@ export const VoiceActiveStage = ({
         <div className="flex h-full w-full items-center justify-center">
           {cards.length === 0 ? (
             <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-md border border-border-2 bg-surface-2 px-8 py-10 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-fg">
+              <div className="flex size-14 items-center justify-center rounded-full bg-primary text-primary-fg">
                 <Volume2 size={26} />
               </div>
               <span className="text-sm font-medium text-primary">{t('voice.connected')}</span>
               <p className="text-sm text-text-2">{t('voice.empty')}</p>
             </div>
-          ) : hasPinnedItem ? (
+          ) : pinning.hasPinnedItem ? (
             <PinnedVoiceStage
               cards={cards}
-              isDarkTheme={isDarkTheme}
+              isDarkTheme={stageState.isDarkTheme}
               speakingUserIds={speakingUserIds}
               screenShares={screenShares}
               cameraTracksByUserId={cameraTracksByUserId}
               labelsByUserId={labelsByUserId}
-              pinnedParticipant={pinnedParticipant}
-              pinnedScreenShare={pinnedScreenShare}
+              pinnedParticipant={pinning.pinnedParticipant}
+              pinnedScreenShare={pinning.pinnedScreenShare}
               currentUserId={currentUserId}
               getParticipantVolume={getParticipantVolume}
               onParticipantVolumeChange={onParticipantVolumeChange}
@@ -101,12 +100,12 @@ export const VoiceActiveStage = ({
               rows={rows}
               cardSizes={cardSizes}
               cardWidth={cardWidth}
-              isDarkTheme={isDarkTheme}
+              isDarkTheme={stageState.isDarkTheme}
               speakingUserIds={speakingUserIds}
               screenShares={screenShares}
               cameraTracksByUserId={cameraTracksByUserId}
               labelsByUserId={labelsByUserId}
-              activePinnedTargetId={activePinnedTargetId}
+              activePinnedTargetId={pinning.activePinnedTargetId}
               currentUserId={currentUserId}
               getParticipantVolume={getParticipantVolume}
               onParticipantVolumeChange={onParticipantVolumeChange}
@@ -118,11 +117,11 @@ export const VoiceActiveStage = ({
       </div>
 
       <VoiceCallControls
-        isMuted={isMuted}
-        isCameraEnabled={isCameraEnabled}
-        isScreenSharing={isScreenSharing}
-        screenShareError={screenShareError}
-        cameraError={cameraError}
+        microphoneState={localMedia.isMuted ? 'muted' : 'unmuted'}
+        cameraState={localMedia.isCameraEnabled ? 'on' : 'off'}
+        screenShareState={localMedia.isScreenSharing ? 'sharing' : 'idle'}
+        screenShareError={localMedia.screenShareError}
+        cameraError={localMedia.cameraError}
         onToggleMute={onToggleMute}
         onToggleCamera={onToggleCamera}
         onToggleScreenShare={onToggleScreenShare}
@@ -187,7 +186,7 @@ const PinnedVoiceStage = ({
     });
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     updateThumbnailScrollState();
     window.addEventListener('resize', updateThumbnailScrollState);
 
@@ -215,20 +214,22 @@ const PinnedVoiceStage = ({
           <VoiceParticipantTile
             card={pinnedParticipant}
             cardSizes={{ avatarSize: 128, titleClassName: 'text-4xl' }}
-            isDarkTheme={isDarkTheme}
             cardWidth="100%"
             className="h-full w-full"
-            cameraFit="contain"
-            isSpeaking={speakingUserIds.has(pinnedParticipant.userId)}
+            presentation={{
+              isDarkTheme,
+              isSpeaking: speakingUserIds.has(pinnedParticipant.userId),
+              isPinned: true,
+              cameraFit: 'contain',
+            }}
             cameraTrack={cameraTracksByUserId.get(pinnedParticipant.userId)}
-            isPinned
-            canAdjustVolume={pinnedParticipant.userId !== currentUserId}
-            participantVolume={getParticipantVolume(pinnedParticipant.userId)}
+            volumeControls={{
+              enabled: pinnedParticipant.userId !== currentUserId,
+              volume: getParticipantVolume(pinnedParticipant.userId),
+              onChange: (volume) => onParticipantVolumeChange(pinnedParticipant.userId, volume),
+              onToggleMute: () => onToggleParticipantMute(pinnedParticipant.userId),
+            }}
             onTogglePin={() => onTogglePin(getPinTargetId('participant', pinnedParticipant.userId))}
-            onParticipantVolumeChange={(volume) =>
-              onParticipantVolumeChange(pinnedParticipant.userId, volume)
-            }
-            onToggleParticipantMute={() => onToggleParticipantMute(pinnedParticipant.userId)}
           />
         ) : null}
       </div>
@@ -255,18 +256,20 @@ const PinnedVoiceStage = ({
                 key={card.userId}
                 card={card}
                 cardSizes={{ avatarSize: 48, titleClassName: 'text-sm' }}
-                isDarkTheme={isDarkTheme}
                 cardWidth="10rem"
-                isSpeaking={speakingUserIds.has(card.userId)}
+                presentation={{
+                  isDarkTheme,
+                  isSpeaking: speakingUserIds.has(card.userId),
+                  isPinned: false,
+                }}
                 cameraTrack={cameraTracksByUserId.get(card.userId)}
-                isPinned={false}
-                canAdjustVolume={card.userId !== currentUserId}
-                participantVolume={getParticipantVolume(card.userId)}
+                volumeControls={{
+                  enabled: card.userId !== currentUserId,
+                  volume: getParticipantVolume(card.userId),
+                  onChange: (volume) => onParticipantVolumeChange(card.userId, volume),
+                  onToggleMute: () => onToggleParticipantMute(card.userId),
+                }}
                 onTogglePin={() => onTogglePin(getPinTargetId('participant', card.userId))}
-                onParticipantVolumeChange={(volume) =>
-                  onParticipantVolumeChange(card.userId, volume)
-                }
-                onToggleParticipantMute={() => onToggleParticipantMute(card.userId)}
               />
             ))}
           </div>
@@ -278,7 +281,7 @@ const PinnedVoiceStage = ({
             aria-label={t('voice.scrollThumbnailsBack')}
             onClick={() => handleScrollThumbnails('left')}
           >
-            <span className="flex h-7 w-7 items-center justify-center rounded-full border border-border-2 bg-surface-2/80 text-text-2 shadow-[0_4px_16px_rgba(61,53,48,0.12)] backdrop-blur-sm">
+            <span className="flex size-7 items-center justify-center rounded-full border border-border-2 bg-surface-2/80 text-text-2 shadow-[0_4px_16px_rgba(61,53,48,0.12)] backdrop-blur-sm">
               <ChevronLeft size={16} />
             </span>
           </button>
@@ -290,7 +293,7 @@ const PinnedVoiceStage = ({
             aria-label={t('voice.scrollThumbnails')}
             onClick={() => handleScrollThumbnails('right')}
           >
-            <span className="flex h-7 w-7 items-center justify-center rounded-full border border-border-2 bg-surface-2/80 text-text-2 shadow-[0_4px_16px_rgba(61,53,48,0.12)] backdrop-blur-sm">
+            <span className="flex size-7 items-center justify-center rounded-full border border-border-2 bg-surface-2/80 text-text-2 shadow-[0_4px_16px_rgba(61,53,48,0.12)] backdrop-blur-sm">
               <ChevronRight size={16} />
             </span>
           </button>
@@ -352,25 +355,30 @@ const VoiceGridStage = ({
         </div>
       )}
       <div className="flex min-h-0 flex-1 flex-col gap-6">
-        {rows.map((row, rowIndex) => (
-          <div key={`row-${rowIndex}`} className="flex flex-1 w-full justify-center gap-6">
+        {rows.map((row) => (
+          <div
+            key={row.map((card) => card.userId).join('-')}
+            className="flex flex-1 w-full justify-center gap-6"
+          >
             {row.map((card) => (
               <VoiceParticipantTile
                 key={card.userId}
                 card={card}
                 cardSizes={cardSizes}
-                isDarkTheme={isDarkTheme}
                 cardWidth={cardWidth}
-                isSpeaking={speakingUserIds.has(card.userId)}
+                presentation={{
+                  isDarkTheme,
+                  isSpeaking: speakingUserIds.has(card.userId),
+                  isPinned: activePinnedTargetId === getPinTargetId('participant', card.userId),
+                }}
                 cameraTrack={cameraTracksByUserId.get(card.userId)}
-                isPinned={activePinnedTargetId === getPinTargetId('participant', card.userId)}
-                canAdjustVolume={card.userId !== currentUserId}
-                participantVolume={getParticipantVolume(card.userId)}
+                volumeControls={{
+                  enabled: card.userId !== currentUserId,
+                  volume: getParticipantVolume(card.userId),
+                  onChange: (volume) => onParticipantVolumeChange(card.userId, volume),
+                  onToggleMute: () => onToggleParticipantMute(card.userId),
+                }}
                 onTogglePin={() => onTogglePin(getPinTargetId('participant', card.userId))}
-                onParticipantVolumeChange={(volume) =>
-                  onParticipantVolumeChange(card.userId, volume)
-                }
-                onToggleParticipantMute={() => onToggleParticipantMute(card.userId)}
               />
             ))}
           </div>

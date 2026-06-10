@@ -77,21 +77,25 @@ export const ConversationCallStage = ({ conversationId, onLeave }: ConversationC
         rows={rows}
         cardSizes={cardSizes}
         cardWidth={cardWidth}
-        isDarkTheme={isDarkTheme}
+        stageState={{ isDarkTheme }}
         speakingUserIds={voice.speakingUserIds}
         screenShares={voice.screenShares}
         cameraTracksByUserId={cameraTracksByUserId}
         labelsByUserId={labelsByUserId}
-        activePinnedTargetId={activePinnedTargetId}
-        pinnedParticipant={pinnedParticipant}
-        pinnedScreenShare={pinnedScreenShare}
-        hasPinnedItem={Boolean(pinnedParticipant || pinnedScreenShare)}
+        pinning={{
+          activePinnedTargetId,
+          pinnedParticipant,
+          pinnedScreenShare,
+          hasPinnedItem: Boolean(pinnedParticipant || pinnedScreenShare),
+        }}
         currentUserId={user?.userId}
-        isMuted={voice.isMuted}
-        isCameraEnabled={voice.isCameraEnabled}
-        isScreenSharing={voice.isScreenSharing}
-        screenShareError={voice.screenShareError}
-        cameraError={voice.cameraError}
+        localMedia={{
+          isMuted: voice.isMuted,
+          isCameraEnabled: voice.isCameraEnabled,
+          isScreenSharing: voice.isScreenSharing,
+          screenShareError: voice.screenShareError,
+          cameraError: voice.cameraError,
+        }}
         onTogglePin={handleTogglePin}
         getParticipantVolume={voice.getParticipantVolume}
         onParticipantVolumeChange={voice.setParticipantVolume}

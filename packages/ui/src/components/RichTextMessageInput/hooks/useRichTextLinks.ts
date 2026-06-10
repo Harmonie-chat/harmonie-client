@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import Quill from 'quill';
 import { getExpandedLinkRange, normalizeUrl } from '../utils/links.utils';
 import type { QuillRange } from '../types';
@@ -13,73 +13,63 @@ export const useRichTextLinks = () => {
   const linkSelectionRef = useRef<QuillRange>(null);
   const linkBubbleRangeRef = useRef<QuillRange>(null);
 
-  const clearLinkBubble = useCallback(() => {
+  const clearLinkBubble = () => {
     linkBubbleRangeRef.current = null;
     setLinkBubble(null);
-  }, []);
+  };
 
-  const showLinkBubble = useCallback(
-    (quill: Quill, range: QuillRange, selectLink = false) => {
-      if (!range) {
-        clearLinkBubble();
-        return;
-      }
+  const showLinkBubble = (quill: Quill, range: QuillRange, selectLink = false) => {
+    if (!range) {
+      clearLinkBubble();
+      return;
+    }
 
-      const formats = quill.getFormat(range.index, 1);
-      const url = typeof formats.link === 'string' ? formats.link : '';
-      if (!url) {
-        clearLinkBubble();
-        return;
-      }
+    const formats = quill.getFormat(range.index, 1);
+    const url = typeof formats.link === 'string' ? formats.link : '';
+    if (!url) {
+      clearLinkBubble();
+      return;
+    }
 
-      const linkRange = getExpandedLinkRange(quill, { index: range.index, length: 0 }, url);
-      const startBounds = quill.getBounds(linkRange.index) ?? {
-        top: 0,
-        left: 0,
-        width: 0,
-        height: 0,
-      };
-      const endIndex = Math.max(
-        linkRange.index + Math.max(linkRange.length - 1, 0),
-        linkRange.index
-      );
-      const endBounds = quill.getBounds(endIndex) ?? startBounds;
-      const centerLeft =
-        startBounds.left + (endBounds.left + endBounds.width - startBounds.left) / 2;
+    const linkRange = getExpandedLinkRange(quill, { index: range.index, length: 0 }, url);
+    const startBounds = quill.getBounds(linkRange.index) ?? {
+      top: 0,
+      left: 0,
+      width: 0,
+      height: 0,
+    };
+    const endIndex = Math.max(linkRange.index + Math.max(linkRange.length - 1, 0), linkRange.index);
+    const endBounds = quill.getBounds(endIndex) ?? startBounds;
+    const centerLeft = startBounds.left + (endBounds.left + endBounds.width - startBounds.left) / 2;
 
-      linkBubbleRangeRef.current = linkRange;
-      if (selectLink) {
-        quill.setSelection(linkRange.index, linkRange.length, 'silent');
-      }
-      setLinkBubble({
-        url,
-        top: startBounds.top - 32,
-        left: centerLeft,
-      });
-    },
-    [clearLinkBubble]
-  );
+    linkBubbleRangeRef.current = linkRange;
+    if (selectLink) {
+      quill.setSelection(linkRange.index, linkRange.length, 'silent');
+    }
+    setLinkBubble({
+      url,
+      top: startBounds.top - 32,
+      left: centerLeft,
+    });
+  };
 
-  const updateLinkBubble = useCallback(
-    (quill: Quill, range: QuillRange) => {
-      if (!range || range.length > 0) {
-        clearLinkBubble();
-        return;
-      }
+  const updateLinkBubble = (quill: Quill, range: QuillRange) => {
+    if (!range || range.length > 0) {
+      clearLinkBubble();
+      return;
+    }
 
-      showLinkBubble(quill, range);
-    },
-    [clearLinkBubble, showLinkBubble]
-  );
+    showLinkBubble(quill, range);
+  };
 
-  const closeLinkDialog = useCallback(() => {
+  const closeLinkDialog = () => {
     setLinkDialogOpen(false);
     setLinkText('');
     setLinkUrl('');
     linkSelectionRef.current = null;
-  }, []);
+  };
 
-  const openLinkDialog = useCallback((quill: Quill) => {
+  const openLinkDialog = (quill: Quill) => {
     const range = quill.getSelection(true);
     if (!range) return;
 
@@ -95,39 +85,33 @@ export const useRichTextLinks = () => {
     setLinkText(selectedText || currentLink);
     setLinkUrl(currentLink);
     setLinkDialogOpen(true);
-  }, []);
+  };
 
-  const submitLinkDialog = useCallback(
-    (quill: Quill | null) => {
-      const range = linkSelectionRef.current;
-      const normalizedUrl = normalizeUrl(linkUrl);
-      const trimmedText = linkText.trim();
-      if (!quill || !range || !normalizedUrl || !trimmedText) return;
+  const submitLinkDialog = (quill: Quill | null) => {
+    const range = linkSelectionRef.current;
+    const normalizedUrl = normalizeUrl(linkUrl);
+    const trimmedText = linkText.trim();
+    if (!quill || !range || !normalizedUrl || !trimmedText) return;
 
-      quill.focus();
-      if (range.length > 0) {
-        quill.deleteText(range.index, range.length, 'user');
-      }
-      quill.insertText(range.index, trimmedText, { link: normalizedUrl }, 'user');
-      quill.setSelection(range.index + trimmedText.length, 0, 'silent');
-      closeLinkDialog();
-    },
-    [closeLinkDialog, linkText, linkUrl]
-  );
+    quill.focus();
+    if (range.length > 0) {
+      quill.deleteText(range.index, range.length, 'user');
+    }
+    quill.insertText(range.index, trimmedText, { link: normalizedUrl }, 'user');
+    quill.setSelection(range.index + trimmedText.length, 0, 'silent');
+    closeLinkDialog();
+  };
 
-  const removeCurrentLink = useCallback(
-    (quill: Quill | null) => {
-      const range = linkSelectionRef.current ?? linkBubbleRangeRef.current;
-      if (!quill || !range || range.length <= 0) return;
+  const removeCurrentLink = (quill: Quill | null) => {
+    const range = linkSelectionRef.current ?? linkBubbleRangeRef.current;
+    if (!quill || !range || range.length <= 0) return;
 
-      quill.focus();
-      quill.formatText(range.index, range.length, 'link', false, 'user');
-      quill.setSelection(range.index + range.length, 0, 'silent');
-      clearLinkBubble();
-      closeLinkDialog();
-    },
-    [clearLinkBubble, closeLinkDialog]
-  );
+    quill.focus();
+    quill.formatText(range.index, range.length, 'link', false, 'user');
+    quill.setSelection(range.index + range.length, 0, 'silent');
+    clearLinkBubble();
+    closeLinkDialog();
+  };
 
   return {
     clearLinkBubble,

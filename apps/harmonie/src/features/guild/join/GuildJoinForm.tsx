@@ -37,9 +37,8 @@ export const GuildJoinForm = ({ onSuccess }: GuildJoinFormProps) => {
       } else {
         setJoinErrorKey('guild.createJoin.joinError');
       }
-    } finally {
-      setIsJoining(false);
     }
+    setIsJoining(false);
   };
 
   return (

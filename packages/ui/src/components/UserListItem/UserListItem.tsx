@@ -30,11 +30,11 @@ export const UserListItem = <TUser,>({
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const hasContextMenu = Boolean(contextItems?.length);
 
-  const handleClick = (event: MouseEvent<HTMLDivElement>) => {
+  const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     onSelect(user, event.currentTarget.getBoundingClientRect());
   };
 
-  const handleContextMenu = (event: MouseEvent<HTMLDivElement>) => {
+  const handleContextMenu = (event: MouseEvent<HTMLButtonElement>) => {
     if (!hasContextMenu) return;
     event.preventDefault();
     setContextMenu({ x: event.clientX, y: event.clientY });
@@ -42,8 +42,9 @@ export const UserListItem = <TUser,>({
 
   return (
     <>
-      <div
-        className="flex items-center gap-3 px-2 py-1.5 mx-1 rounded-sm hover:bg-surface-3 cursor-pointer"
+      <button
+        type="button"
+        className="flex w-[calc(100%-0.5rem)] items-center gap-3 px-2 py-1.5 mx-1 rounded-sm text-left hover:bg-surface-3 cursor-pointer"
         onClick={handleClick}
         onContextMenu={handleContextMenu}
       >
@@ -59,7 +60,7 @@ export const UserListItem = <TUser,>({
           {subtitle && <p className="text-xs text-text-3 truncate">{subtitle}</p>}
         </div>
         {trailing && <div className="shrink-0">{trailing}</div>}
-      </div>
+      </button>
 
       {contextMenu && contextItems && (
         <ContextMenu

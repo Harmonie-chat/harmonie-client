@@ -20,7 +20,7 @@ export const VoiceJoinPrompt = ({
   return (
     <div className="flex flex-1 items-center justify-center px-6 py-8">
       <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-md border border-border-2 bg-surface-2 px-8 py-10 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-fg">
+        <div className="flex size-16 items-center justify-center rounded-full bg-primary text-primary-fg">
           <Volume2 size={28} />
         </div>
         <div className="space-y-2">

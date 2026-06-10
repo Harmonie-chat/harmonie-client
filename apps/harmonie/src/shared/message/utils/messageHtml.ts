@@ -47,8 +47,10 @@ const decodeHtmlEntities = (content: string) => {
 const normalizeTextLines = (content: string) =>
   content
     .split('\n')
-    .map((line) => line.replace(/\s+/g, ' ').trim())
-    .filter(Boolean)
+    .flatMap((line) => {
+      const normalized = line.replace(/\s+/g, ' ').trim();
+      return normalized ? [normalized] : [];
+    })
     .join('\n');
 
 export const stripHtmlToText = (content: string) => {

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Globe, LogOut, Palette, UserRound } from 'lucide-react';
 import { ModalPanel } from './ModalPanel';
 import { Button } from '../Button/Button';
-import { NavList } from '../NavList/NavList';
+import { NavList, NavListItem } from '../NavList/NavList';
 import { Separator } from '../Separator/Separator';
 
 const meta: Meta<typeof ModalPanel> = {
@@ -32,7 +32,7 @@ const DemoSidebar = ({ active, onSelect }: { active: string; onSelect: (id: stri
     <Separator />
     <NavList className="mt-2">
       {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
-        <NavList.Item
+        <NavListItem
           key={id}
           icon={<Icon size={15} />}
           label={label}
@@ -44,7 +44,7 @@ const DemoSidebar = ({ active, onSelect }: { active: string; onSelect: (id: stri
     <div className="mt-auto flex flex-col gap-1">
       <Separator />
       <NavList>
-        <NavList.Item icon={<LogOut size={15} />} label="Log out" onClick={() => {}} />
+        <NavListItem icon={<LogOut size={15} />} label="Log out" onClick={() => {}} />
       </NavList>
     </div>
   </>

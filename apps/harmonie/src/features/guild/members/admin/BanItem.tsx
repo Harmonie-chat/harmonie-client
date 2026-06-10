@@ -22,13 +22,16 @@ export const BanItem = ({ ban, guildId, onUnbanned }: BanItemProps) => {
 
   const handleConfirm = async () => {
     setIsActing(true);
-    try {
-      await unbanMember(guildId, ban.userId);
-      onUnbanned(ban.userId);
-    } finally {
-      setIsActing(false);
-      setConfirming(false);
-    }
+    const error = await unbanMember(guildId, ban.userId).then(
+      () => {
+        onUnbanned(ban.userId);
+        return undefined;
+      },
+      (err: unknown) => err
+    );
+    setIsActing(false);
+    setConfirming(false);
+    if (error) throw error;
   };
 
   return (

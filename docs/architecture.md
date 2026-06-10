@@ -18,11 +18,14 @@ Harmonie is a monorepo containing two workspaces:
 | **pnpm**            | Package manager + workspaces                         |
 | **Turborepo**       | Monorepo task orchestration (build, dev, lint)       |
 | **Vite**            | Bundler (SPA mode for app, library mode for UI)      |
-| **React 18**        | UI framework                                         |
+| **React 19**        | UI framework                                         |
 | **TypeScript 5**    | Static typing                                        |
 | **Tailwind CSS v4** | Styling — used in `packages/ui` and `apps/harmonie`  |
-| **Storybook 8**     | Component development and documentation in isolation |
+| **Storybook 10.4**  | Component development and documentation in isolation |
 | **React Router v6** | Client-side routing                                  |
+| **SignalR**         | Realtime application events                          |
+| **LiveKit**         | Voice and video rooms                                |
+| **i18next**         | Application internationalization                     |
 
 ---
 
@@ -44,28 +47,49 @@ harmonie-client/
 │       ├── tsconfig.json
 │       ├── index.html
 │       └── src/
-│           ├── main.tsx          # Entry point — mounts AuthProvider + RouterProvider
+│           ├── main.tsx          # Entry point — mounts app providers + RouterProvider
 │           ├── vite-env.d.ts     # Vite env types (import.meta.env)
 │           ├── api/
-│           │   ├── auth.ts       # API functions: login, register, refreshTokens
-│           │   ├── authStorage.ts# Token storage (accessToken in memory, refreshToken in localStorage)
-│           │   └── errors.ts     # Shared ApiError interface
+│           │   ├── auth.ts
+│           │   ├── channels.ts
+│           │   ├── client.ts
+│           │   ├── conversations.ts
+│           │   ├── files.ts
+│           │   ├── guilds.ts
+│           │   └── users.ts
 │           ├── routes/
 │           │   ├── index.tsx     # createBrowserRouter
 │           │   ├── AuthGuard.tsx # Redirects to /auth if not authenticated
 │           │   └── GuestGuard.tsx# Redirects to / if authenticated
 │           ├── layouts/
-│           │   └── AppLayout.tsx # 3-column layout + <Outlet />
-│           └── features/
+│           │   ├── MainLayout.tsx
+│           │   ├── MainLayoutShell.tsx
+│           │   ├── ConversationsLayout.tsx
+│           │   └── GuildLayout.tsx
+│           ├── features/
 │               ├── auth/
 │               │   ├── AuthContext.tsx   # AuthProvider + useAuth hook
 │               │   ├── AuthCard.tsx      # Shared card layout for auth pages
 │               │   ├── ConnectPage.tsx   # Login page
 │               │   └── RegisterPage.tsx  # Registration page
-│               ├── chat/
-│               ├── sidebar/
-│               ├── voice/
-│               └── guild/
+│               ├── channel/              # Guild channel navigation and text channels
+│               ├── conversation/         # Direct conversations and calls
+│               ├── guild/                # Guild workspace, search, invites, settings, members
+│               ├── realtime/             # SignalR connection and activity contexts
+│               └── user/                 # Profile, settings, audio/video device state
+│           ├── shared/
+│           │   ├── components/
+│           │   ├── hooks/
+│           │   ├── members/
+│           │   ├── message/
+│           │   ├── notifications/
+│           │   ├── pwa/
+│           │   ├── utils/
+│           │   ├── viewport/
+│           │   └── voice/                # Shared LiveKit voice UI and hooks
+│           ├── i18n/
+│           ├── styles/
+│           └── types/
 └── packages/
     └── ui/                   # Design system
         ├── package.json
@@ -73,15 +97,16 @@ harmonie-client/
         ├── tsconfig.json
         ├── .storybook/
         │   ├── main.ts
-        │   ├── preview.ts
+        │   ├── preview.tsx
         │   └── preview-head.html  # Google Fonts injection
         └── src/
             ├── index.ts      # Barrel export of all components
+            ├── hooks/
+            ├── styles/
             └── components/
                 └── [ComponentName]/
                     ├── ComponentName.tsx
-                    ├── ComponentName.stories.tsx
-                    └── index.ts
+                    └── ComponentName.stories.tsx
 ```
 
 ---
@@ -122,19 +147,18 @@ Each component lives in its own folder:
 ```
 src/components/Button/
 ├── Button.tsx          # React component + exported types
-├── Button.stories.tsx  # Storybook stories
-└── index.ts            # Public re-export: export { Button } from './Button'
+└── Button.stories.tsx  # Storybook stories
 ```
 
-All dumb/presentational components live in `packages/ui`. The app never defines its own UI primitives.
+All dumb/presentational components live in `packages/ui`. The app never defines its own UI primitives. New components must include a colocated Storybook story.
 
 ### Exports
 
-`src/index.ts` exports all components and their types:
+`src/index.ts` exports all components and their types from their component files:
 
 ```ts
-export { Button } from './components/Button';
-export type { ButtonProps } from './components/Button';
+export { Button } from './components/Button/Button';
+export type { ButtonProps } from './components/Button/Button';
 ```
 
 ---
@@ -150,7 +174,16 @@ export type { ButtonProps } from './components/Button';
   /auth/register     → RegisterPage (registration)
 
 /                    → AuthGuard (redirects to /auth if not authenticated)
-  /                  → AppLayout
+  /                  → MainLayout
+    /                → redirect to /conversations
+    /conversations   → ConversationsLayout + ConversationIndexPage
+    /conversations/:conversationId
+                     → ConversationsLayout + ConversationView
+    /guilds/:guildId → GuildLayout + ChannelIndexPage
+    /guilds/:guildId/channels/:channelId
+                     → GuildLayout + TextChannelView
+    /guilds/:guildId/voice/:channelId
+                     → GuildLayout + VoiceChannelView
 
 *                    → redirect to /
 ```
@@ -160,7 +193,14 @@ export type { ButtonProps } from './components/Button';
 Each feature folder is self-contained and owns its pages, hooks, and components:
 
 ```
-features/auth/       → auth pages + AuthContext (useAuth hook + AuthProvider)
+features/auth/          → auth pages + AuthContext (useAuth hook + AuthProvider)
+features/channel/       → guild channels, channel sidebar, text channel views
+features/conversation/  → direct conversations, conversation call views and creation
+features/guild/         → guild workspace, search, invites, settings, members
+features/realtime/      → SignalR provider and realtime message activity state
+features/user/          → profile, settings, theme, audio/video device preferences
+shared/message/         → reusable message rendering, composer, attachments, reactions
+shared/voice/           → shared LiveKit voice room UI, hooks, and utilities
 ```
 
 Route guards (`AuthGuard`, `GuestGuard`) live in `routes/` rather than `features/auth/` since they are routing concerns, not feature concerns.
@@ -182,7 +222,7 @@ import { Button, Input } from '@harmonie/ui';
 pnpm install
 
 # Start all servers in parallel
-turbo run dev
+pnpm dev
 
 # Start Storybook only
 pnpm --filter @harmonie/ui storybook
@@ -191,7 +231,7 @@ pnpm --filter @harmonie/ui storybook
 pnpm --filter @harmonie/app dev
 
 # Build all packages
-turbo run build
+pnpm build
 
 # Build the design system only
 pnpm --filter @harmonie/ui build

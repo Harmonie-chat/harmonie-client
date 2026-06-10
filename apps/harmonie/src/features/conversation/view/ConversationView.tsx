@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button, IconButton } from '@harmonie/ui';
@@ -18,16 +18,103 @@ import { useConversation, useConversationMembersPanel } from '../ConversationCon
 import { sendStartConversationCall } from '../conversationCallRealtime';
 import { getConversationLabel } from '../conversationUtils';
 import { ConversationCallStage } from './ConversationCallStage';
-import { useConversationMessages } from './hooks/useConversationMessages';
+import { useConversationMessages } from './useConversationMessages';
 import {
   ConversationParticipantPopover,
   ConversationParticipantsPanel,
 } from './ConversationParticipantsPanel';
 
 interface SelectedParticipant {
+  conversationId: string;
   participant: ConversationParticipant;
   rect: DOMRect;
 }
+
+interface AutocompleteParticipantState {
+  conversationId: string;
+  participants: ConversationParticipant[];
+}
+
+const EMPTY_CONVERSATION_PARTICIPANTS: ConversationParticipant[] = [];
+
+interface ConversationCallPanelProps {
+  conversationId: string;
+  conversationTitle: string;
+  voice: ReturnType<typeof useVoicePresence>;
+  isActiveConversationCall: boolean;
+  membersAction: ReactNode;
+  onJoin: () => Promise<void>;
+  onLeave: () => void;
+  onShowChat: () => void;
+}
+
+const ConversationCallPanel = ({
+  conversationId,
+  conversationTitle,
+  voice,
+  isActiveConversationCall,
+  membersAction,
+  onJoin,
+  onLeave,
+  onShowChat,
+}: ConversationCallPanelProps) => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-surface-1 md:rounded-md">
+      <header className="flex h-14 shrink-0 items-center justify-between bg-surface-2 px-4 md:rounded-t-md">
+        <div className="flex min-w-0 items-center gap-2">
+          <IconButton
+            className="md:hidden"
+            size="small"
+            variant="ghost"
+            aria-label={t('conversation.backToConversations')}
+            title={t('conversation.backToConversations')}
+            tooltipSide="bottom"
+            onClick={() => navigate('/conversations')}
+          >
+            <ArrowLeft size={16} />
+          </IconButton>
+          <Phone size={16} className="shrink-0 text-text-3" />
+          <span className="truncate text-sm font-semibold text-text-1">{conversationTitle}</span>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button size="small" variant="tertiary" onClick={onShowChat}>
+            <MessageSquare size={14} />
+            <span>{t('conversation.call.showChat')}</span>
+          </Button>
+          {membersAction}
+        </div>
+      </header>
+      {isActiveConversationCall ? (
+        <ConversationCallStage conversationId={conversationId} onLeave={onLeave} />
+      ) : (
+        <div className="flex min-h-0 flex-1 items-center justify-center p-6">
+          <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-md border border-border-2 bg-surface-2 px-8 py-10 text-center">
+            <div className="flex size-14 items-center justify-center rounded-full bg-primary text-primary-fg">
+              <Phone size={26} />
+            </div>
+            <span className="text-sm font-medium text-primary">
+              {voice.isJoining ? t('voice.joining') : t('conversation.call.readyToJoin')}
+            </span>
+            {voice.joinError && <p className="text-sm text-error">{t(voice.joinError)}</p>}
+            <div className="flex items-center gap-2">
+              <Button variant="tertiary" onClick={onLeave}>
+                <PhoneOff size={16} />
+                <span>{t('voice.leave')}</span>
+              </Button>
+              <Button variant="primary" isLoading={voice.isJoining} onClick={() => void onJoin()}>
+                <Phone size={16} />
+                <span>{t('voice.join')}</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const ConversationView = () => {
   const { t } = useTranslation();
@@ -41,12 +128,12 @@ export const ConversationView = () => {
     useConversationMembersPanel(conversationId);
 
   const [selectedParticipant, setSelectedParticipant] = useState<SelectedParticipant | null>(null);
-  const [autocompleteParticipants, setAutocompleteParticipants] = useState<
-    ConversationParticipant[]
-  >([]);
-  const [callPanelConversationId, setCallPanelConversationId] = useState<string | null>(null);
-  const [callPanelVisible, setCallPanelVisible] = useState(false);
-  const threadRefs = useMessageThreadRefs();
+  const [autocompleteParticipantState, setAutocompleteParticipantState] =
+    useState<AutocompleteParticipantState>({ conversationId: '', participants: [] });
+  const [callPanelState, setCallPanelState] = useState<{
+    conversationId: string | null;
+    visible: boolean;
+  }>({ conversationId: null, visible: false });
 
   const {
     messages,
@@ -72,34 +159,36 @@ export const ConversationView = () => {
     connection,
     currentUserId: user?.userId,
   });
+  const threadRefs = useMessageThreadRefs();
+  const currentSelectedParticipant =
+    selectedParticipant?.conversationId === conversationId ? selectedParticipant : null;
+  const conversationParticipants = conversation?.participants ?? EMPTY_CONVERSATION_PARTICIPANTS;
+  const autocompleteParticipants =
+    autocompleteParticipantState.conversationId === conversationId
+      ? autocompleteParticipantState.participants
+      : conversationParticipants;
+  const callPanelConversationId =
+    callPanelState.conversationId === conversationId ? callPanelState.conversationId : null;
+  const storedCallPanelVisible =
+    callPanelState.conversationId === conversationId ? callPanelState.visible : false;
 
-  const membersMap = useMemo(() => {
-    const map = new Map<string, ConversationParticipant>();
-    if (conversation?.participants) {
-      for (const p of conversation.participants) {
-        map.set(p.userId, p);
-      }
-    }
-    for (const participant of autocompleteParticipants) {
-      map.set(participant.userId, participant);
-    }
-    return map;
-  }, [autocompleteParticipants, conversation]);
+  const membersMap = new Map<string, ConversationParticipant>();
+  for (const participant of conversationParticipants) {
+    membersMap.set(participant.userId, participant);
+  }
+  for (const participant of autocompleteParticipants) {
+    membersMap.set(participant.userId, participant);
+  }
 
-  const mentionOptions = useMemo(
-    () =>
-      autocompleteParticipants.map((participant) => ({
-        userId: participant.userId,
-        username: participant.username,
-        displayName: participant.displayName ?? null,
-      })),
-    [autocompleteParticipants]
-  );
+  const mentionOptions = autocompleteParticipants.map((participant) => ({
+    userId: participant.userId,
+    username: participant.username,
+    displayName: participant.displayName ?? null,
+  }));
 
-  const conversationTitle = useMemo(() => {
-    if (!conversation) return conversationId ?? '';
-    return getConversationLabel(conversation, user?.userId);
-  }, [conversation, conversationId, user?.userId]);
+  const conversationTitle = conversation
+    ? getConversationLabel(conversation, user?.userId)
+    : (conversationId ?? '');
 
   const isActiveConversationCall = voice.activeConversationId === conversationId;
   const voiceParticipants = conversationId ? voice.getConversationParticipants(conversationId) : [];
@@ -111,20 +200,17 @@ export const ConversationView = () => {
     isActiveConversationCall ||
     hasJoinableConversationCall ||
     callPanelConversationId === conversationId;
+  const callPanelVisible = isActiveConversationCall || storedCallPanelVisible;
   const isCallPanelOpen = hasConversationCall && callPanelVisible;
 
   const handleAvatarClick = (participant: ConversationParticipant, rect: DOMRect) => {
+    if (!conversationId) return;
     setSelectedParticipant((prev) =>
-      prev?.participant.userId === participant.userId ? null : { participant, rect }
+      prev?.conversationId === conversationId && prev.participant.userId === participant.userId
+        ? null
+        : { conversationId, participant, rect }
     );
   };
-
-  useEffect(() => {
-    setSelectedParticipant(null);
-    setCallPanelConversationId(null);
-    setAutocompleteParticipants([]);
-    setCallPanelVisible(false);
-  }, [conversationId]);
 
   useEffect(() => {
     if (!conversationId) return;
@@ -132,10 +218,15 @@ export const ConversationView = () => {
 
     getConversationParticipants(conversationId)
       .then((participants) => {
-        if (!cancelled) setAutocompleteParticipants(participants);
+        if (!cancelled) setAutocompleteParticipantState({ conversationId, participants });
       })
       .catch(() => {
-        if (!cancelled) setAutocompleteParticipants(conversation?.participants ?? []);
+        if (!cancelled) {
+          setAutocompleteParticipantState({
+            conversationId,
+            participants: conversation?.participants ?? [],
+          });
+        }
       });
 
     return () => {
@@ -143,37 +234,13 @@ export const ConversationView = () => {
     };
   }, [conversation?.participants, conversationId]);
 
-  useEffect(() => {
-    if (
-      callPanelConversationId === conversationId &&
-      !isActiveConversationCall &&
-      !voice.isJoining &&
-      !voice.joinError
-    ) {
-      setCallPanelConversationId(null);
-    }
-  }, [
-    callPanelConversationId,
-    conversationId,
-    isActiveConversationCall,
-    voice.isJoining,
-    voice.joinError,
-  ]);
-
-  useEffect(() => {
-    if (isActiveConversationCall) {
-      setCallPanelVisible(true);
-    }
-  }, [isActiveConversationCall]);
-
   if (!conversationId) return null;
 
   const isGroup = conversation?.type === 'Group';
 
   const joinConversationCall = async () => {
     if (!conversationId) return;
-    setCallPanelVisible(true);
-    setCallPanelConversationId(conversationId);
+    setCallPanelState({ conversationId, visible: true });
     await voice.joinConversation(conversationId, conversationTitle);
     voice.updateActiveConversationMeta(conversationTitle);
   };
@@ -184,117 +251,66 @@ export const ConversationView = () => {
   };
 
   const handleLeaveConversationCall = () => {
-    setCallPanelConversationId(null);
-    setCallPanelVisible(false);
+    setCallPanelState({ conversationId: null, visible: false });
     voice.leaveCall();
   };
 
-  const renderCallAction = () => {
-    if (isCallPanelOpen) return null;
-    if (isActiveConversationCall) {
-      return (
-        <Button size="small" variant="tertiary" onClick={() => setCallPanelVisible(true)}>
-          <Phone size={14} />
-          <span>{t('conversation.call.show')}</span>
-        </Button>
-      );
-    }
-    if (hasJoinableConversationCall) {
-      return (
-        <Button size="small" variant="primary" onClick={() => void joinConversationCall()}>
-          <Phone size={14} />
-          <span>{t('conversation.call.join')}</span>
-        </Button>
-      );
-    }
-    return null;
-  };
+  const callAction = isCallPanelOpen ? null : isActiveConversationCall ? (
+    <Button
+      size="small"
+      variant="tertiary"
+      onClick={() => setCallPanelState({ conversationId, visible: true })}
+    >
+      <Phone size={14} />
+      <span>{t('conversation.call.show')}</span>
+    </Button>
+  ) : hasJoinableConversationCall ? (
+    <Button size="small" variant="primary" onClick={() => void joinConversationCall()}>
+      <Phone size={14} />
+      <span>{t('conversation.call.join')}</span>
+    </Button>
+  ) : null;
 
-  const renderMembersAction = () =>
-    isGroup ? (
-      <IconButton
-        size="small"
-        aria-label={t('conversation.participantsTitle')}
-        title={t('conversation.participantsTitle')}
-        tooltipSide="bottom"
-        onClick={toggleMembersOpen}
-      >
-        <Users size={16} />
-      </IconButton>
-    ) : null;
+  const membersAction = isGroup ? (
+    <IconButton
+      size="small"
+      aria-label={t('conversation.participantsTitle')}
+      title={t('conversation.participantsTitle')}
+      tooltipSide="bottom"
+      onClick={toggleMembersOpen}
+    >
+      <Users size={16} />
+    </IconButton>
+  ) : null;
 
-  const callPanel = isCallPanelOpen ? (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-surface-1 md:rounded-md">
-      <header className="flex h-14 shrink-0 items-center justify-between bg-surface-2 px-4 md:rounded-t-md">
-        <div className="flex min-w-0 items-center gap-2">
-          <IconButton
-            className="md:hidden"
-            size="small"
-            variant="ghost"
-            aria-label={t('conversation.backToConversations')}
-            title={t('conversation.backToConversations')}
-            tooltipSide="bottom"
-            onClick={() => navigate('/conversations')}
-          >
-            <ArrowLeft size={16} />
-          </IconButton>
-          <Phone size={16} className="shrink-0 text-text-3" />
-          <span className="truncate text-sm font-semibold text-text-1">{conversationTitle}</span>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Button size="small" variant="tertiary" onClick={() => setCallPanelVisible(false)}>
-            <MessageSquare size={14} />
-            <span>{t('conversation.call.showChat')}</span>
-          </Button>
-          {renderMembersAction()}
-        </div>
-      </header>
-      {isActiveConversationCall ? (
-        <ConversationCallStage
-          conversationId={conversationId}
-          onLeave={handleLeaveConversationCall}
-        />
-      ) : (
-        <div className="flex min-h-0 flex-1 items-center justify-center p-6">
-          <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-md border border-border-2 bg-surface-2 px-8 py-10 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-fg">
-              <Phone size={26} />
-            </div>
-            <span className="text-sm font-medium text-primary">
-              {voice.isJoining ? t('voice.joining') : t('conversation.call.readyToJoin')}
-            </span>
-            {voice.joinError && <p className="text-sm text-error">{t(voice.joinError)}</p>}
-            <div className="flex items-center gap-2">
-              <Button
-                variant="tertiary"
-                onClick={() => {
-                  setCallPanelConversationId(null);
-                  setCallPanelVisible(false);
-                }}
-              >
-                <PhoneOff size={16} />
-                <span>{t('voice.leave')}</span>
-              </Button>
-              <Button
-                variant="primary"
-                isLoading={voice.isJoining}
-                onClick={() => void joinConversationCall()}
-              >
-                <Phone size={16} />
-                <span>{t('voice.join')}</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+  const startCallAction = !hasConversationCall ? (
+    <IconButton
+      size="small"
+      aria-label={t('conversation.call.start')}
+      title={t('conversation.call.start')}
+      tooltipSide="bottom"
+      onClick={() => void handleStartCall()}
+    >
+      <Phone size={16} />
+    </IconButton>
   ) : null;
 
   return (
     <>
       <div className="flex h-full gap-2">
         <div className="flex min-w-0 flex-1 flex-col gap-2">
-          {callPanel}
+          {isCallPanelOpen && (
+            <ConversationCallPanel
+              conversationId={conversationId}
+              conversationTitle={conversationTitle}
+              voice={voice}
+              isActiveConversationCall={isActiveConversationCall}
+              membersAction={membersAction}
+              onJoin={joinConversationCall}
+              onLeave={handleLeaveConversationCall}
+              onShowChat={() => setCallPanelState({ conversationId, visible: false })}
+            />
+          )}
           <div className={['min-h-0 flex-1', isCallPanelOpen ? 'hidden' : 'block'].join(' ')}>
             <MessageThread
               resetKey={conversationId}
@@ -314,19 +330,9 @@ export const ConversationView = () => {
               }
               afterPinActions={
                 <>
-                  {renderCallAction()}
-                  {!hasConversationCall && (
-                    <IconButton
-                      size="small"
-                      aria-label={t('conversation.call.start')}
-                      title={t('conversation.call.start')}
-                      tooltipSide="bottom"
-                      onClick={() => void handleStartCall()}
-                    >
-                      <Phone size={16} />
-                    </IconButton>
-                  )}
-                  {renderMembersAction()}
+                  {callAction}
+                  {startCallAction}
+                  {membersAction}
                 </>
               }
               refs={threadRefs}
@@ -390,10 +396,10 @@ export const ConversationView = () => {
         )}
       </div>
 
-      {selectedParticipant && (
+      {currentSelectedParticipant && (
         <ConversationParticipantPopover
-          participant={selectedParticipant.participant}
-          anchorRect={selectedParticipant.rect}
+          participant={currentSelectedParticipant.participant}
+          anchorRect={currentSelectedParticipant.rect}
           onClose={() => setSelectedParticipant(null)}
           side="right"
         />

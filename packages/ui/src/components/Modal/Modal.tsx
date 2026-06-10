@@ -19,17 +19,19 @@ export const Modal = ({
   closeLabel = 'Close',
   maxWidth = 'max-w-md',
 }: ModalProps) => {
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const dragStartYRef = useRef<number | null>(null);
   const dragOffsetRef = useRef(0);
   const [dragOffset, setDragOffset] = useState(0);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (!dialog.open) dialog.showModal();
+    return () => {
+      if (dialog.open) dialog.close();
     };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, []);
 
   const handleDragStart = (event: React.PointerEvent<HTMLDivElement>) => {
     dragStartYRef.current = event.clientY;
@@ -73,17 +75,24 @@ export const Modal = ({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] flex items-end justify-center p-0 cursor-default sm:items-center sm:p-4"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
+      className="fixed inset-0 z-50 m-0 flex h-auto max-h-none w-auto max-w-none items-end justify-center border-0 bg-black/40 p-0 text-inherit backdrop-blur-[2px] cursor-default sm:items-center sm:p-4"
       aria-label={title}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
     >
+      <button
+        type="button"
+        className="absolute inset-0 cursor-default"
+        aria-label={closeLabel}
+        onClick={onClose}
+      />
       <div
-        className={`flex max-h-dvh w-full flex-col rounded-t-md border border-border-2 bg-surface-1 transition-transform duration-200 sm:block sm:max-h-none sm:rounded-md ${maxWidth}`}
+        className={`relative flex max-h-dvh w-full flex-col rounded-t-md border border-border-2 bg-surface-1 transition-transform duration-200 sm:block sm:max-h-none sm:rounded-md ${maxWidth}`}
         style={{ transform: `translateY(${dragOffset}px)` }}
-        onClick={(e) => e.stopPropagation()}
       >
         <div
           className="mx-auto flex h-6 w-16 touch-none items-center justify-center sm:hidden"
@@ -114,6 +123,6 @@ export const Modal = ({
           {children}
         </div>
       </div>
-    </div>
+    </dialog>
   );
 };

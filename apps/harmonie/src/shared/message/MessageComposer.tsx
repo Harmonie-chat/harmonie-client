@@ -1,8 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
 import {
-  IconButton,
   RichTextMessageInput,
   type RichTextMentionOption,
   type RichTextMessageInputHandle,
@@ -16,6 +14,8 @@ import { getMessagePayloadContent, stripHtmlToText } from './utils/messageHtml';
 import { filterMentionedUserIdsFromContent } from './utils/mentions';
 import { getRichTextMessageInputLabels } from './utils/richTextMessageInputLabels';
 import { isCoarsePointerDevice, useCoarsePointer } from '@/shared/hooks/useCoarsePointer';
+import { AttachmentPreviewList } from './AttachmentPreviewList';
+import { ReplyPreviewBanner } from './ReplyPreviewBanner';
 
 const MAX_LENGTH = 4000;
 const TYPING_THROTTLE_MS = 4000;
@@ -69,12 +69,19 @@ export const MessageComposer = ({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
-  const [selectedMentionIds, setSelectedMentionIds] = useState<Set<string>>(() => new Set());
   const [isDragOver, setIsDragOver] = useState(false);
   const { formattingOpen, toggleFormattingOpen } = useMessageFormattingPreference();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<RichTextMessageInputHandle>(null);
   const lastTypingSentRef = useRef<number>(0);
+  const activePreviewUrlsRef = useRef<Set<string>>(null!);
+  const selectedMentionIdsRef = useRef<Set<string>>(null!);
+  if (activePreviewUrlsRef.current === null) {
+    activePreviewUrlsRef.current = new Set();
+  }
+  if (selectedMentionIdsRef.current === null) {
+    selectedMentionIdsRef.current = new Set();
+  }
   const inputLabels = getRichTextMessageInputLabels(t);
   const isCoarsePointer = useCoarsePointer();
   const mentionMap = new Map(mentionOptions.map((mention) => [mention.userId, mention]));
@@ -87,14 +94,14 @@ export const MessageComposer = ({
   const doneAttachments = pendingAttachments.filter((a) => a.status === 'done');
   const canSend =
     !sending && !isOverLimit && (!!trimmedContent || (doneAttachments.length > 0 && !isUploading));
-
   useEffect(() => {
+    const activePreviewUrls = activePreviewUrlsRef.current;
     return () => {
-      pendingAttachments.forEach((a) => {
-        if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
+      activePreviewUrls.forEach((previewUrl) => {
+        URL.revokeObjectURL(previewUrl);
       });
+      activePreviewUrls.clear();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -114,44 +121,45 @@ export const MessageComposer = ({
   };
 
   const handleMentionSelected = (mention: RichTextMentionOption) => {
-    setSelectedMentionIds((current) => new Set(current).add(mention.userId));
+    selectedMentionIdsRef.current = new Set(selectedMentionIdsRef.current).add(mention.userId);
   };
 
-  const addFiles = useCallback(
-    (files: File[]) => {
-      const accepted = files.filter((f) => ACCEPTED_TYPES.includes(f.type));
-      if (!accepted.length) return;
+  const addFiles = (files: File[]) => {
+    const accepted = files.filter((f) => ACCEPTED_TYPES.includes(f.type));
+    if (!accepted.length) return;
 
-      const newAttachments: PendingAttachment[] = accepted.map((file) => ({
+    const newAttachments: PendingAttachment[] = accepted.map((file) => {
+      const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined;
+      if (previewUrl) activePreviewUrlsRef.current.add(previewUrl);
+      return {
         localId: `${Date.now()}-${Math.random()}`,
         file,
         status: 'uploading',
-        previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
-      }));
+        previewUrl,
+      };
+    });
 
-      setPendingAttachments((prev) => [...prev, ...newAttachments]);
+    setPendingAttachments((prev) => [...prev, ...newAttachments]);
 
-      newAttachments.forEach((attachment) => {
-        uploadFile(attachment.file)
-          .then((uploaded) => {
-            setPendingAttachments((prev) =>
-              prev.map((a) =>
-                a.localId === attachment.localId
-                  ? { ...a, fileId: uploaded.fileId, status: 'done' }
-                  : a
-              )
-            );
-          })
-          .catch(() => {
-            setPendingAttachments((prev) =>
-              prev.map((a) => (a.localId === attachment.localId ? { ...a, status: 'error' } : a))
-            );
-            setError(t('channel.input.uploadError'));
-          });
-      });
-    },
-    [t]
-  );
+    newAttachments.forEach((attachment) => {
+      uploadFile(attachment.file)
+        .then((uploaded) => {
+          setPendingAttachments((prev) =>
+            prev.map((a) =>
+              a.localId === attachment.localId
+                ? { ...a, fileId: uploaded.fileId, status: 'done' }
+                : a
+            )
+          );
+        })
+        .catch(() => {
+          setPendingAttachments((prev) =>
+            prev.map((a) => (a.localId === attachment.localId ? { ...a, status: 'error' } : a))
+          );
+          setError(t('channel.input.uploadError'));
+        });
+    });
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
@@ -179,7 +187,10 @@ export const MessageComposer = ({
   const removeAttachment = (localId: string) => {
     setPendingAttachments((prev) => {
       const attachment = prev.find((a) => a.localId === localId);
-      if (attachment?.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
+      if (attachment?.previewUrl) {
+        URL.revokeObjectURL(attachment.previewUrl);
+        activePreviewUrlsRef.current.delete(attachment.previewUrl);
+      }
       if (attachment?.fileId) deleteFile(attachment.fileId).catch(() => {});
       return prev.filter((a) => a.localId !== localId);
     });
@@ -194,18 +205,21 @@ export const MessageComposer = ({
     const attachmentFileIds = doneAttachments.map((a) => a.fileId!);
     const mentionedUserIds = filterMentionedUserIdsFromContent(
       content,
-      selectedMentionIds,
+      selectedMentionIdsRef.current,
       mentionMap
     );
 
     try {
       await sendFn(payloadContent, attachmentFileIds, replyTo?.messageId ?? null, mentionedUserIds);
       clearDraft();
-      setSelectedMentionIds(new Set());
+      selectedMentionIdsRef.current = new Set();
       onCancelReply?.();
       setPendingAttachments((prev) => {
         prev.forEach((a) => {
-          if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
+          if (a.previewUrl) {
+            URL.revokeObjectURL(a.previewUrl);
+            activePreviewUrlsRef.current.delete(a.previewUrl);
+          }
         });
         return [];
       });
@@ -218,52 +232,9 @@ export const MessageComposer = ({
       } else {
         setError(t('channel.input.error'));
       }
-    } finally {
-      setSending(false);
     }
+    setSending(false);
   };
-
-  const attachmentsPreview =
-    pendingAttachments.length > 0 ? (
-      <div className="flex flex-wrap gap-2">
-        {pendingAttachments.map((attachment) => (
-          <div
-            key={attachment.localId}
-            className="relative flex items-center rounded-md border border-border-2 bg-surface-3 overflow-hidden"
-          >
-            {attachment.previewUrl ? (
-              <img
-                src={attachment.previewUrl}
-                alt={attachment.file.name}
-                className="h-14 w-14 object-cover"
-              />
-            ) : (
-              <div className="h-14 w-14 flex items-center justify-center text-xs text-text-3 text-center px-1 leading-tight">
-                {attachment.file.name.split('.').pop()?.toUpperCase()}
-              </div>
-            )}
-            {attachment.status === 'uploading' && (
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                <div className="w-4 h-4 border-2 border-white/60 border-t-white rounded-full animate-spin" />
-              </div>
-            )}
-            {attachment.status === 'error' && (
-              <div className="absolute inset-0 bg-error/40 flex items-center justify-center">
-                <span className="text-error-fg text-xs font-medium">!</span>
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => removeAttachment(attachment.localId)}
-              className="absolute top-0.5 right-0.5 p-0.5 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors cursor-pointer"
-              aria-label={t('channel.input.removeAttachment')}
-            >
-              <X size={10} />
-            </button>
-          </div>
-        ))}
-      </div>
-    ) : undefined;
 
   return (
     <div className="flex min-w-0 w-full pt-2 self-end">
@@ -272,6 +243,7 @@ export const MessageComposer = ({
         type="file"
         multiple
         accept={ACCEPTED_TYPES.join(',')}
+        aria-label={t('channel.input.attachFile')}
         className="hidden"
         onChange={handleFileChange}
       />
@@ -282,39 +254,11 @@ export const MessageComposer = ({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        {replyTo && (
-          <div className="mb-2 flex max-w-full items-start gap-2 overflow-hidden rounded-md border border-border-2 bg-surface-2 px-3 py-2">
-            <div className="mt-0.5 h-8 w-0.5 shrink-0 rounded-full bg-primary" />
-            <div className="min-w-0 flex-1">
-              <div className="text-xs font-semibold text-text-1 truncate">
-                {replyTo.isDeleted
-                  ? t('channel.messages.replyDeleted')
-                  : t('channel.messages.replyingTo', {
-                      name: replyTo.authorDisplayName ?? replyTo.authorUsername,
-                    })}
-              </div>
-              {!replyTo.isDeleted && (
-                <div className="text-xs text-text-3 truncate">
-                  {replyTo.content
-                    ? stripHtmlToText(replyTo.content)
-                    : replyTo.hasAttachments
-                      ? t('channel.messages.attachmentOnly')
-                      : t('channel.messages.replyEmpty')}
-                </div>
-              )}
-            </div>
-            <IconButton
-              type="button"
-              size="small"
-              onClick={onCancelReply}
-              title={t('channel.messages.cancelReply')}
-              className="shrink-0"
-            >
-              <X size={14} />
-            </IconButton>
-          </div>
-        )}
-        {attachmentsPreview && <div className="mb-2">{attachmentsPreview}</div>}
+        {replyTo && <ReplyPreviewBanner replyTo={replyTo} onCancelReply={onCancelReply} />}
+        <AttachmentPreviewList
+          attachments={pendingAttachments}
+          onRemoveAttachment={removeAttachment}
+        />
         <RichTextMessageInput
           ref={inputRef}
           value={content}

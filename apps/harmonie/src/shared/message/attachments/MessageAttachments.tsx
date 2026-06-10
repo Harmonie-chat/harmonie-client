@@ -1,17 +1,11 @@
 import { useState } from 'react';
 import type { MessageAttachment } from '@/types/channel';
-import type { MessageAuthor } from '@/shared/message/types';
+import type { MessageAuthor } from '@/shared/message/messageAuthor';
 import { MessageAttachmentDeleteModal } from './MessageAttachmentDeleteModal';
 import { MessageAttachmentFileChip } from './MessageAttachmentFileChip';
 import { MessageAttachmentImage } from './MessageAttachmentImage';
 import { MessageAttachmentLightbox } from './MessageAttachmentLightbox';
-
-export interface LightboxState {
-  fileId: string;
-  fileName: string;
-  member?: MessageAuthor;
-  createdAtUtc: string;
-}
+import type { LightboxState } from './MessageAttachmentLightboxState';
 
 export interface MessageAttachmentsProps {
   attachments: MessageAttachment[];

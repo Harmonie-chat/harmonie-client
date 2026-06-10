@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Input, PlainEmojiTextarea } from '@harmonie/ui';
 import type { UserProfile } from '@/types/user';
@@ -14,45 +14,66 @@ interface ProfileSectionProps {
 
 export const ProfileSection = ({ user, updateUser }: ProfileSectionProps) => {
   const { t } = useTranslation();
-  const [displayNameDraft, setDisplayNameDraft] = useState(user?.displayName ?? '');
-  const [bioDraft, setBioDraft] = useState(user?.bio ?? '');
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState(false);
-
   const currentDisplayName = user?.displayName ?? '';
   const currentBio = user?.bio ?? '';
+  const [draft, setDraft] = useState(() => ({
+    sourceDisplayName: currentDisplayName,
+    sourceBio: currentBio,
+    displayName: currentDisplayName,
+    bio: currentBio,
+    error: false,
+  }));
+  const [isSaving, setIsSaving] = useState(false);
+
+  const isDraftCurrent =
+    draft.sourceDisplayName === currentDisplayName && draft.sourceBio === currentBio;
+  const displayNameDraft = isDraftCurrent ? draft.displayName : currentDisplayName;
+  const bioDraft = isDraftCurrent ? draft.bio : currentBio;
+  const error = isDraftCurrent ? draft.error : false;
   const isDirty = displayNameDraft !== currentDisplayName || bioDraft !== currentBio;
   const remainingDisplayName = DISPLAY_NAME_MAX_LENGTH - displayNameDraft.length;
   const remainingBio = BIO_MAX_LENGTH - bioDraft.length;
 
-  useEffect(() => {
-    setDisplayNameDraft(user?.displayName ?? '');
-    setBioDraft(user?.bio ?? '');
-    setError(false);
-  }, [user?.bio, user?.displayName]);
+  const updateDraft = (nextDraft: Partial<Pick<typeof draft, 'displayName' | 'bio' | 'error'>>) =>
+    setDraft({
+      sourceDisplayName: currentDisplayName,
+      sourceBio: currentBio,
+      displayName: displayNameDraft,
+      bio: bioDraft,
+      error,
+      ...nextDraft,
+    });
 
   const handleSave = async () => {
     setIsSaving(true);
-    setError(false);
+    updateDraft({ error: false });
     try {
       const updated = await patchMe({
         displayName: displayNameDraft.trim() || null,
         bio: bioDraft.trim() || null,
       });
       updateUser(updated);
-      setDisplayNameDraft(updated.displayName ?? '');
-      setBioDraft(updated.bio ?? '');
+      setDraft({
+        sourceDisplayName: updated.displayName ?? '',
+        sourceBio: updated.bio ?? '',
+        displayName: updated.displayName ?? '',
+        bio: updated.bio ?? '',
+        error: false,
+      });
     } catch {
-      setError(true);
-    } finally {
-      setIsSaving(false);
+      updateDraft({ error: true });
     }
+    setIsSaving(false);
   };
 
   const handleCancel = () => {
-    setDisplayNameDraft(currentDisplayName);
-    setBioDraft(currentBio);
-    setError(false);
+    setDraft({
+      sourceDisplayName: currentDisplayName,
+      sourceBio: currentBio,
+      displayName: currentDisplayName,
+      bio: currentBio,
+      error: false,
+    });
   };
 
   return (
@@ -61,7 +82,7 @@ export const ProfileSection = ({ user, updateUser }: ProfileSectionProps) => {
         <Input
           label={t('settings.profile.displayNameLabel')}
           value={displayNameDraft}
-          onChange={(event) => setDisplayNameDraft(event.target.value)}
+          onChange={(event) => updateDraft({ displayName: event.target.value })}
           maxLength={DISPLAY_NAME_MAX_LENGTH}
           disabled={isSaving}
           placeholder={t('settings.profile.displayNamePlaceholder')}
@@ -84,7 +105,7 @@ export const ProfileSection = ({ user, updateUser }: ProfileSectionProps) => {
         <PlainEmojiTextarea
           label={t('settings.profile.label')}
           value={bioDraft}
-          onChange={setBioDraft}
+          onChange={(nextBio) => updateDraft({ bio: nextBio })}
           maxLength={BIO_MAX_LENGTH}
           rows={5}
           disabled={isSaving}

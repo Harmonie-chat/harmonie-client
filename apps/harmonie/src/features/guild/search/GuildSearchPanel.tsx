@@ -14,6 +14,12 @@ interface GuildSearchPanelProps {
   onClose: () => void;
 }
 
+interface SearchState {
+  key: string;
+  results: GuildMessageSearchItem[];
+  error: boolean;
+}
+
 export const GuildSearchPanel = ({
   query,
   authorId,
@@ -24,59 +30,57 @@ export const GuildSearchPanel = ({
   const { guildId } = useParams<{ guildId: string }>();
   const navigate = useNavigate();
 
-  const [results, setResults] = useState<GuildMessageSearchItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
-  const [searched, setSearched] = useState(false);
+  const trimmedQuery = query.trim();
+  const searchKey = `${guildId ?? ''}\u0000${trimmedQuery}\u0000${authorId ?? ''}\u0000${
+    channelId ?? ''
+  }`;
+  const canSearch = trimmedQuery !== '' && Boolean(guildId);
+  const [searchState, setSearchState] = useState<SearchState>({
+    key: '',
+    results: [],
+    error: false,
+  });
+  const searchNavigationNonceRef = useRef(0);
+  const isCurrentSearch = canSearch && searchState.key === searchKey;
+  const results = isCurrentSearch ? searchState.results : [];
+  const loading = canSearch && !isCurrentSearch;
+  const error = isCurrentSearch ? searchState.error : false;
+  const searched = isCurrentSearch;
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    const trimmed = query.trim();
-
-    if (!trimmed) {
-      setResults([]);
-      setSearched(false);
-      setError(false);
-      return;
-    }
-
-    if (!guildId) return;
+    if (!canSearch || !guildId) return;
 
     debounceRef.current = setTimeout(async () => {
-      setLoading(true);
-      setError(false);
       try {
         const response = await searchGuildMessages(guildId, {
-          q: trimmed,
+          q: trimmedQuery,
           authorId: authorId ?? undefined,
           channelId: channelId ?? undefined,
           limit: 30,
         });
-        setResults(response.items);
-        setSearched(true);
+        setSearchState({ key: searchKey, results: response.items, error: false });
       } catch {
-        setError(true);
-        setResults([]);
-      } finally {
-        setLoading(false);
+        setSearchState({ key: searchKey, results: [], error: true });
       }
     }, 350);
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, authorId, channelId, guildId]);
+  }, [canSearch, searchKey, trimmedQuery, authorId, channelId, guildId]);
 
   const handleResultClick = (item: GuildMessageSearchItem) => {
     if (!guildId) return;
+    searchNavigationNonceRef.current += 1;
     navigate(`/guilds/${guildId}/channels/${item.channelId}`, {
       state: {
         searchTarget: {
           messageId: item.messageId,
-          nonce: `${item.messageId}-${Date.now()}`,
+          nonce: `${item.messageId}-${searchNavigationNonceRef.current}`,
         },
       },
     });
@@ -92,8 +96,8 @@ export const GuildSearchPanel = ({
         </IconButton>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2 py-2 flex flex-col gap-1">
-        {!query.trim() && <p className="px-3 py-2 text-sm text-text-3">{t('guild.search.hint')}</p>}
+      <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-1">
+        {!trimmedQuery && <p className="px-3 py-2 text-sm text-text-3">{t('guild.search.hint')}</p>}
 
         {loading && <p className="px-3 py-2 text-sm text-text-3">{t('guild.search.loading')}</p>}
 

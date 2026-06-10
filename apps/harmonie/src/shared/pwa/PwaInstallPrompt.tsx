@@ -23,18 +23,17 @@ const isIos = () => {
 export const PwaInstallPrompt = () => {
   const { t } = useTranslation();
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [showIosPrompt, setShowIosPrompt] = useState(false);
   const [isDismissed, setIsDismissed] = useState(
     () => localStorage.getItem(dismissedStorageKey) === 'true'
+  );
+  const [showIosPrompt, setShowIosPrompt] = useState(
+    () => !isDismissed && !isStandalone() && isIos()
   );
 
   useEffect(() => {
     if (isDismissed || isStandalone()) return;
 
-    if (isIos()) {
-      setShowIosPrompt(true);
-      return;
-    }
+    if (isIos()) return;
 
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
@@ -66,7 +65,7 @@ export const PwaInstallPrompt = () => {
   return (
     <div className="pointer-events-none fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-50 flex justify-center sm:inset-x-auto sm:right-4 sm:bottom-4">
       <div className="pointer-events-auto flex w-full max-w-100 items-center gap-3 rounded-lg border border-secondary bg-surface-1 p-3 shadow-[0_8px_32px_rgba(61,53,48,0.18)]">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-fg">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-fg">
           {showIosPrompt ? <Share size={18} /> : <Download size={18} />}
         </div>
 

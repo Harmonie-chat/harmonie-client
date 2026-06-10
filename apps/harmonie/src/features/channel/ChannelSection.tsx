@@ -34,33 +34,32 @@ function getParticipantLabel(
 
 const VoiceParticipantListItem = ({
   participant,
-  isSpeaking,
-  isMuted,
-  isCameraEnabled,
-  isScreenSharing,
-  canAdjustVolume,
-  participantVolume,
+  voiceState,
+  volumeControls,
   onClick,
-  onParticipantVolumeChange,
-  onToggleParticipantMute,
 }: {
   participant: VoiceParticipant;
-  isSpeaking: boolean;
-  isMuted: boolean;
-  isCameraEnabled: boolean;
-  isScreenSharing: boolean;
-  canAdjustVolume: boolean;
-  participantVolume: number;
+  voiceState: {
+    isSpeaking: boolean;
+    isMuted: boolean;
+    isCameraEnabled: boolean;
+    isScreenSharing: boolean;
+  };
+  volumeControls: {
+    enabled: boolean;
+    volume: number;
+    onChange: (volume: number) => void;
+    onToggleMute: () => void;
+  };
   onClick?: (userId: string, rect: DOMRect) => void;
-  onParticipantVolumeChange?: (volume: number) => void;
-  onToggleParticipantMute?: () => void;
 }) => {
   const { t } = useTranslation();
   const avatarUrl = useFileBlobUrl(participant.avatarFileId);
   const label = getParticipantLabel(participant);
-  const participantVolumePercent = Math.round(participantVolume * 100);
+  const participantVolumePercent = Math.round(volumeControls.volume * 100);
+  const canAdjustVolume = volumeControls.enabled;
   const volumeToggleLabel = t(
-    participantVolume === 0 ? 'voice.unmuteParticipant' : 'voice.muteParticipant',
+    volumeControls.volume === 0 ? 'voice.unmuteParticipant' : 'voice.muteParticipant',
     { name: label }
   );
   const [volumeMenu, setVolumeMenu] = useState<{ x: number; y: number } | null>(null);
@@ -71,7 +70,7 @@ const VoiceParticipantListItem = ({
   };
 
   const handleContextMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
-    if (!canAdjustVolume || !onParticipantVolumeChange) return;
+    if (!canAdjustVolume) return;
 
     event.preventDefault();
     event.stopPropagation();
@@ -81,7 +80,6 @@ const VoiceParticipantListItem = ({
   const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
     if (
       !canAdjustVolume ||
-      !onParticipantVolumeChange ||
       (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10'))
     ) {
       return;
@@ -114,7 +112,7 @@ const VoiceParticipantListItem = ({
           <span
             className={[
               'shrink-0 rounded-full border-2 p-0.5 transition-all duration-150',
-              isSpeaking ? 'border-primary' : 'border-transparent',
+              voiceState.isSpeaking ? 'border-primary' : 'border-transparent',
             ]
               .filter(Boolean)
               .join(' ')}
@@ -132,45 +130,42 @@ const VoiceParticipantListItem = ({
             <span
               className={[
                 'min-w-0 truncate text-sm transition-colors duration-150',
-                isSpeaking ? 'text-primary font-medium' : 'text-text-2',
+                voiceState.isSpeaking ? 'text-primary font-medium' : 'text-text-2',
               ]
                 .filter(Boolean)
                 .join(' ')}
             >
               {label}
             </span>
-            {(isMuted || isCameraEnabled || isScreenSharing) && (
+            {(voiceState.isMuted || voiceState.isCameraEnabled || voiceState.isScreenSharing) && (
               <span className="flex shrink-0 items-center gap-1 text-text-3/80">
-                {isMuted && (
+                {voiceState.isMuted && (
                   <Tooltip content={t('voice.participantMuted', { name: label })} side="top">
-                    <span
-                      className="inline-flex h-4 w-4 items-center justify-center rounded-full"
-                      aria-label={t('voice.participantMuted', { name: label })}
-                      role="img"
-                    >
-                      <MicOff size={12} />
+                    <span className="inline-flex size-4 items-center justify-center rounded-full">
+                      <span className="sr-only">
+                        {t('voice.participantMuted', { name: label })}
+                      </span>
+                      <MicOff size={12} aria-hidden="true" />
                     </span>
                   </Tooltip>
                 )}
-                {isCameraEnabled && (
+                {voiceState.isCameraEnabled && (
                   <Tooltip content={t('voice.participantCameraOn', { name: label })} side="top">
-                    <span
-                      className="inline-flex h-4 w-4 items-center justify-center rounded-full"
-                      aria-label={t('voice.participantCameraOn', { name: label })}
-                      role="img"
-                    >
-                      <Video size={12} />
+                    <span className="inline-flex size-4 items-center justify-center rounded-full">
+                      <span className="sr-only">
+                        {t('voice.participantCameraOn', { name: label })}
+                      </span>
+                      <Video size={12} aria-hidden="true" />
                     </span>
                   </Tooltip>
                 )}
-                {isScreenSharing && (
+                {voiceState.isScreenSharing && (
                   <Tooltip content={t('voice.screenSharingLabel', { name: label })} side="top">
-                    <span
-                      className="inline-flex h-4 w-4 items-center justify-center rounded-full"
-                      aria-label={t('voice.screenSharingLabel', { name: label })}
-                      role="img"
-                    >
-                      <ScreenShare size={12} />
+                    <span className="inline-flex size-4 items-center justify-center rounded-full">
+                      <span className="sr-only">
+                        {t('voice.screenSharingLabel', { name: label })}
+                      </span>
+                      <ScreenShare size={12} aria-hidden="true" />
                     </span>
                   </Tooltip>
                 )}
@@ -179,7 +174,7 @@ const VoiceParticipantListItem = ({
           </span>
         </span>
       </button>
-      {volumeMenu && canAdjustVolume && onParticipantVolumeChange && (
+      {volumeMenu && canAdjustVolume && (
         <ContextMenu
           position={volumeMenu}
           horizontalAnchor="left"
@@ -201,12 +196,12 @@ const VoiceParticipantListItem = ({
                     <IconButton
                       size="small"
                       variant="ghost"
-                      className="h-6 min-h-6 w-6 min-w-6 shrink-0"
-                      onClick={onToggleParticipantMute}
+                      className="h-6 min-size-6 min-w-6 shrink-0"
+                      onClick={volumeControls.onToggleMute}
                       aria-label={volumeToggleLabel}
                       title={volumeToggleLabel}
                     >
-                      {participantVolume === 0 ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                      {volumeControls.volume === 0 ? <VolumeX size={14} /> : <Volume2 size={14} />}
                     </IconButton>
                     <input
                       type="range"
@@ -215,7 +210,7 @@ const VoiceParticipantListItem = ({
                       step={5}
                       value={participantVolumePercent}
                       onChange={(event) =>
-                        onParticipantVolumeChange(Number(event.target.value) / 100)
+                        volumeControls.onChange(Number(event.target.value) / 100)
                       }
                       className="h-1 min-w-0 flex-1 cursor-pointer appearance-none rounded-full bg-transparent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary/35 [&::-moz-range-progress]:h-1 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-primary [&::-moz-range-thumb]:h-2.5 [&::-moz-range-thumb]:w-2.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:shadow-none [&::-moz-range-track]:h-1 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-border-1/25 [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-transparent [&::-webkit-slider-thumb]:mt-[-3px] [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-0 [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow-none"
                       style={
@@ -318,14 +313,18 @@ const SortableChannelItem = ({
             <VoiceParticipantListItem
               key={p.userId}
               participant={p}
-              isSpeaking={speakingUserIds?.has(p.userId) ?? false}
-              isMuted={mutedUserIds?.has(p.userId) ?? false}
-              isCameraEnabled={cameraUserIds?.has(p.userId) ?? false}
-              isScreenSharing={screenSharingUserIds?.has(p.userId) ?? false}
-              canAdjustVolume={voiceActive === true && p.userId !== currentUserId}
-              participantVolume={getParticipantVolume(p.userId)}
-              onParticipantVolumeChange={(volume) => onParticipantVolumeChange(p.userId, volume)}
-              onToggleParticipantMute={() => onToggleParticipantMute(p.userId)}
+              voiceState={{
+                isSpeaking: speakingUserIds?.has(p.userId) ?? false,
+                isMuted: mutedUserIds?.has(p.userId) ?? false,
+                isCameraEnabled: cameraUserIds?.has(p.userId) ?? false,
+                isScreenSharing: screenSharingUserIds?.has(p.userId) ?? false,
+              }}
+              volumeControls={{
+                enabled: voiceActive === true && p.userId !== currentUserId,
+                volume: getParticipantVolume(p.userId),
+                onChange: (volume) => onParticipantVolumeChange(p.userId, volume),
+                onToggleMute: () => onToggleParticipantMute(p.userId),
+              }}
               onClick={onParticipantClick}
             />
           ))}

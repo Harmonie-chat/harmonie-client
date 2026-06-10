@@ -16,9 +16,9 @@ import { AudioInputPopover } from '@/features/user/audio/AudioInputPopover';
 import { VideoInputPopover } from '@/features/user/video/VideoInputPopover';
 
 interface VoiceCallControlsProps {
-  isMuted: boolean;
-  isCameraEnabled: boolean;
-  isScreenSharing: boolean;
+  microphoneState: 'muted' | 'unmuted';
+  cameraState: 'on' | 'off';
+  screenShareState: 'sharing' | 'idle';
   screenShareError: string | null;
   cameraError: string | null;
   onToggleMute: () => void;
@@ -28,9 +28,9 @@ interface VoiceCallControlsProps {
 }
 
 export const VoiceCallControls = ({
-  isMuted,
-  isCameraEnabled,
-  isScreenSharing,
+  microphoneState,
+  cameraState,
+  screenShareState,
   screenShareError,
   cameraError,
   onToggleMute,
@@ -45,6 +45,9 @@ export const VoiceCallControls = ({
   const audioInputChevronRef = useRef<HTMLButtonElement>(null);
   const videoInputChevronRef = useRef<HTMLButtonElement>(null);
   const canShareScreen = Boolean(navigator.mediaDevices?.getDisplayMedia);
+  const isMuted = microphoneState === 'muted';
+  const isCameraEnabled = cameraState === 'on';
+  const isScreenSharing = screenShareState === 'sharing';
 
   const handleToggleMute = () => {
     setAudioInputPopoverOpen(false);
@@ -74,7 +77,7 @@ export const VoiceCallControls = ({
       ].join(' ')}
     >
       <div className="pointer-events-none flex w-[min(calc(100vw-2rem),34rem)] flex-col items-center gap-2">
-        <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-border-2 bg-surface-1 px-3 py-3 shadow-[0_4px_16px_rgba(61,53,48,0.10)]">
+        <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-border-2 bg-surface-1 p-3 shadow-[0_4px_16px_rgba(61,53,48,0.10)]">
           <SplitIconButton
             ref={audioInputChevronRef}
             size="medium"

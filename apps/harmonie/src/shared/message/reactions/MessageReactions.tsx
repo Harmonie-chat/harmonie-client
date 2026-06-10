@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getChannelReactionUsers } from '@/api/channels';
 import { getConversationReactionUsers } from '@/api/conversations';
-import type { MessageAuthor } from '@/shared/message/types';
+import type { MessageAuthor } from '@/shared/message/messageAuthor';
 import type { MessageReaction, MessageReactionUser } from '@/types/channel';
 import type { UserProfile } from '@/types/user';
 import {
@@ -24,6 +24,13 @@ interface MessageReactionsProps {
   currentUser?: UserProfile | null;
 }
 
+interface ReactionUsersState {
+  emoji: string | null;
+  users: MessageReactionUser[];
+  nextCursor: string | null;
+  error: boolean;
+}
+
 export const MessageReactions = ({
   messageId,
   reactions,
@@ -40,10 +47,21 @@ export const MessageReactions = ({
     anchorRect: DOMRect;
   } | null>(null);
   const [selectedEmoji, setSelectedEmoji] = useState<string | null>(null);
-  const [reactionUsers, setReactionUsers] = useState<MessageReactionUser[]>([]);
-  const [reactionUsersNextCursor, setReactionUsersNextCursor] = useState<string | null>(null);
-  const [loadingReactionUsers, setLoadingReactionUsers] = useState(false);
-  const [reactionUsersError, setReactionUsersError] = useState(false);
+  const [reactionUsersState, setReactionUsersState] = useState<ReactionUsersState>({
+    emoji: null,
+    users: [],
+    nextCursor: null,
+    error: false,
+  });
+  const [loadingMoreReactionUsers, setLoadingMoreReactionUsers] = useState(false);
+  const reactionUsers = reactionUsersState.emoji === selectedEmoji ? reactionUsersState.users : [];
+  const reactionUsersNextCursor =
+    reactionUsersState.emoji === selectedEmoji ? reactionUsersState.nextCursor : null;
+  const loadingReactionUsers =
+    selectedEmoji !== null &&
+    (reactionUsersState.emoji !== selectedEmoji || loadingMoreReactionUsers);
+  const reactionUsersError =
+    reactionUsersState.emoji === selectedEmoji ? reactionUsersState.error : false;
 
   const selectedReaction = selectedEmoji
     ? reactions.find((reaction) => reaction.emoji === selectedEmoji)
@@ -78,11 +96,11 @@ export const MessageReactions = ({
       }
     : undefined;
 
-  const clearCloseTooltipTimeout = useCallback(() => {
+  const clearCloseTooltipTimeout = () => {
     if (closeTooltipTimeoutRef.current === null) return;
     window.clearTimeout(closeTooltipTimeoutRef.current);
     closeTooltipTimeoutRef.current = null;
-  }, []);
+  };
 
   const closeTooltipSoon = () => {
     clearCloseTooltipTimeout();
@@ -100,40 +118,67 @@ export const MessageReactions = ({
     setHoveredReaction(null);
   };
 
-  const fetchReactionUsers = useCallback(
-    async (emoji: string, cursor?: string | null) => {
-      if (!reactionSource) return;
+  const fetchReactionUsers = async (emoji: string, cursor?: string | null) => {
+    if (!reactionSource) return;
 
-      setLoadingReactionUsers(true);
-      setReactionUsersError(false);
-      try {
-        const data =
-          reactionSource.type === 'channel'
-            ? await getChannelReactionUsers(reactionSource.entityId, messageId, emoji, cursor)
-            : await getConversationReactionUsers(reactionSource.entityId, messageId, emoji, cursor);
-        setReactionUsers((prev) => (cursor ? [...prev, ...data.users] : data.users));
-        setReactionUsersNextCursor(data.nextCursor);
-      } catch {
-        setReactionUsersError(true);
-      } finally {
-        setLoadingReactionUsers(false);
-      }
-    },
-    [messageId, reactionSource]
-  );
+    if (cursor) setLoadingMoreReactionUsers(true);
+    try {
+      const data =
+        reactionSource.type === 'channel'
+          ? await getChannelReactionUsers(reactionSource.entityId, messageId, emoji, cursor)
+          : await getConversationReactionUsers(reactionSource.entityId, messageId, emoji, cursor);
+      setReactionUsersState((prev) => ({
+        emoji,
+        users: cursor && prev.emoji === emoji ? [...prev.users, ...data.users] : data.users,
+        nextCursor: data.nextCursor,
+        error: false,
+      }));
+    } catch {
+      setReactionUsersState((prev) => ({
+        emoji,
+        users: cursor && prev.emoji === emoji ? prev.users : [],
+        nextCursor: cursor && prev.emoji === emoji ? prev.nextCursor : null,
+        error: true,
+      }));
+    }
+    setLoadingMoreReactionUsers(false);
+  };
 
   useEffect(() => {
     if (!selectedEmoji || !reactionSource) return;
-    setReactionUsers([]);
-    setReactionUsersNextCursor(null);
-    fetchReactionUsers(selectedEmoji);
-  }, [fetchReactionUsers, reactionSource, selectedEmoji]);
+    let active = true;
+    const emoji = selectedEmoji;
+    const loadInitialReactionUsers = async () => {
+      try {
+        const data =
+          reactionSource.type === 'channel'
+            ? await getChannelReactionUsers(reactionSource.entityId, messageId, emoji)
+            : await getConversationReactionUsers(reactionSource.entityId, messageId, emoji);
+        if (!active) return;
+        setReactionUsersState({
+          emoji,
+          users: data.users,
+          nextCursor: data.nextCursor,
+          error: false,
+        });
+      } catch {
+        if (!active) return;
+        setReactionUsersState({ emoji, users: [], nextCursor: null, error: true });
+      }
+    };
+    void loadInitialReactionUsers();
+    return () => {
+      active = false;
+    };
+  }, [messageId, reactionSource, selectedEmoji]);
 
   useEffect(
     () => () => {
-      clearCloseTooltipTimeout();
+      if (closeTooltipTimeoutRef.current === null) return;
+      window.clearTimeout(closeTooltipTimeoutRef.current);
+      closeTooltipTimeoutRef.current = null;
     },
-    [clearCloseTooltipTimeout]
+    []
   );
 
   if (reactions.length === 0) return null;

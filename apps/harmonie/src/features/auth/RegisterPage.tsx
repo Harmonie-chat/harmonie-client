@@ -1,53 +1,94 @@
-import { useState } from 'react';
+import { useReducer } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, Input } from '@harmonie/ui';
 import { Eye, EyeOff } from 'lucide-react';
 import { isValidEmail, isValidPassword } from '@/shared/utils/user';
 import { resolveColor } from '@/shared/utils/colors';
-import { BG_COLORS, ICON_COLORS } from '@/shared/consts/constants';
+import { BG_COLORS, ICON_COLORS } from '@/shared/components/iconAppearanceOptions';
 import { register } from '@/api/auth';
 import { storeTokens } from '@/api/authStorage';
 import type { ApiError } from '@/types/error';
 import { AuthCard } from './AuthCard';
 import { useAuth } from './AuthContext';
 
+interface RegisterState {
+  username: string;
+  usernameErrorKey?: string;
+  email: string;
+  emailErrorKey?: string;
+  password: string;
+  passwordErrorKey?: string;
+  showPassword: boolean;
+  isLoading: boolean;
+  globalErrorKey?: string;
+}
+
+type RegisterAction =
+  | { type: 'patch'; patch: Partial<RegisterState> }
+  | { type: 'togglePasswordVisibility' };
+
+const registerInitialState: RegisterState = {
+  username: '',
+  email: '',
+  password: '',
+  showPassword: false,
+  isLoading: false,
+};
+
+const registerReducer = (state: RegisterState, action: RegisterAction): RegisterState => {
+  switch (action.type) {
+    case 'patch':
+      return { ...state, ...action.patch };
+    case 'togglePasswordVisibility':
+      return { ...state, showPassword: !state.showPassword };
+  }
+};
+
 export const RegisterPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { setIsAuthenticated } = useAuth();
 
-  const [username, setUsername] = useState('');
-  const [usernameErrorKey, setUsernameErrorKey] = useState<string | undefined>();
-  const [email, setEmail] = useState('');
-  const [emailErrorKey, setEmailErrorKey] = useState<string | undefined>();
-  const [password, setPassword] = useState('');
-  const [passwordErrorKey, setPasswordErrorKey] = useState<string | undefined>();
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [globalErrorKey, setGlobalErrorKey] = useState<string | undefined>();
+  const [state, dispatch] = useReducer(registerReducer, registerInitialState);
+  const {
+    username,
+    usernameErrorKey,
+    email,
+    emailErrorKey,
+    password,
+    passwordErrorKey,
+    showPassword,
+    isLoading,
+    globalErrorKey,
+  } = state;
 
   const isSubmittable =
     username.trim().length > 0 && isValidEmail(email) && isValidPassword(password);
 
   const handleEmailBlur = () =>
     email && !isValidEmail(email)
-      ? setEmailErrorKey('auth.errors.emailInvalid')
-      : setEmailErrorKey(undefined);
+      ? dispatch({ type: 'patch', patch: { emailErrorKey: 'auth.errors.emailInvalid' } })
+      : dispatch({ type: 'patch', patch: { emailErrorKey: undefined } });
 
   const handlePasswordBlur = () =>
     password && !isValidPassword(password)
-      ? setPasswordErrorKey('auth.errors.passwordInvalid')
-      : setPasswordErrorKey(undefined);
+      ? dispatch({ type: 'patch', patch: { passwordErrorKey: 'auth.errors.passwordInvalid' } })
+      : dispatch({ type: 'patch', patch: { passwordErrorKey: undefined } });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isSubmittable) return;
 
-    setIsLoading(true);
-    setGlobalErrorKey(undefined);
-    setEmailErrorKey(undefined);
-    setUsernameErrorKey(undefined);
+    dispatch({
+      type: 'patch',
+      patch: {
+        isLoading: true,
+        globalErrorKey: undefined,
+        emailErrorKey: undefined,
+        usernameErrorKey: undefined,
+      },
+    });
 
     try {
       const response = await register({
@@ -67,15 +108,14 @@ export const RegisterPage = () => {
     } catch (err) {
       const apiError = err as ApiError;
       if (apiError.code === 'AUTH_DUPLICATE_EMAIL') {
-        setEmailErrorKey('auth.errors.duplicateEmail');
+        dispatch({ type: 'patch', patch: { emailErrorKey: 'auth.errors.duplicateEmail' } });
       } else if (apiError.code === 'AUTH_DUPLICATE_USERNAME') {
-        setUsernameErrorKey('auth.errors.duplicateUsername');
+        dispatch({ type: 'patch', patch: { usernameErrorKey: 'auth.errors.duplicateUsername' } });
       } else {
-        setGlobalErrorKey('auth.errors.genericError');
+        dispatch({ type: 'patch', patch: { globalErrorKey: 'auth.errors.genericError' } });
       }
-    } finally {
-      setIsLoading(false);
     }
+    dispatch({ type: 'patch', patch: { isLoading: false } });
   };
 
   return (
@@ -85,7 +125,7 @@ export const RegisterPage = () => {
           label={t('auth.username')}
           placeholder={t('auth.username')}
           value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          onChange={(e) => dispatch({ type: 'patch', patch: { username: e.target.value } })}
           error={usernameErrorKey ? t(usernameErrorKey) : undefined}
         />
         <Input
@@ -93,7 +133,7 @@ export const RegisterPage = () => {
           placeholder={t('auth.email')}
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => dispatch({ type: 'patch', patch: { email: e.target.value } })}
           onBlur={handleEmailBlur}
           error={emailErrorKey ? t(emailErrorKey) : undefined}
         />
@@ -102,13 +142,13 @@ export const RegisterPage = () => {
           placeholder="••••••••••"
           type={showPassword ? 'text' : 'password'}
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => dispatch({ type: 'patch', patch: { password: e.target.value } })}
           onBlur={handlePasswordBlur}
           error={passwordErrorKey ? t(passwordErrorKey) : undefined}
           rightElement={
             <button
               type="button"
-              onClick={() => setShowPassword((show) => !show)}
+              onClick={() => dispatch({ type: 'togglePasswordVisibility' })}
               className="cursor-pointer"
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}

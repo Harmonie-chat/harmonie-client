@@ -50,7 +50,6 @@ export const ContextMenu = ({
     };
     const media = window.matchMedia(TOUCH_MENU_QUERY);
     const handleMediaChange = () => setIsTouchMenu(media.matches);
-    handleMediaChange();
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('keydown', handleKeyDown);
     media.addEventListener('change', handleMediaChange);
@@ -154,49 +153,44 @@ export const ContextMenu = ({
       )}
       {isTouchMenu && touchHeader}
       {!(isTouchMenu && touchExpanded) &&
-        items
-          .filter((item) => !(isTouchMenu && item.hideOnTouch))
-          .map((item, i) =>
-            item.content ? (
-              <div
-                key={i}
-                role="group"
-                aria-label={item.label}
-                className={isTouchMenu ? 'px-4 py-4' : 'px-3 py-2'}
-                onClick={(event) => event.stopPropagation()}
-                onKeyDown={(event) => event.stopPropagation()}
-                onMouseDown={(event) => event.stopPropagation()}
-                onPointerDown={(event) => event.stopPropagation()}
-                onTouchStart={(event) => event.stopPropagation()}
-              >
-                {item.content}
-              </div>
-            ) : (
-              <button
-                key={i}
-                role="menuitem"
-                className={[
-                  'flex w-full items-center gap-2 rounded-sm font-body text-text-2 hover:bg-surface-2 hover:text-text-1 cursor-pointer transition-colors text-left',
-                  isTouchMenu ? 'px-4 py-4 text-base' : 'px-3 py-1.5 text-sm',
-                ].join(' ')}
-                onClick={() => {
-                  item.onClick?.();
-                  onClose();
-                }}
-              >
-                {item.icon && (
-                  <span
-                    className={['shrink-0 text-text-3', isTouchMenu ? '[&_svg]:size-5' : ''].join(
-                      ' '
-                    )}
-                  >
-                    {item.icon}
-                  </span>
-                )}
-                {item.label}
-              </button>
-            )
-          )}
+        items.map((item) =>
+          isTouchMenu && item.hideOnTouch ? null : item.content ? (
+            <fieldset
+              key={`content-${item.label}`}
+              aria-label={item.label}
+              className={
+                isTouchMenu ? 'm-0 min-w-0 border-0 px-4 py-4' : 'm-0 min-w-0 border-0 px-3 py-2'
+              }
+            >
+              {item.content}
+            </fieldset>
+          ) : (
+            <button
+              type="button"
+              key={`action-${item.label}`}
+              role="menuitem"
+              className={[
+                'flex w-full items-center gap-2 rounded-sm font-body text-text-2 hover:bg-surface-2 hover:text-text-1 cursor-pointer transition-colors text-left',
+                isTouchMenu ? 'px-4 py-4 text-base' : 'px-3 py-1.5 text-sm',
+              ].join(' ')}
+              onClick={() => {
+                item.onClick?.();
+                onClose();
+              }}
+            >
+              {item.icon && (
+                <span
+                  className={['shrink-0 text-text-3', isTouchMenu ? '[&_svg]:size-5' : ''].join(
+                    ' '
+                  )}
+                >
+                  {item.icon}
+                </span>
+              )}
+              {item.label}
+            </button>
+          )
+        )}
     </div>
   );
 
@@ -204,7 +198,12 @@ export const ContextMenu = ({
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/35 backdrop-blur-[1px]" onClick={onClose} />
+      <button
+        type="button"
+        aria-label="Close menu"
+        className="fixed inset-0 z-40 bg-black/35 backdrop-blur-[1px]"
+        onClick={onClose}
+      />
       {menu}
     </>
   );

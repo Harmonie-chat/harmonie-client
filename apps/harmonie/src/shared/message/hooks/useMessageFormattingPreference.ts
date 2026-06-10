@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const STORAGE_KEY = 'harmonie:message-formatting-open';
 
@@ -15,9 +15,9 @@ export const useMessageFormattingPreference = () => {
     localStorage.setItem(STORAGE_KEY, String(formattingOpen));
   }, [formattingOpen]);
 
-  const toggleFormattingOpen = useCallback(() => {
+  const toggleFormattingOpen = () => {
     setFormattingOpen((current) => !current);
-  }, []);
+  };
 
   return {
     formattingOpen,

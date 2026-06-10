@@ -6,7 +6,7 @@ import { useFileBlobUrl } from '@/shared/hooks/useFileBlobUrl';
 import { useTheme } from '@/features/user/ThemeContext';
 import { getUserGradient } from '@/shared/utils/user';
 import { useCurrentGuild, useGuilds } from '@/features/guild/GuildContext';
-import { useGuildPermissions } from '@/features/guild/hooks/useGuildPermissions';
+import { useGuildPermissions } from '@/features/guild/useGuildPermissions';
 import { useOpenDirectConversation } from '@/features/conversation/useOpenDirectConversation';
 import { useUser } from '@/features/user/UserContext';
 import { BanMemberModal } from '@/features/guild/members/modals/BanMemberModal';

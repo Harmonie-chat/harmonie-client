@@ -32,7 +32,7 @@ const purgeExpiredCacheEntries = (now: number) => {
 
 const enforceCacheLimit = () => {
   if (blobUrlCache.size <= MAX_CACHE_ENTRIES) return;
-  const sortedByAccess = [...blobUrlCache.entries()].sort(
+  const sortedByAccess = Array.from(blobUrlCache.entries()).sort(
     (a, b) => a[1].lastAccessedAt - b[1].lastAccessedAt
   );
   const itemsToEvict = blobUrlCache.size - MAX_CACHE_ENTRIES;
@@ -83,24 +83,26 @@ export const loadBlobUrl = async (fileId: string): Promise<string | undefined> =
   return request;
 };
 
+interface BlobUrlState {
+  fileId: string;
+  url: string | undefined;
+}
+
 export const useFileBlobUrl = (fileId?: string | null): string | undefined => {
-  const [blobUrl, setBlobUrl] = useState<string>();
+  const [state, setState] = useState<BlobUrlState>({ fileId: '', url: undefined });
 
   useEffect(() => {
     let active = true;
 
-    if (!fileId) {
-      setBlobUrl(undefined);
-      return;
-    }
+    if (!fileId) return;
 
     loadBlobUrl(fileId)
       .then((url) => {
         if (!active) return;
-        setBlobUrl(url);
+        setState({ fileId, url });
       })
       .catch(() => {
-        if (active) setBlobUrl(undefined);
+        if (active) setState({ fileId, url: undefined });
       });
 
     return () => {
@@ -108,5 +110,5 @@ export const useFileBlobUrl = (fileId?: string | null): string | undefined => {
     };
   }, [fileId]);
 
-  return blobUrl;
+  return fileId && state.fileId === fileId ? state.url : undefined;
 };

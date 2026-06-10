@@ -5,6 +5,7 @@ import { SplitIconButton } from './SplitIconButton';
 const meta: Meta<typeof SplitIconButton> = {
   title: 'Actions/SplitIconButton',
   component: SplitIconButton,
+  tags: ['autodocs'],
   args: {
     size: 'small',
     selected: false,

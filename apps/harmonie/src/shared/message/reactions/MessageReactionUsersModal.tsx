@@ -1,5 +1,5 @@
 import { Button, Modal } from '@harmonie/ui';
-import type { MessageAuthor } from '@/shared/message/types';
+import type { MessageAuthor } from '@/shared/message/messageAuthor';
 import type { MessageReaction, MessageReactionUser } from '@/types/channel';
 import { MessageReactionUserRow } from './MessageReactionUserRow';
 

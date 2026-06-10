@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode } from 'react';
+import { createContext, use, type ReactNode } from 'react';
 import type {
   VoiceCameraTrack,
   VoiceParticipant,
@@ -179,4 +179,4 @@ export const VoicePresenceProvider = ({ children }: { children: ReactNode }) => 
   );
 };
 
-export const useVoicePresence = () => useContext(VoicePresenceContext);
+export const useVoicePresence = () => use(VoicePresenceContext);

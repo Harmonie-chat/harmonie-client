@@ -34,6 +34,8 @@ const createIncomingCallSoundUrl = () => {
   view.setUint32(40, dataSize, true);
 
   let noise = 0;
+  const patternSpacingSeconds = 1.35;
+  const patternDurationSeconds = 0.92;
   const patternStarts = [0, 1.35, 2.7, 4.05];
   const patternHitStarts = [0.06, 0.26, 0.46, 0.68];
   const patternBodyFrequencies = [215, 235, 285, 220];
@@ -42,12 +44,20 @@ const createIncomingCallSoundUrl = () => {
 
   for (let i = 0; i < sampleCount; i += 1) {
     const time = i / SAMPLE_RATE;
-    const patternIndex = patternStarts.findIndex((start) => time >= start && time < start + 0.92);
-    const patternTime = patternIndex === -1 ? 0 : time - patternStarts[patternIndex];
-    const hitIndex = patternHitStarts.findIndex(
-      (start) => patternTime >= start && patternTime < start + 0.24
-    );
-    const isActiveHit = hitIndex !== -1;
+    const patternIndex = Math.floor(time / patternSpacingSeconds);
+    const patternStart = patternStarts[patternIndex] ?? 0;
+    const isActivePattern =
+      patternIndex < patternStarts.length &&
+      time >= patternStart &&
+      time < patternStart + patternDurationSeconds;
+    const hitIndex = Math.floor((time - patternStart - 0.06) / 0.2);
+    const isKnownHit =
+      hitIndex >= 0 &&
+      hitIndex < patternHitStarts.length &&
+      time - patternStart >= patternHitStarts[hitIndex] &&
+      time - patternStart < patternHitStarts[hitIndex] + 0.24;
+    const patternTime = isActivePattern ? time - patternStart : 0;
+    const isActiveHit = isActivePattern && isKnownHit;
     const hitTime = isActiveHit ? patternTime - patternHitStarts[hitIndex] : 0;
     const bodyFrequency = isActiveHit ? patternBodyFrequencies[hitIndex] : 185;
     const hitAttack = Math.min(1, hitTime / 0.008);

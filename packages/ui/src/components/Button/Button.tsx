@@ -52,6 +52,7 @@ export const Button = ({
 
   const button = (
     <button
+      type="button"
       disabled={isDisabled}
       className={classes}
       aria-describedby={[ariaDescribedBy, tooltipId].filter(Boolean).join(' ') || undefined}

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { RichTextMentionAutocomplete } from './RichTextMentionAutocomplete';
 
 const meta = {
@@ -23,19 +23,22 @@ const results = [
 const KeyboardSelectionExample = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowDown') {
+        setSelectedIndex((current) => (current + 1) % results.length);
+      }
+      if (event.key === 'ArrowUp') {
+        setSelectedIndex((current) => (current - 1 + results.length) % results.length);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
-    <div
-      className="min-h-screen bg-surface-2"
-      tabIndex={0}
-      onKeyDown={(event) => {
-        if (event.key === 'ArrowDown') {
-          setSelectedIndex((current) => (current + 1) % results.length);
-        }
-        if (event.key === 'ArrowUp') {
-          setSelectedIndex((current) => (current - 1 + results.length) % results.length);
-        }
-      }}
-    >
+    <div className="min-h-screen bg-surface-2">
       <RichTextMentionAutocomplete
         results={results}
         selectedIndex={selectedIndex}

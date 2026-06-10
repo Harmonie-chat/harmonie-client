@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, use, useEffect, useState, type ReactNode } from 'react';
 import { getMe } from '@/api/users';
+import { getAccessToken } from '@/api/authStorage';
 import type { UserProfile } from '@/types/user';
 import { useAuth } from '@/features/auth/AuthContext';
 import i18n from '@/i18n';
@@ -11,6 +12,11 @@ interface UserContextValue {
   updateUser: (user: UserProfile) => void;
 }
 
+interface UserState {
+  authKey: string | null;
+  user: UserProfile | null;
+}
+
 const UserContext = createContext<UserContextValue>({
   user: null,
   isLoading: false,
@@ -20,30 +26,36 @@ const UserContext = createContext<UserContextValue>({
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated } = useAuth();
   const { setTheme } = useTheme();
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const authKey = isAuthenticated ? getAccessToken() : null;
+  const [state, setState] = useState<UserState>({ authKey: null, user: null });
+  const user = authKey !== null && state.authKey === authKey ? state.user : null;
+  const isLoading = authKey !== null && state.authKey !== authKey;
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      setUser(null);
-      return;
-    }
-    setIsLoading(true);
+    if (authKey === null) return;
+    let active = true;
     getMe()
       .then((profile) => {
-        setUser(profile);
+        if (!active) return;
+        setState({ authKey, user: profile });
         if (profile.language) i18n.changeLanguage(profile.language);
         if (THEMES.includes(profile.theme as Theme)) setTheme(profile.theme as Theme);
       })
-      .catch(() => setUser(null))
-      .finally(() => setIsLoading(false));
-  }, [isAuthenticated, setTheme]);
+      .catch(() => {
+        if (active) setState({ authKey, user: null });
+      });
+    return () => {
+      active = false;
+    };
+  }, [authKey, setTheme]);
+
+  const updateUser = (nextUser: UserProfile) => {
+    setState({ authKey, user: nextUser });
+  };
 
   return (
-    <UserContext.Provider value={{ user, isLoading, updateUser: setUser }}>
-      {children}
-    </UserContext.Provider>
+    <UserContext.Provider value={{ user, isLoading, updateUser }}>{children}</UserContext.Provider>
   );
 };
 
-export const useUser = () => useContext(UserContext);
+export const useUser = () => use(UserContext);

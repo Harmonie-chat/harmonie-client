@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, use, useEffect, useRef, useState, type ReactNode } from 'react';
 import { logout as logoutApi, refreshTokens } from '@/api/auth';
 import { clearTokens, getRefreshToken, storeTokens } from '@/api/authStorage';
 import { setLogoutHandler } from '@/api/client';
@@ -77,4 +77,4 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => use(AuthContext);

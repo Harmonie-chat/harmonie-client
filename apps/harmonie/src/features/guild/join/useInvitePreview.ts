@@ -11,36 +11,37 @@ interface UseInvitePreviewResult {
   notFound: boolean;
 }
 
+interface InvitePreviewState {
+  code: string;
+  preview: InvitePreview | null;
+  notFound: boolean;
+}
+
 export const useInvitePreview = (inviteCode: string): UseInvitePreviewResult => {
-  const [preview, setPreview] = useState<InvitePreview | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [notFound, setNotFound] = useState(false);
+  const code = inviteCode.trim();
+  const canSearch = code.length >= MIN_CODE_LENGTH;
+  const [state, setState] = useState<InvitePreviewState>({
+    code: '',
+    preview: null,
+    notFound: false,
+  });
+  const isCurrent = canSearch && state.code === code;
 
   useEffect(() => {
-    const code = inviteCode.trim();
-    if (code.length < MIN_CODE_LENGTH) {
-      setPreview(null);
-      setNotFound(false);
-      setIsLoading(false);
-      return;
-    }
-    setIsLoading(true);
+    if (!canSearch) return;
     const timer = setTimeout(() => {
       getInvitePreview(code)
-        .then((data) => {
-          setPreview(data);
-          setNotFound(false);
-        })
-        .catch((err: { status?: number }) => {
-          setPreview(null);
-          setNotFound(err?.status === 404);
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
+        .then((data) => setState({ code, preview: data, notFound: false }))
+        .catch((err: { status?: number }) =>
+          setState({ code, preview: null, notFound: err?.status === 404 })
+        );
     }, DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [inviteCode]);
+  }, [canSearch, code]);
 
-  return { preview, isLoading, notFound };
+  return {
+    preview: isCurrent ? state.preview : null,
+    isLoading: canSearch && !isCurrent,
+    notFound: isCurrent ? state.notFound : false,
+  };
 };

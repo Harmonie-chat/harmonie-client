@@ -9,7 +9,7 @@ interface ProfileBackedUser {
   avatar?: AvatarAppearance | null;
 }
 
-export const avatarFromProfileUpdate = (event: UserProfileUpdatedEvent): AvatarAppearance => ({
+const avatarFromProfileUpdate = (event: UserProfileUpdatedEvent): AvatarAppearance => ({
   color: event.avatarColor ?? undefined,
   icon: event.avatarIcon ?? undefined,
   bg: event.avatarBg ?? undefined,

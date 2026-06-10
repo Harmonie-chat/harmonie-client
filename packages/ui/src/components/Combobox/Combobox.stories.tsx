@@ -48,7 +48,6 @@ export const Menu: Story = {
 
 export const Searchable: Story = {
   render: () => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const [query, setQuery] = useState('');
     const items = MEMBER_ITEMS.filter((item) =>
       item.label.toLowerCase().includes(query.toLowerCase())

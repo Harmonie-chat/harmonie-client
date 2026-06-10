@@ -1,10 +1,33 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { Avatar } from '../Avatar/Avatar';
 import { Badge, type BadgeVariant } from '../Badge/Badge';
 
 const POPOVER_WIDTH = 224;
 const POPOVER_OFFSET = 8;
+const EMPTY_BADGES: UserPopoverBadge[] = [];
+const EMPTY_ACTIONS: UserPopoverAction[] = [];
+const TOUCH_POPOVER_QUERY = '(hover: none), (pointer: coarse)';
+
+const getIsTouchPopoverSnapshot = () =>
+  typeof window !== 'undefined' && window.matchMedia(TOUCH_POPOVER_QUERY).matches;
+
+const getServerIsTouchPopoverSnapshot = () => false;
+
+const subscribeToTouchPopover = (callback: () => void) => {
+  if (typeof window === 'undefined') return () => {};
+
+  const media = window.matchMedia(TOUCH_POPOVER_QUERY);
+  media.addEventListener('change', callback);
+  return () => media.removeEventListener('change', callback);
+};
 
 export interface UserPopoverBadge {
   label: ReactNode;
@@ -46,17 +69,19 @@ export const UserPopover = ({
   avatarBg = 'var(--color-cat-1)',
   headerBackground,
   side = 'left',
-  badges = [],
+  badges = EMPTY_BADGES,
   bioLabel,
   bio,
-  actions = [],
+  actions = EMPTY_ACTIONS,
 }: UserPopoverProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
-  const [isTouchPopover, setIsTouchPopover] = useState(false);
-  const top = Math.min(
-    anchorRect.top,
-    window.innerHeight - (cardRef.current?.offsetHeight ?? 200) - POPOVER_OFFSET
+  const isTouchPopover = useSyncExternalStore(
+    subscribeToTouchPopover,
+    getIsTouchPopoverSnapshot,
+    getServerIsTouchPopoverSnapshot
   );
+  const [cardHeight, setCardHeight] = useState(200);
+  const top = Math.min(anchorRect.top, window.innerHeight - cardHeight - POPOVER_OFFSET);
   const left =
     side === 'right'
       ? Math.min(
@@ -73,18 +98,18 @@ export const UserPopover = ({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [onClose]);
 
-  useEffect(() => {
-    const media = window.matchMedia('(hover: none), (pointer: coarse)');
-    const handleChange = () => setIsTouchPopover(media.matches);
-
-    handleChange();
-    media.addEventListener('change', handleChange);
-    return () => media.removeEventListener('change', handleChange);
-  }, []);
+  useLayoutEffect(() => {
+    setCardHeight(cardRef.current?.offsetHeight ?? 200);
+  }, [actions.length, badges.length, bio, bioLabel]);
 
   return createPortal(
     <>
-      <div className="fixed inset-0 z-40 cursor-default" onClick={onClose} />
+      <button
+        type="button"
+        aria-label={`Close ${label}`}
+        className="fixed inset-0 z-40 cursor-default"
+        onClick={onClose}
+      />
       <div
         ref={cardRef}
         className={[
@@ -105,7 +130,7 @@ export const UserPopover = ({
                   aria-label={action.label}
                   title={action.title ?? action.label}
                   onClick={action.onClick}
-                  className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-full bg-transparent text-text-2 hover:text-text-1 hover:scale-[1.04] transition cursor-pointer"
+                  className="inline-flex items-center justify-center size-[28px] rounded-full bg-transparent text-text-2 hover:text-text-1 hover:scale-[1.04] transition cursor-pointer"
                 >
                   {action.icon}
                 </button>
@@ -131,8 +156,8 @@ export const UserPopover = ({
           </div>
           {badges.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
-              {badges.map((badge, index) => (
-                <Badge key={index} variant={badge.variant}>
+              {badges.map((badge) => (
+                <Badge key={`${badge.variant}-${badge.label}`} variant={badge.variant}>
                   {badge.label}
                 </Badge>
               ))}

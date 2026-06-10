@@ -28,44 +28,33 @@ export const VoiceChannelView = () => {
   const { theme } = useTheme();
   const { user } = useUser();
   const voice = useVoicePresence();
+  const {
+    activeChannelId: activeVoiceChannelId,
+    activeChannelName,
+    isJoining,
+    joinChannel,
+    updateActiveChannelMeta,
+  } = voice;
+  const autoJoinAttemptedChannelRef = useRef<string | null>(null);
 
   const channel = channels?.find((c) => c.channelId === channelId);
-  const isActive = voice.activeChannelId === channelId;
-  const joinMetaRef = useRef({
-    channel,
-    guild,
-    isActive,
-    isJoining: voice.isJoining,
-    joinChannel: voice.joinChannel,
-  });
-
-  joinMetaRef.current = {
-    channel,
-    guild,
-    isActive,
-    isJoining: voice.isJoining,
-    joinChannel: voice.joinChannel,
-  };
-
+  const isActive = activeVoiceChannelId === channelId;
   useEffect(() => {
     if (!channelId || !guildId) return;
-    const {
-      channel: ch,
-      guild: g,
-      isActive: active,
-      isJoining: joining,
-      joinChannel: join,
-    } = joinMetaRef.current;
-    if (!active && !joining) {
-      void join(channelId, ch?.name, guildId, g?.name);
+    if (autoJoinAttemptedChannelRef.current !== channelId) {
+      autoJoinAttemptedChannelRef.current = null;
     }
-  }, [channelId, guildId]);
+    if (!isActive && !isJoining && autoJoinAttemptedChannelRef.current !== channelId) {
+      autoJoinAttemptedChannelRef.current = channelId;
+      void joinChannel(channelId, channel?.name, guildId, guild?.name);
+    }
+  }, [channel?.name, channelId, guild?.name, guildId, isActive, isJoining, joinChannel]);
 
   useEffect(() => {
-    if (isActive && channel?.name && guild?.name && !voice.activeChannelName) {
-      voice.updateActiveChannelMeta(channel.name, guild.name);
+    if (isActive && channel?.name && guild?.name && !activeChannelName) {
+      updateActiveChannelMeta(channel.name, guild.name);
     }
-  }, [isActive, channel?.name, guild?.name, voice]);
+  }, [activeChannelName, channel?.name, guild?.name, isActive, updateActiveChannelMeta]);
 
   if (!channelId || !guildId) return <Navigate to="/" replace />;
 
@@ -146,21 +135,25 @@ export const VoiceChannelView = () => {
             rows={rows}
             cardSizes={cardSizes}
             cardWidth={cardWidth}
-            isDarkTheme={isDarkTheme}
+            stageState={{ isDarkTheme }}
             speakingUserIds={voice.speakingUserIds}
             screenShares={voice.screenShares}
             cameraTracksByUserId={cameraTracksByUserId}
             labelsByUserId={labelsByUserId}
-            activePinnedTargetId={activePinnedTargetId}
-            pinnedParticipant={pinnedParticipant}
-            pinnedScreenShare={pinnedScreenShare}
-            hasPinnedItem={Boolean(pinnedParticipant || pinnedScreenShare)}
+            pinning={{
+              activePinnedTargetId,
+              pinnedParticipant,
+              pinnedScreenShare,
+              hasPinnedItem: Boolean(pinnedParticipant || pinnedScreenShare),
+            }}
             currentUserId={user?.userId}
-            isMuted={voice.isMuted}
-            isCameraEnabled={voice.isCameraEnabled}
-            isScreenSharing={voice.isScreenSharing}
-            screenShareError={voice.screenShareError}
-            cameraError={voice.cameraError}
+            localMedia={{
+              isMuted: voice.isMuted,
+              isCameraEnabled: voice.isCameraEnabled,
+              isScreenSharing: voice.isScreenSharing,
+              screenShareError: voice.screenShareError,
+              cameraError: voice.cameraError,
+            }}
             onTogglePin={handleTogglePin}
             getParticipantVolume={voice.getParticipantVolume}
             onParticipantVolumeChange={voice.setParticipantVolume}

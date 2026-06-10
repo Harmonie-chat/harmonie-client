@@ -3,18 +3,24 @@ import { Pencil, Pin, PinOff, Reply, SmilePlus, Trash2 } from 'lucide-react';
 import { IconButton } from '@harmonie/ui';
 
 interface MessageActionsProps {
-  canEdit: boolean;
-  canDelete: boolean;
-  canPin: boolean;
-  isPinned: boolean;
-  canReact: boolean;
-  canReply: boolean;
-  editLabel: string;
-  deleteLabel: string;
-  pinLabel: string;
-  unpinLabel: string;
-  reactLabel: string;
-  replyLabel: string;
+  availability: {
+    canEdit: boolean;
+    canDelete: boolean;
+    canPin: boolean;
+    canReact: boolean;
+    canReply: boolean;
+  };
+  state: {
+    isPinned: boolean;
+  };
+  labels: {
+    edit: string;
+    delete: string;
+    pin: string;
+    unpin: string;
+    react: string;
+    reply: string;
+  };
   onEdit: () => void;
   onDelete: () => void;
   onPinToggle: () => void;
@@ -23,18 +29,9 @@ interface MessageActionsProps {
 }
 
 export const MessageActions = ({
-  canEdit,
-  canDelete,
-  canPin,
-  isPinned,
-  canReact,
-  canReply,
-  editLabel,
-  deleteLabel,
-  pinLabel,
-  unpinLabel,
-  reactLabel,
-  replyLabel,
+  availability,
+  state,
+  labels,
   onEdit,
   onDelete,
   onPinToggle,
@@ -42,6 +39,7 @@ export const MessageActions = ({
   onReply,
 }: MessageActionsProps) => {
   const reactButtonRef = useRef<HTMLDivElement>(null);
+  const { canEdit, canDelete, canPin, canReact, canReply } = availability;
 
   if (!canEdit && !canDelete && !canPin && !canReact && !canReply) return null;
 
@@ -60,7 +58,7 @@ export const MessageActions = ({
       {canReply && (
         <IconButton
           size="medium"
-          title={replyLabel}
+          title={labels.reply}
           tooltipSide={singleActionTooltipSide}
           onClick={onReply}
         >
@@ -71,7 +69,7 @@ export const MessageActions = ({
         <div ref={reactButtonRef}>
           <IconButton
             size="medium"
-            title={reactLabel}
+            title={labels.react}
             tooltipSide={singleActionTooltipSide}
             onClick={handleReactClick}
           >
@@ -82,17 +80,17 @@ export const MessageActions = ({
       {canPin && (
         <IconButton
           size="medium"
-          title={isPinned ? unpinLabel : pinLabel}
+          title={state.isPinned ? labels.unpin : labels.pin}
           tooltipSide={singleActionTooltipSide}
           onClick={onPinToggle}
         >
-          {isPinned ? <PinOff size={16} /> : <Pin size={16} />}
+          {state.isPinned ? <PinOff size={16} /> : <Pin size={16} />}
         </IconButton>
       )}
       {canEdit && (
         <IconButton
           size="medium"
-          title={editLabel}
+          title={labels.edit}
           tooltipSide={singleActionTooltipSide}
           onClick={onEdit}
         >
@@ -100,7 +98,7 @@ export const MessageActions = ({
         </IconButton>
       )}
       {canDelete && (
-        <IconButton size="medium" title={deleteLabel} onClick={onDelete}>
+        <IconButton size="medium" title={labels.delete} onClick={onDelete}>
           <Trash2 size={16} />
         </IconButton>
       )}

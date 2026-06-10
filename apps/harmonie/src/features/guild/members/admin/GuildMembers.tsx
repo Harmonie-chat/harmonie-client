@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { updateMemberRole } from '@/api/guilds';
 import { useGuildMembers, useGuilds } from '@/features/guild/GuildContext';
-import { useGuildPermissions } from '@/features/guild/hooks/useGuildPermissions';
+import { useGuildPermissions } from '@/features/guild/useGuildPermissions';
 import { MemberRow } from '@/features/guild/members/admin/MemberRow';
 import type { Guild, GuildMemberRole } from '@/types/guild';
 
@@ -35,9 +35,8 @@ export const GuildMembers = ({ guild, onOwnershipTransferred }: GuildMembersProp
       refresh();
     } catch {
       // Nothing to revert — the list will reflect the current server state
-    } finally {
-      setChangingRoleId(null);
     }
+    setChangingRoleId(null);
   };
 
   return (
@@ -55,12 +54,14 @@ export const GuildMembers = ({ guild, onOwnershipTransferred }: GuildMembersProp
               key={member.userId}
               member={member}
               guildId={guild.guildId}
-              isOwner={member.userId === guild.ownerUserId}
-              canRemove={canRemoveMember(member)}
-              canBan={canBanMember(member)}
-              canEditRole={canEditMemberRole(member)}
-              canTransferOwnership={canTransferOwnership(member)}
-              isChangingRole={changingRoleId === member.userId}
+              permissions={{
+                isOwner: member.userId === guild.ownerUserId,
+                canRemove: canRemoveMember(member),
+                canBan: canBanMember(member),
+                canEditRole: canEditMemberRole(member),
+                canTransferOwnership: canTransferOwnership(member),
+              }}
+              roleState={{ isChangingRole: changingRoleId === member.userId }}
               onRemoved={refresh}
               onBanned={refresh}
               onRoleChange={handleRoleChange}

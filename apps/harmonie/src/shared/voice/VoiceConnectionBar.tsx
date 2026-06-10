@@ -51,6 +51,7 @@ export const VoiceConnectionBar = () => {
             <span className="text-xs font-medium text-status-online">{t('voice.connected')}</span>
           </div>
           <button
+            type="button"
             className="truncate text-left text-xs text-text-2 hover:text-text-1 hover:underline transition-colors duration-100 cursor-pointer"
             onClick={handleGoToCall}
           >

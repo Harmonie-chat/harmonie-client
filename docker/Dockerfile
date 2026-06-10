@@ -1,5 +1,5 @@
 FROM node:22-alpine AS builder
-RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+RUN corepack enable && corepack prepare pnpm@10.34.1 --activate
 WORKDIR /app
 
 # Install deps first (cache layer)

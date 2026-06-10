@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { sortMessagesAsc } from '@/shared/utils/message';
 import { REALTIME_SERVER_EVENTS } from '@/features/realtime/constants';
 import type { Message, MessageList, MessagePreviewUpdatedEvent } from '@/types/channel';
@@ -29,6 +29,8 @@ interface WsMessageDeletedEvent {
   messageId: string;
   [key: string]: unknown;
 }
+
+const EMPTY_MESSAGES: Message[] = [];
 
 interface WsReactionEvent {
   messageId: string;
@@ -106,83 +108,113 @@ export const useMessages = ({
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [lastReadMessageId, setLastReadMessageId] = useState<string | null>(null);
-  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [loadedEntityId, setLoadedEntityId] = useState<string | undefined>();
+  const [editingMessageState, setEditingMessageState] = useState<{
+    entityId?: string;
+    messageId: string | null;
+  }>({ entityId: undefined, messageId: null });
+  const editingMessageId =
+    editingMessageState.entityId === entityId ? editingMessageState.messageId : null;
+  const setEditingMessageId = (messageId: string | null) =>
+    setEditingMessageState({ entityId, messageId });
 
   const loadingMoreRef = useRef(false);
   const messagesRef = useRef<Message[]>([]);
   const nextCursorRef = useRef<string | null>(null);
   const editingMessageIdRef = useRef<string | null>(null);
+  const markAsReadRef = useRef<(messageId: string) => Promise<void>>(async () => {});
+  const applyFetchedMessagesRef = useRef<(requestedEntityId: string, data: MessageList) => void>(
+    () => {}
+  );
+  const applyMessagesFetchErrorRef = useRef<(requestedEntityId: string) => void>(() => {});
+  const finishMessagesLoadRef = useRef<() => void>(() => {});
 
   const apiRef = useRef(api);
-  apiRef.current = api;
   const wsRef = useRef(ws);
-  wsRef.current = ws;
+
+  const isLoadedEntity = entityId !== undefined && ready && loadedEntityId === entityId;
+  const visibleMessages = isLoadedEntity ? messages : EMPTY_MESSAGES;
+  const visibleLoading = !entityId || !ready || !isLoadedEntity || loading;
+  const visibleError = isLoadedEntity ? error : false;
+  const visibleNextCursor = isLoadedEntity ? nextCursor : null;
+  const visibleLastReadMessageId = isLoadedEntity ? lastReadMessageId : null;
 
   useEffect(() => {
-    messagesRef.current = messages;
-  }, [messages]);
+    apiRef.current = api;
+  }, [api]);
   useEffect(() => {
-    nextCursorRef.current = nextCursor;
-  }, [nextCursor]);
+    wsRef.current = ws;
+  }, [ws]);
+  useEffect(() => {
+    messagesRef.current = visibleMessages;
+  }, [visibleMessages]);
+  useEffect(() => {
+    nextCursorRef.current = visibleNextCursor;
+  }, [visibleNextCursor]);
   useEffect(() => {
     editingMessageIdRef.current = editingMessageId;
   }, [editingMessageId]);
-  useEffect(() => {
-    setEditingMessageId(null);
-  }, [entityId]);
+  const markAsRead = async (messageId: string) => {
+    if (!entityId) return;
+    await apiRef.current.ackMessage(entityId, messageId);
+  };
 
-  const markAsRead = useCallback(
-    async (messageId: string) => {
-      if (!entityId) return;
-      await apiRef.current.ackMessage(entityId, messageId);
-    },
-    [entityId]
-  );
+  const dismissNewMessagesSeparator = () => setLastReadMessageId(null);
 
-  const dismissNewMessagesSeparator = useCallback(() => setLastReadMessageId(null), []);
-
-  useEffect(() => {
-    if (!entityId || !ready) {
-      setMessages([]);
-      setLoading(true);
-      setError(false);
-      setNextCursor(null);
-      setLastReadMessageId(null);
-      return;
-    }
-
-    let cancelled = false;
-
-    setMessages([]);
-    setLoading(true);
+  const applyFetchedMessages = (requestedEntityId: string, data: MessageList) => {
+    const sorted = sortMessagesAsc(data.items);
+    setLoadedEntityId(requestedEntityId);
+    setMessages(sorted);
+    setNextCursor(data.nextCursor);
+    const lastMessage = sorted[sorted.length - 1];
+    const hasUnread =
+      data.lastReadMessageId !== null && data.lastReadMessageId !== lastMessage?.messageId;
+    setLastReadMessageId(hasUnread ? data.lastReadMessageId : null);
     setError(false);
+    if (lastMessage) markAsReadRef.current(lastMessage.messageId).catch(() => {});
+  };
+
+  const applyMessagesFetchError = (requestedEntityId: string) => {
+    setLoadedEntityId(requestedEntityId);
+    setMessages([]);
     setNextCursor(null);
     setLastReadMessageId(null);
+    setError(true);
+  };
+
+  const finishMessagesLoad = () => setLoading(false);
+
+  useEffect(() => {
+    markAsReadRef.current = markAsRead;
+    applyFetchedMessagesRef.current = applyFetchedMessages;
+    applyMessagesFetchErrorRef.current = applyMessagesFetchError;
+    finishMessagesLoadRef.current = finishMessagesLoad;
+  });
+
+  useEffect(() => {
+    if (!entityId || !ready) return;
+
+    let cancelled = false;
 
     apiRef.current
       .fetchMessages(entityId)
       .then((data) => {
         if (cancelled) return;
-        const sorted = sortMessagesAsc(data.items);
-        setMessages(sorted);
-        setNextCursor(data.nextCursor);
-        const lastMessage = sorted[sorted.length - 1];
-        const hasUnread =
-          data.lastReadMessageId !== null && data.lastReadMessageId !== lastMessage?.messageId;
-        setLastReadMessageId(hasUnread ? data.lastReadMessageId : null);
-        if (lastMessage) markAsRead(lastMessage.messageId).catch(() => {});
+        applyFetchedMessagesRef.current(entityId, data);
       })
       .catch(() => {
-        if (!cancelled) setError(true);
+        if (!cancelled) {
+          applyMessagesFetchErrorRef.current(entityId);
+        }
       })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+      .then(() => {
+        if (!cancelled) finishMessagesLoadRef.current();
       });
 
     return () => {
       cancelled = true;
     };
-  }, [entityId, ready, markAsRead]);
+  }, [entityId, ready]);
 
   useEffect(() => {
     if (!connection || !entityId || !ready) return;
@@ -207,8 +239,21 @@ export const useMessages = ({
           updatedAtUtc: null,
         },
       ]);
-      markAsRead(event.messageId).catch(() => {});
+      markAsReadRef.current(event.messageId).catch(() => {});
     };
+
+    const { created } = wsRef.current;
+    connection.on(created, handleCreated);
+
+    return () => {
+      connection.off(created, handleCreated);
+    };
+  }, [connection, entityId, ready]);
+
+  useEffect(() => {
+    if (!connection || !entityId || !ready) return;
+
+    const getEntityId = (event: Record<string, string>) => event[wsRef.current.entityIdField];
 
     const handleUpdated = (event: WsMessageUpdatedEvent) => {
       if (getEntityId(event as Record<string, string>) !== entityId) return;
@@ -226,23 +271,34 @@ export const useMessages = ({
       );
     };
 
+    const { updated } = wsRef.current;
+    connection.on(updated, handleUpdated);
+
+    return () => {
+      connection.off(updated, handleUpdated);
+    };
+  }, [connection, entityId, ready]);
+
+  useEffect(() => {
+    if (!connection || !entityId || !ready) return;
+
+    const getEntityId = (event: Record<string, string>) => event[wsRef.current.entityIdField];
+
     const handleDeleted = (event: WsMessageDeletedEvent) => {
       if (getEntityId(event as Record<string, string>) !== entityId) return;
-      if (event.messageId === editingMessageIdRef.current) setEditingMessageId(null);
+      if (event.messageId === editingMessageIdRef.current) {
+        setEditingMessageState({ entityId, messageId: null });
+      }
       setMessages((prev) => prev.filter((m) => m.messageId !== event.messageId));
     };
 
-    const { created, updated, deleted } = wsRef.current;
-    connection.on(created, handleCreated);
-    connection.on(updated, handleUpdated);
+    const { deleted } = wsRef.current;
     connection.on(deleted, handleDeleted);
 
     return () => {
-      connection.off(created, handleCreated);
-      connection.off(updated, handleUpdated);
       connection.off(deleted, handleDeleted);
     };
-  }, [connection, entityId, ready, markAsRead]);
+  }, [connection, entityId, ready]);
 
   useEffect(() => {
     if (!connection || !entityId || !ready) return;
@@ -304,9 +360,14 @@ export const useMessages = ({
             ? m
             : {
                 ...m,
-                reactions: m.reactions
-                  .map((r) => (r.emoji === event.emoji ? { ...r, count: r.count - 1 } : r))
-                  .filter((r) => r.count > 0),
+                reactions: m.reactions.reduce<Message['reactions']>((next, reaction) => {
+                  const updated =
+                    reaction.emoji === event.emoji
+                      ? { ...reaction, count: reaction.count - 1 }
+                      : reaction;
+                  if (updated.count > 0) next.push(updated);
+                  return next;
+                }, []),
               }
         )
       );
@@ -374,176 +435,163 @@ export const useMessages = ({
     };
   }, [connection, entityId, ready]);
 
-  const loadMoreWithCursor = useCallback(
-    async (cursor: string) => {
-      if (!entityId || loadingMoreRef.current) return [];
-      loadingMoreRef.current = true;
-      setLoadingMore(true);
-      try {
-        const data = await apiRef.current.fetchMessages(entityId, cursor);
-        setMessages((prev) => {
-          const existingIds = new Set(prev.map((m) => m.messageId));
-          const newItems = sortMessagesAsc(data.items).filter((m) => !existingIds.has(m.messageId));
-          return [...newItems, ...prev];
-        });
-        nextCursorRef.current = data.nextCursor;
-        setNextCursor(data.nextCursor);
-        return data.items;
-      } catch {
-        return [];
-      } finally {
-        loadingMoreRef.current = false;
-        setLoadingMore(false);
-      }
-    },
-    [entityId]
-  );
+  const loadMoreWithCursor = async (cursor: string) => {
+    if (!entityId || loadingMoreRef.current) return [];
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    let items: Message[] = [];
+    try {
+      const data = await apiRef.current.fetchMessages(entityId, cursor);
+      setMessages((prev) => {
+        const existingIds = new Set(prev.map((m) => m.messageId));
+        const newItems = sortMessagesAsc(data.items).filter((m) => !existingIds.has(m.messageId));
+        return [...newItems, ...prev];
+      });
+      nextCursorRef.current = data.nextCursor;
+      setNextCursor(data.nextCursor);
+      items = data.items;
+    } catch {
+      items = [];
+    }
+    loadingMoreRef.current = false;
+    setLoadingMore(false);
+    return items;
+  };
 
-  const loadMore = useCallback(async () => {
-    if (!nextCursor) return [];
-    return loadMoreWithCursor(nextCursor);
-  }, [loadMoreWithCursor, nextCursor]);
+  const loadMore = async () => {
+    if (!visibleNextCursor) return [];
+    return loadMoreWithCursor(visibleNextCursor);
+  };
 
-  const loadUntilMessage = useCallback(
-    async (messageId: string) => {
-      if (!entityId) return false;
-      if (messagesRef.current.some((m) => m.messageId === messageId)) return true;
-      while (nextCursorRef.current && !loadingMoreRef.current) {
-        const cursor = nextCursorRef.current;
-        if (!cursor) break;
-        const items = await loadMoreWithCursor(cursor);
-        if (items.some((m) => m.messageId === messageId)) return true;
-        if (items.length === 0) break;
-      }
-      return messagesRef.current.some((m) => m.messageId === messageId);
-    },
-    [entityId, loadMoreWithCursor]
-  );
+  const loadUntilMessage = async (messageId: string) => {
+    if (!entityId) return false;
+    if (messagesRef.current.some((m) => m.messageId === messageId)) return true;
 
-  const startEditing = useCallback((messageId: string) => setEditingMessageId(messageId), []);
-  const cancelEditing = useCallback(() => setEditingMessageId(null), []);
+    const loadNextPage = async (): Promise<boolean> => {
+      if (!nextCursorRef.current || loadingMoreRef.current) return false;
+      const cursor = nextCursorRef.current;
+      const items = await loadMoreWithCursor(cursor);
+      if (items.some((m) => m.messageId === messageId)) return true;
+      if (items.length === 0) return false;
+      return loadNextPage();
+    };
 
-  const saveEdit = useCallback(
-    async (messageId: string, content: string, mentionedUserIds: string[]) => {
-      if (!entityId) return;
-      const updated = await apiRef.current.updateMessage(
+    await loadNextPage();
+    return messagesRef.current.some((m) => m.messageId === messageId);
+  };
+
+  const startEditing = (messageId: string) => setEditingMessageId(messageId);
+  const cancelEditing = () => setEditingMessageId(null);
+
+  const saveEdit = async (messageId: string, content: string, mentionedUserIds: string[]) => {
+    if (!entityId) return;
+    const updated = await apiRef.current.updateMessage(
+      entityId,
+      messageId,
+      content,
+      mentionedUserIds
+    );
+    setMessages((prev) =>
+      prev.map((m) => (m.messageId === updated.messageId ? { ...m, ...updated } : m))
+    );
+    setEditingMessageId(null);
+  };
+
+  const removeMessage = async (messageId: string) => {
+    if (!entityId) return;
+    const backup = messagesRef.current;
+    if (messageId === editingMessageIdRef.current) cancelEditing();
+    setMessages((prev) => prev.filter((m) => m.messageId !== messageId));
+    try {
+      await apiRef.current.deleteMessage(entityId, messageId);
+    } catch {
+      setMessages(backup);
+    }
+  };
+
+  const removeAttachment = async (messageId: string, attachmentFileId: string) => {
+    if (!entityId) return;
+    const backup = messagesRef.current;
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.messageId === messageId
+          ? { ...m, attachments: m.attachments.filter((a) => a.fileId !== attachmentFileId) }
+          : m
+      )
+    );
+    try {
+      await apiRef.current.deleteAttachment(entityId, messageId, attachmentFileId);
+    } catch {
+      setMessages(backup);
+    }
+  };
+
+  const setMessagePinned = async (messageId: string, isPinned: boolean) => {
+    if (!entityId) return;
+    const backup = messagesRef.current;
+    setMessages((prev) => prev.map((m) => (m.messageId === messageId ? { ...m, isPinned } : m)));
+    try {
+      await (isPinned ? apiRef.current.pinMessage : apiRef.current.unpinMessage)(
+        entityId,
+        messageId
+      );
+    } catch {
+      setMessages(backup);
+    }
+  };
+
+  const toggleReaction = async (messageId: string, emoji: string) => {
+    if (!entityId) return;
+    const message = messagesRef.current.find((m) => m.messageId === messageId);
+    if (!message) return;
+
+    const { reactions } = message;
+    const existing = reactions.find((r) => r.emoji === emoji);
+    const isReacting = !existing?.reactedByMe;
+    const originalReactions = reactions;
+
+    const nextReactions = isReacting
+      ? existing
+        ? reactions.map((r) =>
+            r.emoji === emoji ? { ...r, count: r.count + 1, reactedByMe: true } : r
+          )
+        : [...reactions, { emoji, count: 1, reactedByMe: true, users: [] }]
+      : reactions.reduce<Message['reactions']>((next, reaction) => {
+          const updated =
+            reaction.emoji === emoji
+              ? { ...reaction, count: reaction.count - 1, reactedByMe: false }
+              : reaction;
+          if (updated.count > 0) next.push(updated);
+          return next;
+        }, []);
+
+    setMessages((prev) =>
+      prev.map((m) => (m.messageId === messageId ? { ...m, reactions: nextReactions } : m))
+    );
+
+    try {
+      await (isReacting ? apiRef.current.addReaction : apiRef.current.removeReaction)(
         entityId,
         messageId,
-        content,
-        mentionedUserIds
+        emoji
       );
+    } catch {
       setMessages((prev) =>
-        prev.map((m) => (m.messageId === updated.messageId ? { ...m, ...updated } : m))
+        prev.map((m) => (m.messageId === messageId ? { ...m, reactions: originalReactions } : m))
       );
-      setEditingMessageId(null);
-    },
-    [entityId]
-  );
+    }
+  };
 
-  const removeMessage = useCallback(
-    async (messageId: string) => {
-      if (!entityId) return;
-      const backup = messagesRef.current;
-      if (messageId === editingMessageIdRef.current) cancelEditing();
-      setMessages((prev) => prev.filter((m) => m.messageId !== messageId));
-      try {
-        await apiRef.current.deleteMessage(entityId, messageId);
-      } catch {
-        setMessages(backup);
-      }
-    },
-    [entityId, cancelEditing]
-  );
-
-  const removeAttachment = useCallback(
-    async (messageId: string, attachmentFileId: string) => {
-      if (!entityId) return;
-      const backup = messagesRef.current;
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.messageId === messageId
-            ? { ...m, attachments: m.attachments.filter((a) => a.fileId !== attachmentFileId) }
-            : m
-        )
-      );
-      try {
-        await apiRef.current.deleteAttachment(entityId, messageId, attachmentFileId);
-      } catch {
-        setMessages(backup);
-      }
-    },
-    [entityId]
-  );
-
-  const setMessagePinned = useCallback(
-    async (messageId: string, isPinned: boolean) => {
-      if (!entityId) return;
-      const backup = messagesRef.current;
-      setMessages((prev) => prev.map((m) => (m.messageId === messageId ? { ...m, isPinned } : m)));
-      try {
-        await (isPinned ? apiRef.current.pinMessage : apiRef.current.unpinMessage)(
-          entityId,
-          messageId
-        );
-      } catch {
-        setMessages(backup);
-      }
-    },
-    [entityId]
-  );
-
-  const toggleReaction = useCallback(
-    async (messageId: string, emoji: string) => {
-      if (!entityId) return;
-      const message = messagesRef.current.find((m) => m.messageId === messageId);
-      if (!message) return;
-
-      const { reactions } = message;
-      const existing = reactions.find((r) => r.emoji === emoji);
-      const isReacting = !existing?.reactedByMe;
-      const originalReactions = reactions;
-
-      const nextReactions = isReacting
-        ? existing
-          ? reactions.map((r) =>
-              r.emoji === emoji ? { ...r, count: r.count + 1, reactedByMe: true } : r
-            )
-          : [...reactions, { emoji, count: 1, reactedByMe: true, users: [] }]
-        : reactions
-            .map((r) => (r.emoji === emoji ? { ...r, count: r.count - 1, reactedByMe: false } : r))
-            .filter((r) => r.count > 0);
-
-      setMessages((prev) =>
-        prev.map((m) => (m.messageId === messageId ? { ...m, reactions: nextReactions } : m))
-      );
-
-      try {
-        await (isReacting ? apiRef.current.addReaction : apiRef.current.removeReaction)(
-          entityId,
-          messageId,
-          emoji
-        );
-      } catch {
-        setMessages((prev) =>
-          prev.map((m) => (m.messageId === messageId ? { ...m, reactions: originalReactions } : m))
-        );
-      }
-    },
-    [entityId]
-  );
-
-  const latestOwnMessage = useMemo(
-    () => [...messages].reverse().find((m) => m.authorUserId === currentUserId) ?? null,
-    [currentUserId, messages]
-  );
+  const latestOwnMessage =
+    [...visibleMessages].reverse().find((m) => m.authorUserId === currentUserId) ?? null;
 
   return {
-    messages,
-    loading,
-    error,
+    messages: visibleMessages,
+    loading: visibleLoading,
+    error: visibleError,
     loadingMore,
     editingMessageId,
-    lastReadMessageId,
+    lastReadMessageId: visibleLastReadMessageId,
     latestOwnMessage,
     typingUserIds,
     loadMore,

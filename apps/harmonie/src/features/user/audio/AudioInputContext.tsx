@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, use, useEffect, useReducer, useRef, type ReactNode } from 'react';
 
 export interface AudioInputDevice {
   deviceId: string;
@@ -32,76 +32,127 @@ const isAudioInputNoiseReductionLevel = (
 ): value is AudioInputNoiseReductionLevel =>
   value === 'off' || value === 'standard' || value === 'high';
 
-export const AudioInputProvider = ({ children }: { children: ReactNode }) => {
-  const [devices, setDevices] = useState<AudioInputDevice[]>([]);
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>(
-    () => localStorage.getItem(STORAGE_KEY) ?? DEFAULT_DEVICE_ID
-  );
-  const [noiseReductionLevel, setNoiseReductionLevelState] =
-    useState<AudioInputNoiseReductionLevel>(() => {
-      const stored = localStorage.getItem(NOISE_REDUCTION_STORAGE_KEY);
-      return isAudioInputNoiseReductionLevel(stored) ? stored : DEFAULT_NOISE_REDUCTION_LEVEL;
-    });
-  const [needsPermission, setNeedsPermission] = useState(false);
-  const [muted, setMuted] = useState(false);
+interface AudioInputState {
+  devices: AudioInputDevice[];
+  selectedDeviceId: string;
+  noiseReductionLevel: AudioInputNoiseReductionLevel;
+  needsPermission: boolean;
+  muted: boolean;
+}
 
-  const enumerateDevices = useCallback(async () => {
-    try {
-      const allDevices = await navigator.mediaDevices.enumerateDevices();
-      const inputDevices = allDevices.filter((d) => d.kind === 'audioinput');
-      const uniqueInputDevices = Array.from(
-        new Map(inputDevices.map((device) => [device.deviceId, device])).values()
-      );
+type AudioInputAction =
+  | { type: 'devicesSynced'; devices: AudioInputDevice[]; needsPermission: boolean }
+  | { type: 'deviceSelected'; deviceId: string }
+  | { type: 'noiseReductionChanged'; level: AudioInputNoiseReductionLevel }
+  | { type: 'muteChanged'; muted: boolean }
+  | { type: 'muteToggled' };
 
-      const hasLabels = uniqueInputDevices.some((d) => d.label !== '');
+const createAudioInputInitialState = (): AudioInputState => {
+  const storedNoiseReductionLevel = localStorage.getItem(NOISE_REDUCTION_STORAGE_KEY);
 
-      const mapped: AudioInputDevice[] = uniqueInputDevices.map((d, i) => ({
-        deviceId: d.deviceId,
-        label: d.label || (d.deviceId === DEFAULT_DEVICE_ID ? '' : `Input ${i + 1}`),
-      }));
+  return {
+    devices: [],
+    selectedDeviceId: localStorage.getItem(STORAGE_KEY) ?? DEFAULT_DEVICE_ID,
+    noiseReductionLevel: isAudioInputNoiseReductionLevel(storedNoiseReductionLevel)
+      ? storedNoiseReductionLevel
+      : DEFAULT_NOISE_REDUCTION_LEVEL,
+    needsPermission: false,
+    muted: false,
+  };
+};
 
-      if (!mapped.find((d) => d.deviceId === DEFAULT_DEVICE_ID)) {
-        mapped.unshift({ deviceId: DEFAULT_DEVICE_ID, label: '' });
-      }
+const audioInputReducer = (state: AudioInputState, action: AudioInputAction): AudioInputState => {
+  switch (action.type) {
+    case 'devicesSynced':
+      return { ...state, devices: action.devices, needsPermission: action.needsPermission };
+    case 'deviceSelected':
+      return { ...state, selectedDeviceId: action.deviceId };
+    case 'noiseReductionChanged':
+      return { ...state, noiseReductionLevel: action.level };
+    case 'muteChanged':
+      return { ...state, muted: action.muted };
+    case 'muteToggled':
+      return { ...state, muted: !state.muted };
+  }
+};
 
-      setDevices(mapped);
-      setNeedsPermission(!hasLabels);
-    } catch {
-      // mediaDevices not available
+const readAudioInputDevices = async () => {
+  try {
+    const allDevices = await navigator.mediaDevices.enumerateDevices();
+    const inputDevices = allDevices.filter((d) => d.kind === 'audioinput');
+    const uniqueInputDevices = Array.from(
+      new Map(inputDevices.map((device) => [device.deviceId, device])).values()
+    );
+
+    const hasLabels = uniqueInputDevices.some((d) => d.label !== '');
+
+    const mapped: AudioInputDevice[] = uniqueInputDevices.map((d, i) => ({
+      deviceId: d.deviceId,
+      label: d.label || (d.deviceId === DEFAULT_DEVICE_ID ? '' : `Input ${i + 1}`),
+    }));
+
+    if (!mapped.find((d) => d.deviceId === DEFAULT_DEVICE_ID)) {
+      mapped.unshift({ deviceId: DEFAULT_DEVICE_ID, label: '' });
     }
-  }, []);
+
+    return { devices: mapped, needsPermission: !hasLabels };
+  } catch {
+    return null;
+  }
+};
+
+export const AudioInputProvider = ({ children }: { children: ReactNode }) => {
+  const [state, dispatch] = useReducer(audioInputReducer, undefined, createAudioInputInitialState);
+  const { devices, selectedDeviceId, noiseReductionLevel, needsPermission, muted } = state;
+
+  const syncDevices = () => {
+    void readAudioInputDevices().then((nextDevices) => {
+      if (!nextDevices) return;
+      dispatch({
+        type: 'devicesSynced',
+        devices: nextDevices.devices,
+        needsPermission: nextDevices.needsPermission,
+      });
+    });
+  };
+  const syncDevicesRef = useRef(syncDevices);
 
   useEffect(() => {
-    void enumerateDevices();
-    navigator.mediaDevices?.addEventListener('devicechange', enumerateDevices);
+    syncDevicesRef.current = syncDevices;
+  });
+
+  useEffect(() => {
+    syncDevicesRef.current();
+    const handleDeviceChange = () => syncDevicesRef.current();
+    navigator.mediaDevices?.addEventListener('devicechange', handleDeviceChange);
     return () => {
-      navigator.mediaDevices?.removeEventListener('devicechange', enumerateDevices);
+      navigator.mediaDevices?.removeEventListener('devicechange', handleDeviceChange);
     };
-  }, [enumerateDevices]);
+  }, []);
 
-  const selectDevice = useCallback((deviceId: string) => {
-    setSelectedDeviceId(deviceId);
+  const selectDevice = (deviceId: string) => {
+    dispatch({ type: 'deviceSelected', deviceId });
     localStorage.setItem(STORAGE_KEY, deviceId);
-  }, []);
+  };
 
-  const setNoiseReductionLevel = useCallback((level: AudioInputNoiseReductionLevel) => {
-    setNoiseReductionLevelState(level);
+  const setNoiseReductionLevel = (level: AudioInputNoiseReductionLevel) => {
+    dispatch({ type: 'noiseReductionChanged', level });
     localStorage.setItem(NOISE_REDUCTION_STORAGE_KEY, level);
-  }, []);
+  };
 
-  const requestPermission = useCallback(async () => {
+  const requestPermission = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach((t) => t.stop());
-      await enumerateDevices();
+      syncDevices();
     } catch {
       // User denied
     }
-  }, [enumerateDevices]);
+  };
 
-  const toggleMute = useCallback(() => {
-    setMuted((prev) => !prev);
-  }, []);
+  const toggleMute = () => {
+    dispatch({ type: 'muteToggled' });
+  };
 
   return (
     <AudioInputContext.Provider
@@ -114,7 +165,7 @@ export const AudioInputProvider = ({ children }: { children: ReactNode }) => {
         needsPermission,
         requestPermission,
         muted,
-        setMuted,
+        setMuted: (nextMuted) => dispatch({ type: 'muteChanged', muted: nextMuted }),
         toggleMute,
       }}
     >
@@ -124,7 +175,7 @@ export const AudioInputProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useAudioInput = (): AudioInputContextValue => {
-  const ctx = useContext(AudioInputContext);
+  const ctx = use(AudioInputContext);
   if (!ctx) throw new Error('useAudioInput must be used inside AudioInputProvider');
   return ctx;
 };

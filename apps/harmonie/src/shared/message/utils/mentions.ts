@@ -1,8 +1,7 @@
 import type { RichTextMentionOption } from '@harmonie/ui';
 import { stripHtmlToText } from './messageHtml';
 
-export const getMentionLabel = (mention: RichTextMentionOption) =>
-  mention.displayName ?? mention.username;
+const getMentionLabel = (mention: RichTextMentionOption) => mention.displayName ?? mention.username;
 
 export const filterMentionedUserIdsFromContent = (
   content: string,
@@ -24,7 +23,3 @@ export const filterMentionedUserIdsFromContent = (
 
   return Array.from(new Set(nextIds)).slice(0, 50);
 };
-
-export const getMentionOptionsFromMap = (
-  mentionMap: ReadonlyMap<string, RichTextMentionOption>
-): RichTextMentionOption[] => Array.from(mentionMap.values());

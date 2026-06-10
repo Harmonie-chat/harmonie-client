@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useReducer } from 'react';
 import { Copy, Link, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, Input, RowCard } from '@harmonie/ui';
@@ -9,73 +9,114 @@ interface GuildInvitesProps {
   guildId: string;
 }
 
+interface GuildInvitesState {
+  guildId: string;
+  invites: GuildInvite[];
+  isLoading: boolean;
+  maxUsesInput: string;
+  isCreating: boolean;
+  createError: boolean;
+  revokingCode: string | null;
+  copiedCode: string | null;
+}
+
+type GuildInvitesAction =
+  | { type: 'loaded'; guildId: string; invites: GuildInvite[] }
+  | { type: 'patch'; patch: Partial<GuildInvitesState> }
+  | { type: 'inviteCreated'; guildId: string; invite: GuildInvite }
+  | { type: 'inviteRevoked'; guildId: string; code: string };
+
+const guildInvitesInitialState: GuildInvitesState = {
+  guildId: '',
+  invites: [],
+  isLoading: true,
+  maxUsesInput: '',
+  isCreating: false,
+  createError: false,
+  revokingCode: null,
+  copiedCode: null,
+};
+
+const guildInvitesReducer = (
+  state: GuildInvitesState,
+  action: GuildInvitesAction
+): GuildInvitesState => {
+  switch (action.type) {
+    case 'loaded':
+      return { ...state, guildId: action.guildId, invites: action.invites, isLoading: false };
+    case 'patch':
+      return { ...state, ...action.patch };
+    case 'inviteCreated':
+      return {
+        ...state,
+        guildId: action.guildId,
+        invites: [action.invite, ...(state.guildId === action.guildId ? state.invites : [])],
+        isLoading: false,
+      };
+    case 'inviteRevoked':
+      return {
+        ...state,
+        invites:
+          state.guildId === action.guildId
+            ? state.invites.filter((invite) => invite.code !== action.code)
+            : [],
+      };
+  }
+};
+
 export const GuildInvites = ({ guildId }: GuildInvitesProps) => {
   const { t } = useTranslation();
-  const [invites, setInvites] = useState<GuildInvite[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [maxUsesInput, setMaxUsesInput] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
-  const [createError, setCreateError] = useState(false);
-  const [revokingCode, setRevokingCode] = useState<string | null>(null);
-  const [copiedCode, setCopiedCode] = useState<string | null>(null);
-
-  const fetchInvites = useCallback(() => {
-    setIsLoading(true);
-    listGuildInvites(guildId)
-      .then((data) => setInvites(data.invites))
-      .catch(() => {})
-      .finally(() => setIsLoading(false));
-  }, [guildId]);
+  const [state, dispatch] = useReducer(guildInvitesReducer, guildInvitesInitialState);
+  const invites = state.guildId === guildId ? state.invites : [];
+  const isLoading = state.guildId !== guildId || state.isLoading;
+  const { maxUsesInput, isCreating, createError, revokingCode, copiedCode } = state;
 
   useEffect(() => {
-    fetchInvites();
-  }, [fetchInvites]);
+    listGuildInvites(guildId)
+      .then((data) => dispatch({ type: 'loaded', guildId, invites: data.invites }))
+      .catch(() => dispatch({ type: 'loaded', guildId, invites: [] }));
+  }, [guildId]);
 
   const handleCreate = async () => {
-    setIsCreating(true);
-    setCreateError(false);
+    dispatch({ type: 'patch', patch: { isCreating: true, createError: false } });
     const parsedMaxUses = maxUsesInput.trim() ? parseInt(maxUsesInput, 10) : null;
     try {
       const newInvite = await createGuildInvite(guildId, {
         maxUses: parsedMaxUses,
         expiresInHours: null,
       });
-      setInvites((prev) => [
-        {
-          code: newInvite.code,
-          creatorId: newInvite.creatorId,
-          usesCount: newInvite.usesCount,
-          maxUses: newInvite.maxUses,
-          expiresAtUtc: newInvite.expiresAtUtc,
-          createdAtUtc: newInvite.createdAtUtc,
-          revokedAtUtc: null,
-          isExpired: false,
-        },
-        ...prev,
-      ]);
+      const createdInvite: GuildInvite = {
+        code: newInvite.code,
+        creatorId: newInvite.creatorId,
+        usesCount: newInvite.usesCount,
+        maxUses: newInvite.maxUses,
+        expiresAtUtc: newInvite.expiresAtUtc,
+        createdAtUtc: newInvite.createdAtUtc,
+        revokedAtUtc: null,
+        isExpired: false,
+      };
+      dispatch({ type: 'inviteCreated', guildId, invite: createdInvite });
     } catch {
-      setCreateError(true);
-    } finally {
-      setIsCreating(false);
+      dispatch({ type: 'patch', patch: { createError: true } });
     }
+    dispatch({ type: 'patch', patch: { isCreating: false } });
   };
 
   const handleRevoke = async (code: string) => {
-    setRevokingCode(code);
+    dispatch({ type: 'patch', patch: { revokingCode: code } });
     try {
       await revokeGuildInvite(guildId, code);
-      setInvites((prev) => prev.filter((inv) => inv.code !== code));
+      dispatch({ type: 'inviteRevoked', guildId, code });
     } catch {
       // Silently fail — keep the invite in the list
-    } finally {
-      setRevokingCode(null);
     }
+    dispatch({ type: 'patch', patch: { revokingCode: null } });
   };
 
   const handleCopy = (code: string) => {
     navigator.clipboard.writeText(code).then(() => {
-      setCopiedCode(code);
-      setTimeout(() => setCopiedCode(null), 2000);
+      dispatch({ type: 'patch', patch: { copiedCode: code } });
+      setTimeout(() => dispatch({ type: 'patch', patch: { copiedCode: null } }), 2000);
     });
   };
 
@@ -93,7 +134,7 @@ export const GuildInvites = ({ guildId }: GuildInvitesProps) => {
             type="number"
             min={1}
             value={maxUsesInput}
-            onChange={(e) => setMaxUsesInput(e.target.value)}
+            onChange={(e) => dispatch({ type: 'patch', patch: { maxUsesInput: e.target.value } })}
           />
         </div>
         <Button variant="primary" isLoading={isCreating} onClick={handleCreate}>

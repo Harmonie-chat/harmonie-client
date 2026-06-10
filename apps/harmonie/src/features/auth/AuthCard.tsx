@@ -35,6 +35,7 @@ export const AuthCard = ({ title, children }: AuthCardProps) => {
                 host: (
                   <a
                     href="https://github.com/Harmonie-chat"
+                    aria-label={t('auth.hostLinkLabel')}
                     className="underline"
                     target="_blank"
                     rel="noopener noreferrer"

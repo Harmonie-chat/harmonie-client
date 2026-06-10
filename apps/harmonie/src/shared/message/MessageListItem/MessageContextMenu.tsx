@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { EmojiClickData } from 'emoji-picker-react';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Pencil, Pin, PinOff, Plus, Reply, SmilePlus, Trash2 } from 'lucide-react';
@@ -37,11 +37,8 @@ export const MessageContextMenu = ({
   onPinToggle,
 }: MessageContextMenuProps) => {
   const { t } = useTranslation();
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-
-  useEffect(() => {
-    setShowEmojiPicker(false);
-  }, [menu?.messageId]);
+  const [emojiPickerMessageId, setEmojiPickerMessageId] = useState<string | null>(null);
+  const showEmojiPicker = menu !== null && emojiPickerMessageId === menu.messageId;
 
   if (!menu) return null;
 
@@ -70,9 +67,9 @@ export const MessageContextMenu = ({
                 <div className="mb-3 flex items-center gap-3">
                   <button
                     type="button"
-                    className="flex h-10 w-10 items-center justify-center rounded-md bg-surface-2 text-text-2"
+                    className="flex size-10 items-center justify-center rounded-md bg-surface-2 text-text-2"
                     aria-label={t('common.close')}
-                    onClick={() => setShowEmojiPicker(false)}
+                    onClick={() => setEmojiPickerMessageId(null)}
                   >
                     <ArrowLeft size={18} />
                   </button>
@@ -109,7 +106,7 @@ export const MessageContextMenu = ({
                   type="button"
                   className="flex h-11 items-center justify-center rounded-md bg-surface-2 text-text-2 transition-colors active:bg-surface-3"
                   aria-label={t('channel.messages.react')}
-                  onClick={() => setShowEmojiPicker(true)}
+                  onClick={() => setEmojiPickerMessageId(menu.messageId)}
                 >
                   <Plus size={20} />
                 </button>

@@ -28,8 +28,9 @@ export const ColorSwatches = ({
         <button
           key={color}
           type="button"
+          aria-label={color}
           onClick={() => onSelect(color)}
-          className="w-7 h-7 rounded-full border-2 transition-all shrink-0 cursor-pointer"
+          className="size-7 rounded-full border-2 transition-all shrink-0 cursor-pointer"
           style={{
             backgroundColor: color,
             borderColor: selected === color ? 'var(--color-text-1)' : 'var(--color-border-2)',
@@ -44,8 +45,9 @@ export const ColorSwatches = ({
           <Tooltip content={customColorLabel}>
             <button
               type="button"
+              aria-label={customColorLabel}
               onClick={() => pickerRef.current?.click()}
-              className="relative w-7 h-7 rounded-full border-2 shrink-0 cursor-pointer flex items-center justify-center overflow-hidden transition-all"
+              className="relative size-7 rounded-full border-2 shrink-0 cursor-pointer flex items-center justify-center overflow-hidden transition-all"
               style={{
                 backgroundColor: isCustomSelected ? selected : 'var(--color-surface-hover)',
                 borderColor: isCustomSelected ? 'var(--color-text-1)' : 'var(--color-border-2)',
@@ -67,6 +69,7 @@ export const ColorSwatches = ({
             ref={pickerRef}
             type="color"
             value={pickerValue}
+            aria-label={customColorLabel}
             onChange={(e) => onSelect(e.target.value)}
             className="sr-only"
           />

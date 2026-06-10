@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 
+const revokeUrl = (url?: string) => {
+  if (url) URL.revokeObjectURL(url);
+};
+
 export const useImageFileDraft = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>();
-
-  const revokeUrl = (url?: string) => {
-    if (url) URL.revokeObjectURL(url);
-  };
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const nextFile = e.target.files?.[0];

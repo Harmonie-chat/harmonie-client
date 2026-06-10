@@ -28,11 +28,15 @@ export const getAutocompleteResults = (textBeforeCursor: string): AutocompleteRe
   const match = textBeforeCursor.match(PARTIAL_SHORTCODE_RE);
   if (!match) return [];
   const query = match[1];
-  return gemoji
-    .flatMap((g) =>
-      g.names.filter((n) => n.startsWith(query)).map((name) => ({ emoji: g.emoji, name }))
-    )
-    .slice(0, 8);
+  const results: AutocompleteResult[] = [];
+  for (const emoji of gemoji) {
+    for (const name of emoji.names) {
+      if (!name.startsWith(query)) continue;
+      results.push({ emoji: emoji.emoji, name });
+      if (results.length >= 8) return results;
+    }
+  }
+  return results;
 };
 
 export const getPartialMatchLength = (textBeforeCursor: string): number => {

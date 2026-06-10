@@ -7,6 +7,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -24,6 +25,7 @@ export interface TooltipProps {
 const offset = 10;
 const viewportMargin = 8;
 const maxWidth = 224;
+const TOOLTIP_MEDIA_QUERY = '(hover: hover) and (pointer: fine)';
 
 const transformClasses: Record<TooltipSide, string> = {
   top: '-translate-x-1/2 -translate-y-full',
@@ -52,6 +54,19 @@ const getPosition = (rect: DOMRect, side: TooltipSide): CSSProperties => {
   };
 };
 
+const getTooltipsEnabledSnapshot = () =>
+  typeof window !== 'undefined' && window.matchMedia(TOOLTIP_MEDIA_QUERY).matches;
+
+const getServerTooltipsEnabledSnapshot = () => false;
+
+const subscribeToTooltipsEnabled = (callback: () => void) => {
+  if (typeof window === 'undefined') return () => {};
+
+  const media = window.matchMedia(TOOLTIP_MEDIA_QUERY);
+  media.addEventListener('change', callback);
+  return () => media.removeEventListener('change', callback);
+};
+
 export const Tooltip = ({
   content,
   children,
@@ -66,16 +81,11 @@ export const Tooltip = ({
   const tooltipRef = useRef<HTMLSpanElement>(null);
   const timeoutRef = useRef<number | null>(null);
   const [position, setPosition] = useState<CSSProperties | null>(null);
-  const [tooltipsEnabled, setTooltipsEnabled] = useState(false);
-
-  useEffect(() => {
-    const media = window.matchMedia('(hover: hover) and (pointer: fine)');
-    const handleChange = () => setTooltipsEnabled(media.matches);
-
-    handleChange();
-    media.addEventListener('change', handleChange);
-    return () => media.removeEventListener('change', handleChange);
-  }, []);
+  const tooltipsEnabled = useSyncExternalStore(
+    subscribeToTooltipsEnabled,
+    getTooltipsEnabledSnapshot,
+    getServerTooltipsEnabledSnapshot
+  );
 
   const close = () => {
     if (timeoutRef.current !== null) window.clearTimeout(timeoutRef.current);

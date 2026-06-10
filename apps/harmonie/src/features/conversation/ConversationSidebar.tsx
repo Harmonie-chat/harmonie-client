@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useReducer } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ContextMenu, ConversationItem, IconButton } from '@harmonie/ui';
@@ -20,6 +20,43 @@ type ContextMenuState = {
   position: { x: number; y: number };
 } | null;
 
+interface ConversationSidebarState {
+  showNewConversation: boolean;
+  contextMenu: ContextMenuState;
+  renamingConversation: Conversation | null;
+  leavingConversation: Conversation | null;
+  isSavingName: boolean;
+  nameError: boolean;
+  isLeaving: boolean;
+  leaveError: boolean;
+}
+
+type ConversationSidebarAction = {
+  type: 'patch';
+  patch: Partial<ConversationSidebarState>;
+};
+
+const conversationSidebarInitialState: ConversationSidebarState = {
+  showNewConversation: false,
+  contextMenu: null,
+  renamingConversation: null,
+  leavingConversation: null,
+  isSavingName: false,
+  nameError: false,
+  isLeaving: false,
+  leaveError: false,
+};
+
+const conversationSidebarReducer = (
+  state: ConversationSidebarState,
+  action: ConversationSidebarAction
+): ConversationSidebarState => {
+  switch (action.type) {
+    case 'patch':
+      return { ...state, ...action.patch };
+  }
+};
+
 export const ConversationSidebar = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -29,77 +66,82 @@ export const ConversationSidebar = () => {
   const { hasUnreadConversation } = useMessageActivity();
   const { user } = useUser();
   const voice = useVoicePresence();
-  const [showNewConversation, setShowNewConversation] = useState(false);
-  const [contextMenu, setContextMenu] = useState<ContextMenuState>(null);
-  const [renamingConversation, setRenamingConversation] = useState<Conversation | null>(null);
-  const [leavingConversation, setLeavingConversation] = useState<Conversation | null>(null);
-  const [isSavingName, setIsSavingName] = useState(false);
-  const [nameError, setNameError] = useState(false);
-  const [isLeaving, setIsLeaving] = useState(false);
-  const [leaveError, setLeaveError] = useState(false);
+  const [state, dispatch] = useReducer(conversationSidebarReducer, conversationSidebarInitialState);
+  const {
+    showNewConversation,
+    contextMenu,
+    renamingConversation,
+    leavingConversation,
+    isSavingName,
+    nameError,
+    isLeaving,
+    leaveError,
+  } = state;
 
   useEffect(() => {
     fetchConversations();
   }, [fetchConversations]);
 
   const handleLeaveRequest = (conversation: Conversation) => {
-    setContextMenu(null);
-    setLeavingConversation(conversation);
-    setLeaveError(false);
+    dispatch({
+      type: 'patch',
+      patch: { contextMenu: null, leavingConversation: conversation, leaveError: false },
+    });
   };
 
   const handleConfirmLeave = () => {
     if (!leavingConversation) return;
 
     const conversationId = leavingConversation.conversationId;
-    setIsLeaving(true);
-    setLeaveError(false);
+    dispatch({ type: 'patch', patch: { isLeaving: true, leaveError: false } });
     deleteConversation(conversationId)
       .then(() => {
         removeConversation(conversationId);
-        setLeavingConversation(null);
+        dispatch({ type: 'patch', patch: { leavingConversation: null } });
         if (activeConversationId === conversationId) {
           navigate('/conversations');
         }
       })
-      .catch(() => setLeaveError(true))
-      .finally(() => setIsLeaving(false));
+      .catch(() => dispatch({ type: 'patch', patch: { leaveError: true } }))
+      .then(() => dispatch({ type: 'patch', patch: { isLeaving: false } }));
   };
 
   const handleContextMenu = (e: React.MouseEvent, conversation: Conversation) => {
     e.preventDefault();
-    setContextMenu({ conversation, position: { x: e.clientX, y: e.clientY } });
+    dispatch({
+      type: 'patch',
+      patch: { contextMenu: { conversation, position: { x: e.clientX, y: e.clientY } } },
+    });
   };
 
   const handleLongPress = (position: { x: number; y: number }, conversation: Conversation) => {
-    setContextMenu({ conversation, position });
+    dispatch({ type: 'patch', patch: { contextMenu: { conversation, position } } });
   };
 
   const openRename = (conversation: Conversation) => {
-    setContextMenu(null);
-    setRenamingConversation(conversation);
-    setNameError(false);
+    dispatch({
+      type: 'patch',
+      patch: { contextMenu: null, renamingConversation: conversation, nameError: false },
+    });
   };
 
   const handleSaveName = async (nextName: string | null) => {
     if (!renamingConversation) return;
 
     if (nextName !== null && nextName === renamingConversation.name) {
-      setRenamingConversation(null);
+      dispatch({ type: 'patch', patch: { renamingConversation: null } });
       return;
     }
 
-    setIsSavingName(true);
-    setNameError(false);
+    dispatch({ type: 'patch', patch: { isSavingName: true, nameError: false } });
     try {
       await updateConversationName(renamingConversation.conversationId, nextName);
       updateConversation({ ...renamingConversation, name: nextName });
-      setRenamingConversation(null);
+      dispatch({ type: 'patch', patch: { renamingConversation: null } });
     } catch {
-      setNameError(true);
-    } finally {
-      setIsSavingName(false);
+      dispatch({ type: 'patch', patch: { nameError: true } });
     }
+    dispatch({ type: 'patch', patch: { isSavingName: false } });
   };
 
   const buildContextMenuItems = (conversation: Conversation) => [
@@ -129,7 +171,7 @@ export const ConversationSidebar = () => {
           <IconButton
             size="small"
             variant="ghost"
-            onClick={() => setShowNewConversation(true)}
+            onClick={() => dispatch({ type: 'patch', patch: { showNewConversation: true } })}
             aria-label={t('conversation.newConversation')}
             title={t('conversation.newConversation')}
             tooltipSide="right"
@@ -138,7 +180,7 @@ export const ConversationSidebar = () => {
           </IconButton>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-2 py-2 flex flex-col gap-0.5">
+        <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-0.5">
           {isLoading ? (
             <div className="flex flex-col gap-2 px-2 pt-1 animate-pulse">
               <div className="h-8 rounded bg-border-2" />
@@ -146,7 +188,7 @@ export const ConversationSidebar = () => {
               <div className="h-8 rounded bg-border-2" />
             </div>
           ) : conversations.length === 0 ? (
-            <p className="text-xs text-text-3 px-2 py-2">{t('conversation.selectPlaceholder')}</p>
+            <p className="text-xs text-text-3 p-2">{t('conversation.selectPlaceholder')}</p>
           ) : (
             conversations.map((conv) => {
               const label = getConversationLabel(conv, user.userId);
@@ -185,13 +227,15 @@ export const ConversationSidebar = () => {
       </aside>
 
       {showNewConversation && (
-        <NewConversationModal onClose={() => setShowNewConversation(false)} />
+        <NewConversationModal
+          onClose={() => dispatch({ type: 'patch', patch: { showNewConversation: false } })}
+        />
       )}
 
       {contextMenu && (
         <ContextMenu
           position={contextMenu.position}
-          onClose={() => setContextMenu(null)}
+          onClose={() => dispatch({ type: 'patch', patch: { contextMenu: null } })}
           items={buildContextMenuItems(contextMenu.conversation)}
         />
       )}
@@ -201,9 +245,9 @@ export const ConversationSidebar = () => {
           conversation={renamingConversation}
           isSaving={isSavingName}
           error={nameError}
-          onClose={() => setRenamingConversation(null)}
+          onClose={() => dispatch({ type: 'patch', patch: { renamingConversation: null } })}
           onSave={handleSaveName}
-          onChange={() => setNameError(false)}
+          onChange={() => dispatch({ type: 'patch', patch: { nameError: false } })}
         />
       )}
 
@@ -211,7 +255,7 @@ export const ConversationSidebar = () => {
         <LeaveConversationModal
           isLeaving={isLeaving}
           error={leaveError}
-          onClose={() => setLeavingConversation(null)}
+          onClose={() => dispatch({ type: 'patch', patch: { leavingConversation: null } })}
           onConfirm={handleConfirmLeave}
         />
       )}

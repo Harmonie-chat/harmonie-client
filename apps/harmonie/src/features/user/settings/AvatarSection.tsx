@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useReducer } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Upload } from 'lucide-react';
 import { Avatar, Button } from '@harmonie/ui';
@@ -13,6 +13,26 @@ interface AvatarSectionProps {
   user: UserProfile | null;
   updateUser: (user: UserProfile) => void;
 }
+
+interface AvatarDraftState {
+  selectedIcon: string;
+  iconColor: string;
+  iconBg: string;
+  isSaving: boolean;
+  imageMarkedForDeletion: boolean;
+}
+
+type AvatarDraftAction = { type: 'patch'; patch: Partial<AvatarDraftState> };
+
+const avatarDraftReducer = (
+  state: AvatarDraftState,
+  action: AvatarDraftAction
+): AvatarDraftState => {
+  switch (action.type) {
+    case 'patch':
+      return { ...state, ...action.patch };
+  }
+};
 
 export const AvatarSection = ({ user, updateUser }: AvatarSectionProps) => {
   const { t } = useTranslation();
@@ -30,12 +50,14 @@ export const AvatarSection = ({ user, updateUser }: AvatarSectionProps) => {
   const initialIconColor = user?.avatar?.color ?? defaultIconColor;
   const initialIconBg = user?.avatar?.bg ?? defaultBgColor;
 
-  const [selectedIcon, setSelectedIcon] = useState(defaultIcon);
-  const [iconColor, setIconColor] = useState(initialIconColor);
-  const [iconBg, setIconBg] = useState(initialIconBg);
-  const [isSaving, setIsSaving] = useState(false);
-
-  const [imageMarkedForDeletion, setImageMarkedForDeletion] = useState(false);
+  const [draft, dispatchDraft] = useReducer(avatarDraftReducer, undefined, () => ({
+    selectedIcon: defaultIcon,
+    iconColor: initialIconColor,
+    iconBg: initialIconBg,
+    isSaving: false,
+    imageMarkedForDeletion: false,
+  }));
+  const { selectedIcon, iconColor, iconBg, isSaving, imageMarkedForDeletion } = draft;
   const remoteImagePreview = useFileBlobUrl(user?.avatarFileId);
   const imagePreview = imageMarkedForDeletion
     ? undefined
@@ -48,59 +70,72 @@ export const AvatarSection = ({ user, updateUser }: AvatarSectionProps) => {
 
   const resetDraft = () => {
     clearLocalImage();
-    setImageMarkedForDeletion(false);
-    setSelectedIcon(defaultIcon);
-    setIconColor(initialIconColor);
-    setIconBg(initialIconBg);
+    dispatchDraft({
+      type: 'patch',
+      patch: {
+        imageMarkedForDeletion: false,
+        selectedIcon: defaultIcon,
+        iconColor: initialIconColor,
+        iconBg: initialIconBg,
+      },
+    });
   };
 
   const applyImageDeletion = async (): Promise<string | undefined> => {
     if (imageMarkedForDeletion && user?.avatarFileId) {
       await removeAvatarImage();
-      setImageMarkedForDeletion(false);
+      dispatchDraft({ type: 'patch', patch: { imageMarkedForDeletion: false } });
       return undefined;
     }
 
     return user?.avatarFileId ?? undefined;
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      if (imageFile) {
-        const { avatarFileId } = await uploadAvatarImage(imageFile);
-        clearLocalImage();
-        setImageMarkedForDeletion(false);
-        if (user) updateUser({ ...user, avatarFileId });
-        return;
-      }
-
-      const nextAvatarFileId = await applyImageDeletion();
-
-      if (hasPendingIconChanges) {
-        const updated = await patchMe({
-          avatar: { icon: selectedIcon, color: iconColor, bg: iconBg },
-        });
-        updateUser({ ...updated, avatarFileId: nextAvatarFileId });
-        return;
-      }
-
-      if (nextAvatarFileId !== user?.avatarFileId && user) {
-        updateUser({ ...user, avatarFileId: nextAvatarFileId });
-      }
-    } finally {
-      setIsSaving(false);
+  const saveAvatarChanges = async () => {
+    if (imageFile) {
+      const { avatarFileId } = await uploadAvatarImage(imageFile);
+      clearLocalImage();
+      dispatchDraft({ type: 'patch', patch: { imageMarkedForDeletion: false } });
+      if (user) updateUser({ ...user, avatarFileId });
+      return;
     }
+
+    const nextAvatarFileId = await applyImageDeletion();
+
+    if (hasPendingIconChanges) {
+      const updated = await patchMe({
+        avatar: { icon: selectedIcon, color: iconColor, bg: iconBg },
+      });
+      updateUser({ ...updated, avatarFileId: nextAvatarFileId });
+      return;
+    }
+
+    if (nextAvatarFileId !== user?.avatarFileId && user) {
+      updateUser({ ...user, avatarFileId: nextAvatarFileId });
+    }
+  };
+
+  const handleSave = async () => {
+    dispatchDraft({ type: 'patch', patch: { isSaving: true } });
+    const error = await saveAvatarChanges().then(
+      () => undefined,
+      (err: unknown) => err
+    );
+    dispatchDraft({ type: 'patch', patch: { isSaving: false } });
+    if (error) throw error;
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onLocalImageChange(e);
-    setImageMarkedForDeletion(false);
+    dispatchDraft({ type: 'patch', patch: { imageMarkedForDeletion: false } });
   };
 
   const handleImageDelete = () => {
     clearLocalImage();
-    setImageMarkedForDeletion(Boolean(user?.avatarFileId));
+    dispatchDraft({
+      type: 'patch',
+      patch: { imageMarkedForDeletion: Boolean(user?.avatarFileId) },
+    });
   };
 
   const isSaveDisabled = isSaving || (!hasPendingIconChanges && !hasPendingImageChanges);
@@ -110,8 +145,10 @@ export const AvatarSection = ({ user, updateUser }: AvatarSectionProps) => {
       <div className="flex flex-col gap-5 animate-fade-in">
         <div className="flex items-center gap-3">
           <button
+            type="button"
+            aria-label={t('settings.avatar.change')}
             onClick={() => fileInputRef.current?.click()}
-            className="group relative w-20 h-20 rounded-full shrink-0 cursor-pointer overflow-hidden appearance-none p-0 outline-none"
+            className="group relative size-20 rounded-full shrink-0 cursor-pointer overflow-hidden appearance-none p-0 outline-none"
           >
             {imagePreview ? (
               <>
@@ -127,7 +164,7 @@ export const AvatarSection = ({ user, updateUser }: AvatarSectionProps) => {
               </>
             ) : (
               <div className="flex w-full h-full items-center justify-center">
-                <div className="relative w-16 h-16">
+                <div className="relative size-16">
                   <Avatar icon={selectedIcon} color={iconColor} bg={iconBg} size={64} />
                   <div className="absolute inset-0 rounded-full flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Upload size={18} className="text-white" />
@@ -139,6 +176,7 @@ export const AvatarSection = ({ user, updateUser }: AvatarSectionProps) => {
               ref={fileInputRef}
               type="file"
               accept="image/*"
+              aria-label={t('settings.avatar.change')}
               className="hidden"
               onChange={handleImageChange}
             />
@@ -174,11 +212,15 @@ export const AvatarSection = ({ user, updateUser }: AvatarSectionProps) => {
         <div className={imagePreview ? 'opacity-50' : ''}>
           <IconAppearanceEditor
             selectedIcon={selectedIcon}
-            onSelectIcon={setSelectedIcon}
+            onSelectIcon={(nextIcon) =>
+              dispatchDraft({ type: 'patch', patch: { selectedIcon: nextIcon } })
+            }
             selectedColor={iconColor}
-            onSelectColor={setIconColor}
+            onSelectColor={(nextColor) =>
+              dispatchDraft({ type: 'patch', patch: { iconColor: nextColor } })
+            }
             selectedBg={iconBg}
-            onSelectBg={setIconBg}
+            onSelectBg={(nextBg) => dispatchDraft({ type: 'patch', patch: { iconBg: nextBg } })}
             iconLabel={t('settings.avatar.iconSection')}
             colorLabel={t('settings.avatar.colorSection')}
             bgLabel={t('settings.avatar.bgSection')}

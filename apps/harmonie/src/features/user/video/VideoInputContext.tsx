@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, use, useEffect, useRef, useState, type ReactNode } from 'react';
 
 export interface VideoInputDevice {
   deviceId: string;
@@ -18,6 +18,31 @@ const VideoInputContext = createContext<VideoInputContextValue | null>(null);
 const STORAGE_KEY = 'harmonie:videoInputDeviceId';
 export const VIDEO_DEFAULT_DEVICE_ID = 'default';
 
+const readVideoInputDevices = async () => {
+  try {
+    const allDevices = await navigator.mediaDevices.enumerateDevices();
+    const inputDevices = allDevices.filter((d) => d.kind === 'videoinput');
+    const uniqueInputDevices = Array.from(
+      new Map(inputDevices.map((device) => [device.deviceId, device])).values()
+    );
+
+    const hasLabels = uniqueInputDevices.some((d) => d.label !== '');
+
+    const mapped: VideoInputDevice[] = uniqueInputDevices.map((d) => ({
+      deviceId: d.deviceId,
+      label: d.label,
+    }));
+
+    if (!mapped.find((d) => d.deviceId === VIDEO_DEFAULT_DEVICE_ID)) {
+      mapped.unshift({ deviceId: VIDEO_DEFAULT_DEVICE_ID, label: '' });
+    }
+
+    return { devices: mapped, needsPermission: !hasLabels };
+  } catch {
+    return null;
+  }
+};
+
 export const VideoInputProvider = ({ children }: { children: ReactNode }) => {
   const [devices, setDevices] = useState<VideoInputDevice[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>(
@@ -25,54 +50,42 @@ export const VideoInputProvider = ({ children }: { children: ReactNode }) => {
   );
   const [needsPermission, setNeedsPermission] = useState(false);
 
-  const enumerateDevices = useCallback(async () => {
-    try {
-      const allDevices = await navigator.mediaDevices.enumerateDevices();
-      const inputDevices = allDevices.filter((d) => d.kind === 'videoinput');
-      const uniqueInputDevices = Array.from(
-        new Map(inputDevices.map((device) => [device.deviceId, device])).values()
-      );
-
-      const hasLabels = uniqueInputDevices.some((d) => d.label !== '');
-
-      const mapped: VideoInputDevice[] = uniqueInputDevices.map((d) => ({
-        deviceId: d.deviceId,
-        label: d.label,
-      }));
-
-      if (!mapped.find((d) => d.deviceId === VIDEO_DEFAULT_DEVICE_ID)) {
-        mapped.unshift({ deviceId: VIDEO_DEFAULT_DEVICE_ID, label: '' });
-      }
-
-      setDevices(mapped);
-      setNeedsPermission(!hasLabels);
-    } catch {
-      // mediaDevices not available
-    }
-  }, []);
+  const syncDevices = () => {
+    void readVideoInputDevices().then((nextDevices) => {
+      if (!nextDevices) return;
+      setDevices(nextDevices.devices);
+      setNeedsPermission(nextDevices.needsPermission);
+    });
+  };
+  const syncDevicesRef = useRef(syncDevices);
 
   useEffect(() => {
-    void enumerateDevices();
-    navigator.mediaDevices?.addEventListener('devicechange', enumerateDevices);
-    return () => {
-      navigator.mediaDevices?.removeEventListener('devicechange', enumerateDevices);
-    };
-  }, [enumerateDevices]);
+    syncDevicesRef.current = syncDevices;
+  });
 
-  const selectDevice = useCallback((deviceId: string) => {
-    setSelectedDeviceId(deviceId);
-    localStorage.setItem(STORAGE_KEY, deviceId);
+  useEffect(() => {
+    syncDevicesRef.current();
+    const handleDeviceChange = () => syncDevicesRef.current();
+    navigator.mediaDevices?.addEventListener('devicechange', handleDeviceChange);
+    return () => {
+      navigator.mediaDevices?.removeEventListener('devicechange', handleDeviceChange);
+    };
   }, []);
 
-  const requestPermission = useCallback(async () => {
+  const selectDevice = (deviceId: string) => {
+    setSelectedDeviceId(deviceId);
+    localStorage.setItem(STORAGE_KEY, deviceId);
+  };
+
+  const requestPermission = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       stream.getTracks().forEach((t) => t.stop());
-      await enumerateDevices();
+      syncDevices();
     } catch {
       // User denied
     }
-  }, [enumerateDevices]);
+  };
 
   return (
     <VideoInputContext.Provider
@@ -90,7 +103,7 @@ export const VideoInputProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useVideoInput = (): VideoInputContextValue => {
-  const ctx = useContext(VideoInputContext);
+  const ctx = use(VideoInputContext);
   if (!ctx) throw new Error('useVideoInput must be used inside VideoInputProvider');
   return ctx;
 };
