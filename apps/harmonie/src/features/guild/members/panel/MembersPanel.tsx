@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
@@ -11,6 +11,7 @@ import { MemberPopover } from '@/shared/members/MemberPopover';
 import { useGuildMembers } from '@/features/guild/GuildContext';
 
 interface SelectedMember {
+  guildId: string;
   member: GuildMember;
   rect: DOMRect;
 }
@@ -36,12 +37,15 @@ export const MembersPanel = ({ onClose }: MembersPanelProps) => {
   const loading = membersOrNull === null;
   const members = membersOrNull ?? [];
 
-  useEffect(() => {
-    setSelected(null);
-  }, [guildId]);
+  const selectedMember = selected?.guildId === guildId ? selected : null;
 
   const handleSelect = (member: GuildMember, rect: DOMRect) => {
-    setSelected((prev) => (prev?.member.userId === member.userId ? null : { member, rect }));
+    if (!guildId) return;
+    setSelected((prev) =>
+      prev?.guildId === guildId && prev.member.userId === member.userId
+        ? null
+        : { guildId, member, rect }
+    );
   };
 
   const onlineMembers = members.filter((m) => m.isActive);
@@ -99,11 +103,11 @@ export const MembersPanel = ({ onClose }: MembersPanelProps) => {
         </div>
       </div>
 
-      {selected && guildId && (
+      {selectedMember && guildId && (
         <MemberPopover
-          member={selected.member}
+          member={selectedMember.member}
           guildId={guildId}
-          anchorRect={selected.rect}
+          anchorRect={selectedMember.rect}
           onClose={() => setSelected(null)}
           onRemoved={() => setSelected(null)}
           onBanned={() => setSelected(null)}

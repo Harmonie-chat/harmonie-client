@@ -1,7 +1,7 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { Globe, LogOut, Palette, UserRound } from 'lucide-react';
-import { NavList } from './NavList';
+import { NavList, NavListItem } from './NavList';
 
 const meta: Meta<typeof NavList> = {
   title: 'Navigation/NavList',
@@ -16,9 +16,9 @@ export const Default: Story = {
   render: () => (
     <div className="w-48 bg-surface-2 p-3 rounded-md">
       <NavList>
-        <NavList.Item icon={<Globe size={15} />} label="Language" onClick={() => {}} />
-        <NavList.Item icon={<UserRound size={15} />} label="Avatar" onClick={() => {}} />
-        <NavList.Item icon={<Palette size={15} />} label="Theme" onClick={() => {}} />
+        <NavListItem icon={<Globe size={15} />} label="Language" onClick={() => {}} />
+        <NavListItem icon={<UserRound size={15} />} label="Avatar" onClick={() => {}} />
+        <NavListItem icon={<Palette size={15} />} label="Theme" onClick={() => {}} />
       </NavList>
     </div>
   ),
@@ -28,9 +28,9 @@ export const WithActiveItem: Story = {
   render: () => (
     <div className="w-48 bg-surface-2 p-3 rounded-md">
       <NavList>
-        <NavList.Item icon={<Globe size={15} />} label="Language" active onClick={() => {}} />
-        <NavList.Item icon={<UserRound size={15} />} label="Avatar" onClick={() => {}} />
-        <NavList.Item icon={<Palette size={15} />} label="Theme" onClick={() => {}} />
+        <NavListItem icon={<Globe size={15} />} label="Language" active onClick={() => {}} />
+        <NavListItem icon={<UserRound size={15} />} label="Avatar" onClick={() => {}} />
+        <NavListItem icon={<Palette size={15} />} label="Theme" onClick={() => {}} />
       </NavList>
     </div>
   ),
@@ -48,7 +48,7 @@ const InteractiveExample = () => {
     <div className="w-48 bg-surface-2 p-3 rounded-md flex flex-col gap-2">
       <NavList>
         {ITEMS.map(({ id, icon: Icon, label }) => (
-          <NavList.Item
+          <NavListItem
             key={id}
             icon={<Icon size={15} />}
             label={label}
@@ -69,12 +69,12 @@ export const WithFooterAction: Story = {
   render: () => (
     <div className="w-48 bg-surface-2 p-3 rounded-md flex flex-col gap-2">
       <NavList>
-        <NavList.Item icon={<Globe size={15} />} label="Language" active onClick={() => {}} />
-        <NavList.Item icon={<UserRound size={15} />} label="Avatar" onClick={() => {}} />
-        <NavList.Item icon={<Palette size={15} />} label="Theme" onClick={() => {}} />
+        <NavListItem icon={<Globe size={15} />} label="Language" active onClick={() => {}} />
+        <NavListItem icon={<UserRound size={15} />} label="Avatar" onClick={() => {}} />
+        <NavListItem icon={<Palette size={15} />} label="Theme" onClick={() => {}} />
       </NavList>
       <NavList>
-        <NavList.Item icon={<LogOut size={15} />} label="Log out" onClick={() => {}} />
+        <NavListItem icon={<LogOut size={15} />} label="Log out" onClick={() => {}} />
       </NavList>
     </div>
   ),

@@ -15,7 +15,7 @@ export const SegmentedControl = <T extends string>({
   onChange,
 }: SegmentedControlProps<T>) => {
   return (
-    <div role="group" className="flex gap-1 bg-surface-2 p-1 rounded-sm">
+    <fieldset className="m-0 flex min-w-0 gap-1 rounded-sm border-0 bg-surface-2 p-1">
       {options.map((option) => (
         <button
           key={option.value}
@@ -33,6 +33,6 @@ export const SegmentedControl = <T extends string>({
           {option.label}
         </button>
       ))}
-    </div>
+    </fieldset>
   );
 };

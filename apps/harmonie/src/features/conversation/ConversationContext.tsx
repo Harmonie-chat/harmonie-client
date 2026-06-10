@@ -1,12 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, use, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getConversations } from '@/api/conversations';
 import { useRealtime } from '@/features/realtime/RealtimeContext';
@@ -51,12 +43,13 @@ export const ConversationProvider = ({ children }: { children: ReactNode }) => {
   const [membersPanelOpenByConversationId, setMembersPanelOpenByConversationId] = useState<
     Record<string, boolean>
   >({});
+  const fetchConversationsRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     conversationsRef.current = conversations;
   }, [conversations]);
 
-  const fetchConversations = useCallback(() => {
+  const fetchConversations = () => {
     getConversations()
       .then((data) =>
         setConversations(
@@ -68,17 +61,21 @@ export const ConversationProvider = ({ children }: { children: ReactNode }) => {
         )
       )
       .catch(() => setConversations([]));
-  }, []);
+  };
 
   useEffect(() => {
-    fetchConversations();
-  }, [fetchConversations]);
+    fetchConversationsRef.current = fetchConversations;
+  });
+
+  useEffect(() => {
+    fetchConversationsRef.current();
+  }, []);
 
   useEffect(() => {
     if (!connection) return;
 
     const handleConversationCreated = () => {
-      fetchConversations();
+      fetchConversationsRef.current();
     };
 
     const handleConversationMessageCreated = (event: ConversationMessageCreatedEvent) => {
@@ -90,8 +87,26 @@ export const ConversationProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      fetchConversations();
+      fetchConversationsRef.current();
     };
+
+    connection.on(REALTIME_SERVER_EVENTS.conversationCreated, handleConversationCreated);
+    connection.on(
+      REALTIME_SERVER_EVENTS.conversationMessageCreated,
+      handleConversationMessageCreated
+    );
+
+    return () => {
+      connection.off(REALTIME_SERVER_EVENTS.conversationCreated, handleConversationCreated);
+      connection.off(
+        REALTIME_SERVER_EVENTS.conversationMessageCreated,
+        handleConversationMessageCreated
+      );
+    };
+  }, [connection]);
+
+  useEffect(() => {
+    if (!connection) return;
 
     const handleConversationUpdated = (event: ConversationUpdatedEvent) => {
       setConversations((prev) =>
@@ -99,40 +114,6 @@ export const ConversationProvider = ({ children }: { children: ReactNode }) => {
           ? prev.map((conversation) =>
               conversation.conversationId === event.conversationId
                 ? { ...conversation, name: event.name }
-                : conversation
-            )
-          : prev
-      );
-    };
-
-    const handleConversationParticipantLeft = (event: ConversationParticipantLeftEvent) => {
-      if (event.userId === user?.userId) {
-        setConversations((prev) =>
-          prev
-            ? prev.filter((conversation) => conversation.conversationId !== event.conversationId)
-            : prev
-        );
-        if (event.conversationId === activeConversationId) {
-          navigate('/conversations', { replace: true });
-        }
-        setMembersPanelOpenByConversationId((prev) => {
-          const next = { ...prev };
-          delete next[event.conversationId];
-          return next;
-        });
-        return;
-      }
-
-      setConversations((prev) =>
-        prev
-          ? prev.map((conversation) =>
-              conversation.conversationId === event.conversationId
-                ? {
-                    ...conversation,
-                    participants: conversation.participants.filter(
-                      (participant) => participant.userId !== event.userId
-                    ),
-                  }
                 : conversation
             )
           : prev
@@ -154,32 +135,81 @@ export const ConversationProvider = ({ children }: { children: ReactNode }) => {
       );
     };
 
-    connection.on(REALTIME_SERVER_EVENTS.conversationCreated, handleConversationCreated);
-    connection.on(
-      REALTIME_SERVER_EVENTS.conversationMessageCreated,
-      handleConversationMessageCreated
-    );
     connection.on(REALTIME_SERVER_EVENTS.conversationUpdated, handleConversationUpdated);
+    connection.on(REALTIME_SERVER_EVENTS.userProfileUpdated, handleUserProfileUpdated);
+
+    return () => {
+      connection.off(REALTIME_SERVER_EVENTS.conversationUpdated, handleConversationUpdated);
+      connection.off(REALTIME_SERVER_EVENTS.userProfileUpdated, handleUserProfileUpdated);
+    };
+  }, [connection]);
+
+  useEffect(() => {
+    if (!connection) return;
+
+    const handleConversationParticipantLeft = (event: ConversationParticipantLeftEvent) => {
+      if (event.userId !== user?.userId) return;
+      setConversations((prev) =>
+        prev
+          ? prev.filter((conversation) => conversation.conversationId !== event.conversationId)
+          : prev
+      );
+      setMembersPanelOpenByConversationId((prev) => {
+        const next = { ...prev };
+        delete next[event.conversationId];
+        return next;
+      });
+      if (event.conversationId === activeConversationId) {
+        navigate('/conversations', { replace: true });
+      }
+    };
+
     connection.on(
       REALTIME_SERVER_EVENTS.conversationParticipantLeft,
       handleConversationParticipantLeft
     );
-    connection.on(REALTIME_SERVER_EVENTS.userProfileUpdated, handleUserProfileUpdated);
 
     return () => {
-      connection.off(REALTIME_SERVER_EVENTS.conversationCreated, handleConversationCreated);
-      connection.off(
-        REALTIME_SERVER_EVENTS.conversationMessageCreated,
-        handleConversationMessageCreated
-      );
-      connection.off(REALTIME_SERVER_EVENTS.conversationUpdated, handleConversationUpdated);
       connection.off(
         REALTIME_SERVER_EVENTS.conversationParticipantLeft,
         handleConversationParticipantLeft
       );
-      connection.off(REALTIME_SERVER_EVENTS.userProfileUpdated, handleUserProfileUpdated);
     };
-  }, [activeConversationId, connection, fetchConversations, navigate, user?.userId]);
+  }, [activeConversationId, connection, navigate, user?.userId]);
+
+  useEffect(() => {
+    if (!connection) return;
+
+    const handleConversationParticipantLeft = (event: ConversationParticipantLeftEvent) => {
+      if (event.userId === user?.userId) return;
+      setConversations((prev) =>
+        prev
+          ? prev.map((conversation) =>
+              conversation.conversationId === event.conversationId
+                ? {
+                    ...conversation,
+                    participants: conversation.participants.filter(
+                      (participant) => participant.userId !== event.userId
+                    ),
+                  }
+                : conversation
+            )
+          : prev
+      );
+    };
+
+    connection.on(
+      REALTIME_SERVER_EVENTS.conversationParticipantLeft,
+      handleConversationParticipantLeft
+    );
+
+    return () => {
+      connection.off(
+        REALTIME_SERVER_EVENTS.conversationParticipantLeft,
+        handleConversationParticipantLeft
+      );
+    };
+  }, [connection, user?.userId]);
 
   const addConversation = (conversation: Conversation) =>
     setConversations((prev) =>
@@ -208,9 +238,9 @@ export const ConversationProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const setConversationMembersPanelOpen = useCallback((conversationId: string, open: boolean) => {
+  const setConversationMembersPanelOpen = (conversationId: string, open: boolean) => {
     setMembersPanelOpenByConversationId((prev) => ({ ...prev, [conversationId]: open }));
-  }, []);
+  };
 
   return (
     <ConversationContext.Provider
@@ -229,33 +259,30 @@ export const ConversationProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useConversations = () => useContext(ConversationContext);
+export const useConversations = () => use(ConversationContext);
 
 export const useConversation = (conversationId: string | undefined) => {
-  const { conversations } = useContext(ConversationContext);
+  const { conversations } = use(ConversationContext);
   return conversations?.find((c) => c.conversationId === conversationId) ?? null;
 };
 
 export const useConversationMembersPanel = (conversationId: string | undefined) => {
   const { membersPanelOpenByConversationId, setConversationMembersPanelOpen } =
-    useContext(ConversationContext);
+    use(ConversationContext);
 
   const membersOpen = conversationId
     ? membersPanelOpenByConversationId[conversationId] === true
     : false;
 
-  const setMembersOpen = useCallback(
-    (open: boolean) => {
-      if (!conversationId) return;
-      setConversationMembersPanelOpen(conversationId, open);
-    },
-    [conversationId, setConversationMembersPanelOpen]
-  );
+  const setMembersOpen = (open: boolean) => {
+    if (!conversationId) return;
+    setConversationMembersPanelOpen(conversationId, open);
+  };
 
-  const toggleMembersOpen = useCallback(() => {
+  const toggleMembersOpen = () => {
     if (!conversationId) return;
     setConversationMembersPanelOpen(conversationId, !membersOpen);
-  }, [conversationId, membersOpen, setConversationMembersPanelOpen]);
+  };
 
   return { membersOpen, setMembersOpen, toggleMembersOpen };
 };

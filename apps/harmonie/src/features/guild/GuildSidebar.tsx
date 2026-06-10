@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useReducer } from 'react';
 import { DoorOpen, House, Mailbox, Pencil, Plus, ShieldBan, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -7,10 +7,10 @@ import { useMessageActivity } from '@/features/realtime/MessageActivityContext';
 import { useFileBlobUrl } from '@/shared/hooks/useFileBlobUrl';
 import { useGuilds } from './GuildContext';
 import { GuildCreateOrJoinModal } from '@/features/guild/join/GuildCreateOrJoinModal';
-import { useGuildPermissions } from '@/features/guild/hooks/useGuildPermissions';
+import { useGuildPermissions } from '@/features/guild/useGuildPermissions';
 import type { Guild } from '@/types/guild';
 import { GuildSettingsModal } from '@/features/guild/settings/GuildSettingsModal';
-import { AdminSectionMenu } from '@/features/guild/types/adminSection';
+import { AdminSectionMenu } from '@/features/guild/settings/adminSection';
 
 const GuildSidebarItem = ({
   guild,
@@ -32,11 +32,12 @@ const GuildSidebarItem = ({
     <div className="relative">
       <Tooltip content={guild.name} side="right">
         <button
+          type="button"
           onClick={onClick}
           onContextMenu={canOpenGuildContextMenu ? (e) => onOpenContextMenu(e, guild) : undefined}
           aria-label={guild.name}
           className={[
-            'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-transparent cursor-pointer first:mt-1 last:mb-1 transform-gpu transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:scale-[1.1] active:scale-[0.97]',
+            'size-10 rounded-xl flex items-center justify-center shrink-0 bg-transparent cursor-pointer first:mt-1 last:mb-1 transform-gpu transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:scale-[1.1] active:scale-[0.97]',
             isActive ? 'ring-2 ring-primary' : 'hover:opacity-90',
           ].join(' ')}
         >
@@ -51,10 +52,41 @@ const GuildSidebarItem = ({
         </button>
       </Tooltip>
       {hasUnread && (
-        <span className="absolute top-1 right-0 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-background" />
+        <span className="absolute top-1 right-0 size-2.5 rounded-full bg-primary ring-2 ring-background" />
       )}
     </div>
   );
+};
+
+interface GuildSidebarState {
+  addMenu: { x: number; y: number } | null;
+  createOrJoinMode: 'create' | 'join' | null;
+  contextMenu: {
+    guild: Guild;
+    position: { x: number; y: number };
+  } | null;
+  editSection: AdminSectionMenu;
+  editGuild: Guild | null;
+}
+
+type GuildSidebarAction = { type: 'patch'; patch: Partial<GuildSidebarState> };
+
+const guildSidebarInitialState: GuildSidebarState = {
+  addMenu: null,
+  createOrJoinMode: null,
+  contextMenu: null,
+  editSection: 'identity',
+  editGuild: null,
+};
+
+const guildSidebarReducer = (
+  state: GuildSidebarState,
+  action: GuildSidebarAction
+): GuildSidebarState => {
+  switch (action.type) {
+    case 'patch':
+      return { ...state, ...action.patch };
+  }
 };
 
 export const GuildSidebar = () => {
@@ -64,25 +96,20 @@ export const GuildSidebar = () => {
   const location = useLocation();
   const isConversationsRoute = location.pathname.startsWith('/conversations');
   const { guilds, fetchGuilds } = useGuilds();
-  const [addMenu, setAddMenu] = useState<{ x: number; y: number } | null>(null);
-  const [createOrJoinMode, setCreateOrJoinMode] = useState<'create' | 'join' | null>(null);
   const { hasUnreadGuild, hasAnyUnreadConversation } = useMessageActivity();
-  const [contextMenu, setContextMenu] = useState<{
-    guild: Guild;
-    position: { x: number; y: number };
-  } | null>(null);
-  const [editSection, setEditSection] = useState<AdminSectionMenu>('identity');
-  const [editGuild, setEditGuild] = useState<Guild | null>(null);
+  const [state, dispatch] = useReducer(guildSidebarReducer, guildSidebarInitialState);
+  const { addMenu, createOrJoinMode, contextMenu, editSection, editGuild } = state;
 
   const handleGuildContextMenu = (e: React.MouseEvent, guild: Guild) => {
     e.preventDefault();
-    setContextMenu({ guild, position: { x: e.clientX, y: e.clientY } });
+    dispatch({
+      type: 'patch',
+      patch: { contextMenu: { guild, position: { x: e.clientX, y: e.clientY } } },
+    });
   };
 
   const handleContextMenuClick = (editSection: AdminSectionMenu, guild: Guild) => {
-    setEditSection(editSection);
-    setEditGuild(guild);
-    setContextMenu(null);
+    dispatch({ type: 'patch', patch: { editSection, editGuild: guild, contextMenu: null } });
   };
 
   const { canAccessDangerZone, canLeaveGuild, canManageGuild } = useGuildPermissions(
@@ -142,10 +169,11 @@ export const GuildSidebar = () => {
           <div className="relative">
             <Tooltip content={t('conversation.home')} side="right">
               <button
+                type="button"
                 onClick={() => navigate('/conversations')}
                 aria-label={t('conversation.home')}
                 className={[
-                  'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 cursor-pointer transform-gpu transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:scale-[1.1] active:scale-[0.97]',
+                  'size-10 rounded-xl flex items-center justify-center shrink-0 cursor-pointer transform-gpu transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:scale-[1.1] active:scale-[0.97]',
                   isConversationsRoute
                     ? 'bg-primary text-primary-fg'
                     : 'bg-surface-2 text-text-2 hover:bg-surface-3',
@@ -155,7 +183,7 @@ export const GuildSidebar = () => {
               </button>
             </Tooltip>
             {hasAnyUnreadConversation() && !isConversationsRoute && (
-              <span className="absolute top-1 right-0 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-background" />
+              <span className="absolute top-1 right-0 size-2.5 rounded-full bg-primary ring-2 ring-background" />
             )}
           </div>
           <hr className="w-8 border-t border-border-2 my-0" />
@@ -174,17 +202,18 @@ export const GuildSidebar = () => {
           })}
           {/* Button to add or join a guild */}
           <button
+            type="button"
             onClick={(e) => {
               e.preventDefault();
-              setAddMenu({ x: e.clientX, y: e.clientY });
+              dispatch({ type: 'patch', patch: { addMenu: { x: e.clientX, y: e.clientY } } });
             }}
             onContextMenu={(e) => {
               e.preventDefault();
-              setAddMenu({ x: e.clientX, y: e.clientY });
+              dispatch({ type: 'patch', patch: { addMenu: { x: e.clientX, y: e.clientY } } });
             }}
             aria-label={t('guild.createJoin.title')}
             className={[
-              'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 cursor-pointer bg-surface-2 text-text-2 hover:bg-surface-3 transform-gpu transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:scale-[1.06] active:scale-[0.97]',
+              'size-10 rounded-xl flex items-center justify-center shrink-0 cursor-pointer bg-surface-2 text-text-2 hover:bg-surface-3 transform-gpu transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:scale-[1.06] active:scale-[0.97]',
               addMenu ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : '',
             ].join(' ')}
           >
@@ -196,22 +225,26 @@ export const GuildSidebar = () => {
       {addMenu && (
         <ContextMenu
           position={addMenu}
-          onClose={() => setAddMenu(null)}
+          onClose={() => dispatch({ type: 'patch', patch: { addMenu: null } })}
           items={[
             {
               label: t('guild.createJoin.createTitle'),
               icon: <Plus size={14} />,
               onClick: () => {
-                setCreateOrJoinMode('create');
-                setAddMenu(null);
+                dispatch({
+                  type: 'patch',
+                  patch: { createOrJoinMode: 'create', addMenu: null },
+                });
               },
             },
             {
               label: t('guild.createJoin.joinTitle'),
               icon: <Mailbox size={14} />,
               onClick: () => {
-                setCreateOrJoinMode('join');
-                setAddMenu(null);
+                dispatch({
+                  type: 'patch',
+                  patch: { createOrJoinMode: 'join', addMenu: null },
+                });
               },
             },
           ]}
@@ -219,13 +252,16 @@ export const GuildSidebar = () => {
       )}
       {/* Model to join or create a guild */}
       {createOrJoinMode && (
-        <GuildCreateOrJoinModal mode={createOrJoinMode} onClose={() => setCreateOrJoinMode(null)} />
+        <GuildCreateOrJoinModal
+          mode={createOrJoinMode}
+          onClose={() => dispatch({ type: 'patch', patch: { createOrJoinMode: null } })}
+        />
       )}
       {/* Context menu for guild actions */}
       {contextMenu && (
         <ContextMenu
           position={contextMenu.position}
-          onClose={() => setContextMenu(null)}
+          onClose={() => dispatch({ type: 'patch', patch: { contextMenu: null } })}
           items={guildContextMenuItems}
         />
       )}
@@ -233,18 +269,18 @@ export const GuildSidebar = () => {
         <GuildSettingsModal
           guild={editGuild}
           initialSection={editSection}
-          onClose={() => setEditGuild(null)}
+          onClose={() => dispatch({ type: 'patch', patch: { editGuild: null } })}
           onUpdated={() => {
-            setEditGuild(null);
+            dispatch({ type: 'patch', patch: { editGuild: null } });
             fetchGuilds();
           }}
           onDeleted={() => {
-            setEditGuild(null);
+            dispatch({ type: 'patch', patch: { editGuild: null } });
             fetchGuilds();
             navigate('/conversations');
           }}
           onLeave={() => {
-            setEditGuild(null);
+            dispatch({ type: 'patch', patch: { editGuild: null } });
             fetchGuilds();
             navigate('/conversations');
           }}

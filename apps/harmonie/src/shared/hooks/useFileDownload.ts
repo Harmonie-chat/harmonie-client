@@ -7,16 +7,19 @@ export const useFileDownload = () => {
   const download = async (fileId: string, fileName: string) => {
     if (downloading) return;
     setDownloading(true);
-    try {
-      const url = await loadBlobUrl(fileId);
-      if (!url) return;
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      a.click();
-    } finally {
-      setDownloading(false);
-    }
+    const error = await loadBlobUrl(fileId).then(
+      (url) => {
+        if (!url) return;
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        return undefined;
+      },
+      (err: unknown) => err
+    );
+    setDownloading(false);
+    if (error) throw error;
   };
 
   return { download, downloading };

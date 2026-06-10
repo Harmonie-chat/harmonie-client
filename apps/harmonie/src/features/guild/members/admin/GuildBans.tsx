@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { listGuildBans } from '@/api/guilds';
 import { BanItem } from '@/features/guild/members/admin/BanItem';
@@ -8,25 +8,33 @@ interface GuildBansProps {
   guildId: string;
 }
 
+interface GuildBansState {
+  guildId: string;
+  bans: GuildBan[];
+  isLoading: boolean;
+}
+
 export const GuildBans = ({ guildId }: GuildBansProps) => {
   const { t } = useTranslation();
-  const [bans, setBans] = useState<GuildBan[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const fetchBans = useCallback(() => {
-    setIsLoading(true);
-    listGuildBans(guildId)
-      .then((data) => setBans(data.bans))
-      .catch(() => {})
-      .finally(() => setIsLoading(false));
-  }, [guildId]);
+  const [state, setState] = useState<GuildBansState>({
+    guildId: '',
+    bans: [],
+    isLoading: true,
+  });
+  const bans = state.guildId === guildId ? state.bans : [];
+  const isLoading = state.guildId !== guildId || state.isLoading;
 
   useEffect(() => {
-    fetchBans();
-  }, [fetchBans]);
+    listGuildBans(guildId)
+      .then((data) => setState({ guildId, bans: data.bans, isLoading: false }))
+      .catch(() => setState({ guildId, bans: [], isLoading: false }));
+  }, [guildId]);
 
   const handleUnbanned = (userId: string) => {
-    setBans((prev) => prev.filter((b) => b.userId !== userId));
+    setState((prev) => ({
+      ...prev,
+      bans: prev.guildId === guildId ? prev.bans.filter((b) => b.userId !== userId) : [],
+    }));
   };
 
   return (

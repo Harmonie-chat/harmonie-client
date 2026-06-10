@@ -5,7 +5,7 @@ import { GuildAvatar } from '@harmonie/ui';
 import { IconAppearanceEditor } from '@/shared/components/IconAppearanceEditor';
 
 interface GuildLogoPickerProps {
-  fileInputRef: RefObject<HTMLInputElement>;
+  fileInputRef: RefObject<HTMLInputElement | null>;
   logoPreview: string | undefined;
   effectiveRemoteLogoPreview: string | undefined;
   isLoading: boolean;
@@ -45,15 +45,16 @@ export const GuildLogoPicker = ({
       <div className="flex items-center gap-3">
         <button
           type="button"
+          aria-label={t('guild.noGuild.logoUploadButton')}
           onClick={() => fileInputRef.current?.click()}
           disabled={isLoading}
-          className="group relative w-14 h-14 rounded-xl shrink-0 cursor-pointer overflow-hidden appearance-none p-0 outline-none disabled:cursor-not-allowed disabled:opacity-60"
+          className="group relative size-14 rounded-xl shrink-0 cursor-pointer overflow-hidden appearance-none p-0 outline-none disabled:cursor-not-allowed disabled:opacity-60"
         >
           {hasImage ? (
             <>
               <img
                 src={logoPreview ?? effectiveRemoteLogoPreview}
-                alt="Guild preview"
+                alt={t('guild.noGuild.logoPreview')}
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/40 opacity-0 group-hover:opacity-60 transition-opacity">
@@ -63,7 +64,7 @@ export const GuildLogoPicker = ({
             </>
           ) : (
             <div className="flex w-full h-full items-center justify-center">
-              <div className="relative w-16 h-16">
+              <div className="relative size-16">
                 <GuildAvatar
                   iconUrl={logoPreview}
                   alt={name || t('guild.noGuild.namePlaceholder')}
@@ -82,6 +83,7 @@ export const GuildLogoPicker = ({
             ref={fileInputRef}
             type="file"
             accept="image/*"
+            aria-label={t('guild.noGuild.logoUploadButton')}
             className="hidden"
             onChange={onImageChange}
             disabled={isLoading}

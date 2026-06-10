@@ -1,8 +1,8 @@
 import {
-  useCallback,
   useEffect,
+  useLayoutEffect,
+  useReducer,
   useRef,
-  useState,
   type MutableRefObject,
   type ReactNode,
   type RefObject,
@@ -12,7 +12,7 @@ import { Button, IconButton, Modal, Separator, type RichTextMentionOption } from
 import { Pin } from 'lucide-react';
 import type { Message, PinnedMessageList, ReplyPreview } from '@/types/channel';
 import type { UserProfile } from '@/types/user';
-import type { MessageAuthor } from '@/shared/message/types';
+import type { MessageAuthor } from '@/shared/message/messageAuthor';
 import { MessageComposer } from './MessageComposer';
 import { MessageListItem } from './MessageListItem/MessageListItem';
 import { MessageContextMenu, type MessageMenuState } from './MessageListItem/MessageContextMenu';
@@ -24,23 +24,72 @@ import { scheduleCenterMessageIfOutsideView } from './utils/scrollMessageIntoVie
 
 const PINNED_MESSAGE_HIGHLIGHT_MS = 1200;
 
+interface MessageThreadUiState {
+  messageMenu: MessageMenuState | null;
+  reactionPicker: {
+    messageId: string;
+    anchorRect: DOMRect;
+  } | null;
+  pendingDeleteMessageId: string | null;
+  replyTo: ReplyPreview | null;
+  pinnedMessagesOpen: boolean;
+  pinnedHighlightMessageId: string | null;
+  separatorDismissed: boolean;
+  showScrollToBottom: boolean;
+}
+
+type MessageThreadUiAction = {
+  type: 'patch';
+  patch: Partial<MessageThreadUiState>;
+};
+
+const messageThreadInitialUiState: MessageThreadUiState = {
+  messageMenu: null,
+  reactionPicker: null,
+  pendingDeleteMessageId: null,
+  replyTo: null,
+  pinnedMessagesOpen: false,
+  pinnedHighlightMessageId: null,
+  separatorDismissed: false,
+  showScrollToBottom: false,
+};
+
+const messageThreadUiReducer = (
+  state: MessageThreadUiState,
+  action: MessageThreadUiAction
+): MessageThreadUiState => {
+  switch (action.type) {
+    case 'patch':
+      return { ...state, ...action.patch };
+  }
+};
+
 export interface MessageThreadRefs {
-  scrollRef: RefObject<HTMLDivElement>;
-  messagesContentRef: RefObject<HTMLDivElement>;
+  scrollRef: RefObject<HTMLDivElement | null>;
+  messagesContentRef: RefObject<HTMLDivElement | null>;
   scrollAnchorRef: MutableRefObject<{ scrollTop: number; scrollHeight: number } | null>;
   previousMessageCountRef: MutableRefObject<number>;
   suppressNextScrollEffectsRef: MutableRefObject<boolean>;
   shouldStickToBottomRef: MutableRefObject<boolean>;
 }
 
-export const useMessageThreadRefs = (): MessageThreadRefs => ({
-  scrollRef: useRef<HTMLDivElement>(null),
-  messagesContentRef: useRef<HTMLDivElement>(null),
-  scrollAnchorRef: useRef<{ scrollTop: number; scrollHeight: number } | null>(null),
-  previousMessageCountRef: useRef(0),
-  suppressNextScrollEffectsRef: useRef(false),
-  shouldStickToBottomRef: useRef(false),
-});
+export const useMessageThreadRefs = (): MessageThreadRefs => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesContentRef = useRef<HTMLDivElement>(null);
+  const scrollAnchorRef = useRef<{ scrollTop: number; scrollHeight: number } | null>(null);
+  const previousMessageCountRef = useRef(0);
+  const suppressNextScrollEffectsRef = useRef(false);
+  const shouldStickToBottomRef = useRef(false);
+
+  return {
+    scrollRef,
+    messagesContentRef,
+    scrollAnchorRef,
+    previousMessageCountRef,
+    suppressNextScrollEffectsRef,
+    shouldStickToBottomRef,
+  };
+};
 
 interface MessageThreadLabels {
   loading: string;
@@ -109,8 +158,11 @@ interface MessageThreadProps<TAuthor extends MessageAuthor = MessageAuthor> {
   onAvatarClick?: (author: TAuthor, rect: DOMRect) => void;
 }
 
-export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>({
-  resetKey,
+export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>(
+  props: MessageThreadProps<TAuthor>
+) => <MessageThreadContent key={props.resetKey} {...props} />;
+
+const useMessageThreadContent = <TAuthor extends MessageAuthor = MessageAuthor>({
   title,
   leadingActions,
   beforePinActions,
@@ -144,17 +196,17 @@ export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>({
   onAvatarClick,
 }: MessageThreadProps<TAuthor>) => {
   const { t } = useTranslation();
-  const [messageMenu, setMessageMenu] = useState<MessageMenuState | null>(null);
-  const [reactionPicker, setReactionPicker] = useState<{
-    messageId: string;
-    anchorRect: DOMRect;
-  } | null>(null);
-  const [pendingDeleteMessageId, setPendingDeleteMessageId] = useState<string | null>(null);
-  const [replyTo, setReplyTo] = useState<ReplyPreview | null>(null);
-  const [pinnedMessagesOpen, setPinnedMessagesOpen] = useState(false);
-  const [pinnedHighlightMessageId, setPinnedHighlightMessageId] = useState<string | null>(null);
-  const [separatorDismissed, setSeparatorDismissed] = useState(false);
-  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [uiState, dispatchUi] = useReducer(messageThreadUiReducer, messageThreadInitialUiState);
+  const {
+    messageMenu,
+    reactionPicker,
+    pendingDeleteMessageId,
+    replyTo,
+    pinnedMessagesOpen,
+    pinnedHighlightMessageId,
+    separatorDismissed,
+    showScrollToBottom,
+  } = uiState;
   const pinnedHighlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const {
@@ -166,37 +218,27 @@ export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>({
     shouldStickToBottomRef,
   } = refs;
 
-  const scrollToBottom = useCallback(
-    (behavior: ScrollBehavior = 'auto') => {
-      const scrollElement = scrollRef.current;
-      if (!scrollElement) return;
+  const scrollToBottom = (behavior: ScrollBehavior = 'auto') => {
+    const scrollElement = scrollRef.current;
+    if (!scrollElement) return;
 
-      setShowScrollToBottom(false);
+    dispatchUi({ type: 'patch', patch: { showScrollToBottom: false } });
 
-      if (behavior === 'smooth') {
-        scrollElement.scrollTo({ top: scrollElement.scrollHeight, behavior });
-        return;
-      }
+    if (behavior === 'smooth') {
+      scrollElement.scrollTo({ top: scrollElement.scrollHeight, behavior });
+      return;
+    }
 
-      scrollElement.scrollTop = scrollElement.scrollHeight;
+    scrollElement.scrollTop = scrollElement.scrollHeight;
 
-      requestAnimationFrame(() => {
-        const nextScrollElement = scrollRef.current;
-        if (!nextScrollElement) return;
-        nextScrollElement.scrollTop = nextScrollElement.scrollHeight;
-      });
-    },
-    [scrollRef]
-  );
+    requestAnimationFrame(() => {
+      const nextScrollElement = scrollRef.current;
+      if (!nextScrollElement) return;
+      nextScrollElement.scrollTop = nextScrollElement.scrollHeight;
+    });
+  };
 
-  useEffect(() => {
-    setMessageMenu(null);
-    setPendingDeleteMessageId(null);
-    setReplyTo(null);
-    setPinnedMessagesOpen(false);
-    setPinnedHighlightMessageId(null);
-    setSeparatorDismissed(false);
-    setShowScrollToBottom(false);
+  useLayoutEffect(() => {
     previousMessageCountRef.current = 0;
     scrollAnchorRef.current = null;
     suppressNextScrollEffectsRef.current = false;
@@ -207,19 +249,12 @@ export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>({
     }
   }, [
     previousMessageCountRef,
-    resetKey,
     scrollAnchorRef,
     shouldStickToBottomRef,
     suppressNextScrollEffectsRef,
   ]);
 
-  useEffect(() => {
-    return () => {
-      if (pinnedHighlightTimeoutRef.current) clearTimeout(pinnedHighlightTimeoutRef.current);
-    };
-  }, []);
-
-  useEffect(() => {
+  useLayoutEffect(() => {
     const element = scrollRef.current;
     if (!element) return;
 
@@ -244,7 +279,9 @@ export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>({
       suppressNextScrollEffectsRef.current = true;
       shouldStickToBottomRef.current = true;
       requestAnimationFrame(() => {
-        scrollToBottom();
+        const nextScrollElement = scrollRef.current;
+        if (!nextScrollElement) return;
+        nextScrollElement.scrollTop = nextScrollElement.scrollHeight;
       });
     }
 
@@ -254,7 +291,6 @@ export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>({
     previousMessageCountRef,
     scrollAnchorRef,
     scrollRef,
-    scrollToBottom,
     searchState?.activeSearchTarget,
     searchState?.seekingTargetRef,
     shouldStickToBottomRef,
@@ -269,7 +305,9 @@ export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>({
     const observer = new ResizeObserver(() => {
       if (shouldStickToBottomRef.current) {
         requestAnimationFrame(() => {
-          scrollToBottom();
+          const nextScrollElement = scrollRef.current;
+          if (!nextScrollElement) return;
+          nextScrollElement.scrollTop = nextScrollElement.scrollHeight;
         });
       }
     });
@@ -277,7 +315,7 @@ export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>({
     observer.observe(contentEl);
     observer.observe(scrollEl);
     return () => observer.disconnect();
-  }, [messages.length, messagesContentRef, scrollRef, scrollToBottom, shouldStickToBottomRef]);
+  }, [messages.length, messagesContentRef, scrollRef, shouldStickToBottomRef]);
 
   useEffect(() => {
     if (!editingMessageId) return;
@@ -300,35 +338,30 @@ export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>({
     const element = scrollRef.current;
     if (!element) return;
     const rafId = requestAnimationFrame(() => {
-      if (element.scrollHeight <= element.clientHeight) setSeparatorDismissed(true);
+      if (element.scrollHeight <= element.clientHeight) {
+        dispatchUi({ type: 'patch', patch: { separatorDismissed: true } });
+      }
     });
     return () => cancelAnimationFrame(rafId);
   }, [lastReadMessageId, scrollRef, separatorDismissed]);
 
-  const handleMessagesScroll = useCallback(() => {
+  const handleMessagesScroll = () => {
     const element = scrollRef.current;
     if (!element) return;
 
     if (lastReadMessageId !== null && !separatorDismissed) {
-      setSeparatorDismissed(true);
+      dispatchUi({ type: 'patch', patch: { separatorDismissed: true } });
     }
     const distanceFromBottom = element.scrollHeight - element.scrollTop - element.clientHeight;
     shouldStickToBottomRef.current = distanceFromBottom < 50;
-    setShowScrollToBottom(distanceFromBottom > 160);
+    dispatchUi({ type: 'patch', patch: { showScrollToBottom: distanceFromBottom > 160 } });
     if (element.scrollTop >= 100) return;
     scrollAnchorRef.current = {
       scrollTop: element.scrollTop,
       scrollHeight: element.scrollHeight,
     };
     void loadMore();
-  }, [
-    lastReadMessageId,
-    loadMore,
-    scrollAnchorRef,
-    scrollRef,
-    separatorDismissed,
-    shouldStickToBottomRef,
-  ]);
+  };
 
   const openMessageMenuAt = (
     messageId: string,
@@ -337,15 +370,20 @@ export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>({
   ) => {
     const message = messages.find((item) => item.messageId === messageId);
     const isOwnMessage = message?.authorUserId === currentUser?.userId;
-    setMessageMenu({
-      messageId,
-      position,
-      horizontalAnchor,
-      isPinned: message?.isPinned ?? false,
-      canReply: Boolean(message),
-      canReact: Boolean(message),
-      canEdit: isOwnMessage,
-      canDelete: isOwnMessage,
+    dispatchUi({
+      type: 'patch',
+      patch: {
+        messageMenu: {
+          messageId,
+          position,
+          horizontalAnchor,
+          isPinned: message?.isPinned ?? false,
+          canReply: Boolean(message),
+          canReact: Boolean(message),
+          canEdit: isOwnMessage,
+          canDelete: isOwnMessage,
+        },
+      },
     });
   };
 
@@ -359,26 +397,30 @@ export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>({
   };
 
   const handleStartEditing = (messageId: string) => {
-    setMessageMenu(null);
-    setReplyTo(null);
+    dispatchUi({ type: 'patch', patch: { messageMenu: null, replyTo: null } });
     startEditing(messageId);
   };
 
   const handleStartReply = (messageId: string) => {
     const message = messages.find((item) => item.messageId === messageId);
     if (!message) return;
-    setMessageMenu(null);
+    dispatchUi({ type: 'patch', patch: { messageMenu: null } });
     cancelEditing();
     const author = authorMap.get(message.authorUserId);
-    setReplyTo({
-      messageId: message.messageId,
-      authorUserId: message.authorUserId,
-      authorDisplayName: author?.displayName ?? null,
-      authorUsername: author?.username ?? t('channel.messages.memberNotFound'),
-      content: message.content,
-      hasAttachments: message.attachments.length > 0,
-      isDeleted: false,
-      deletedAtUtc: null,
+    dispatchUi({
+      type: 'patch',
+      patch: {
+        replyTo: {
+          messageId: message.messageId,
+          authorUserId: message.authorUserId,
+          authorDisplayName: author?.displayName ?? null,
+          authorUsername: author?.username ?? t('channel.messages.memberNotFound'),
+          content: message.content,
+          hasAttachments: message.attachments.length > 0,
+          isDeleted: false,
+          deletedAtUtc: null,
+        },
+      },
     });
   };
 
@@ -386,24 +428,29 @@ export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>({
     messageId: string,
     value: string | { x: number; y: number }
   ) => {
-    setMessageMenu(null);
+    dispatchUi({ type: 'patch', patch: { messageMenu: null } });
     if (typeof value === 'string') {
       toggleReaction(messageId, value);
       return;
     }
 
-    setReactionPicker({
-      messageId,
-      anchorRect: {
-        x: value.x,
-        y: value.y,
-        width: 1,
-        height: 1,
-        top: value.y,
-        right: value.x + 1,
-        bottom: value.y + 1,
-        left: value.x,
-        toJSON: () => ({}),
+    dispatchUi({
+      type: 'patch',
+      patch: {
+        reactionPicker: {
+          messageId,
+          anchorRect: {
+            x: value.x,
+            y: value.y,
+            width: 1,
+            height: 1,
+            top: value.y,
+            right: value.x + 1,
+            bottom: value.y + 1,
+            left: value.x,
+            toJSON: () => ({}),
+          },
+        },
       },
     });
   };
@@ -411,16 +458,15 @@ export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>({
   const handleMenuReactionSelected = (emoji: string) => {
     if (!reactionPicker) return;
     toggleReaction(reactionPicker.messageId, emoji);
-    setReactionPicker(null);
+    dispatchUi({ type: 'patch', patch: { reactionPicker: null } });
   };
 
   const handleDeleteRequest = (messageId: string) => {
-    setMessageMenu(null);
-    setPendingDeleteMessageId(messageId);
+    dispatchUi({ type: 'patch', patch: { messageMenu: null, pendingDeleteMessageId: messageId } });
   };
 
   const handlePinToggle = (messageId: string, isPinned: boolean) => {
-    setMessageMenu(null);
+    dispatchUi({ type: 'patch', patch: { messageMenu: null } });
     const scrollElement = scrollRef.current;
     const scrollTop = scrollElement?.scrollTop;
     suppressNextScrollEffectsRef.current = true;
@@ -438,9 +484,9 @@ export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>({
     const loaded = await loadUntilMessage(messageId);
     if (!loaded) return;
     if (pinnedHighlightTimeoutRef.current) clearTimeout(pinnedHighlightTimeoutRef.current);
-    setPinnedHighlightMessageId(messageId);
+    dispatchUi({ type: 'patch', patch: { pinnedHighlightMessageId: messageId } });
     pinnedHighlightTimeoutRef.current = setTimeout(() => {
-      setPinnedHighlightMessageId(null);
+      dispatchUi({ type: 'patch', patch: { pinnedHighlightMessageId: null } });
       pinnedHighlightTimeoutRef.current = null;
     }, PINNED_MESSAGE_HIGHLIGHT_MS);
     requestAnimationFrame(() => {
@@ -462,9 +508,11 @@ export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>({
   const handleConfirmDelete = () => {
     if (pendingDeleteMessageId) {
       removeMessage(pendingDeleteMessageId);
-      if (replyTo?.messageId === pendingDeleteMessageId) setReplyTo(null);
+      if (replyTo?.messageId === pendingDeleteMessageId) {
+        dispatchUi({ type: 'patch', patch: { replyTo: null } });
+      }
     }
-    setPendingDeleteMessageId(null);
+    dispatchUi({ type: 'patch', patch: { pendingDeleteMessageId: null } });
   };
 
   const typingNames = typingUserIds.map(
@@ -486,7 +534,7 @@ export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>({
               aria-label={t('channel.messages.pinnedMessages')}
               title={t('channel.messages.pinnedMessages')}
               tooltipSide="bottom"
-              onClick={() => setPinnedMessagesOpen(true)}
+              onClick={() => dispatchUi({ type: 'patch', patch: { pinnedMessagesOpen: true } })}
             >
               <Pin size={16} />
             </IconButton>
@@ -548,15 +596,16 @@ export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>({
                       <MessageListItem
                         message={message}
                         member={authorMap.get(message.authorUserId)}
-                        grouped={grouped}
-                        isOwn={message.authorUserId === currentUser?.userId}
-                        isEditing={message.messageId === editingMessageId}
-                        isMenuOpen={message.messageId === messageMenu?.messageId}
-                        isMentioned={isMentioned}
-                        isSelected={
-                          message.messageId === searchState?.selectedMessageId ||
-                          message.messageId === pinnedHighlightMessageId
-                        }
+                        rowState={{
+                          grouped,
+                          isOwn: message.authorUserId === currentUser?.userId,
+                          isEditing: message.messageId === editingMessageId,
+                          isMenuOpen: message.messageId === messageMenu?.messageId,
+                          isMentioned,
+                          isSelected:
+                            message.messageId === searchState?.selectedMessageId ||
+                            message.messageId === pinnedHighlightMessageId,
+                        }}
                         onAvatarClick={onAvatarClick}
                         onEdit={handleStartEditing}
                         onCancelEdit={cancelEditing}
@@ -610,7 +659,7 @@ export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>({
             latestEditableMessage={latestOwnMessage}
             onEditingRequested={handleStartEditing}
             replyTo={replyTo}
-            onCancelReply={() => setReplyTo(null)}
+            onCancelReply={() => dispatchUi({ type: 'patch', patch: { replyTo: null } })}
             mentionOptions={composer.mentionOptions}
           />
         </div>
@@ -618,7 +667,7 @@ export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>({
 
       <MessageContextMenu
         menu={messageMenu}
-        onClose={() => setMessageMenu(null)}
+        onClose={() => dispatchUi({ type: 'patch', patch: { messageMenu: null } })}
         onReply={handleStartReply}
         onReact={handleOpenReactionPicker}
         onEdit={handleStartEditing}
@@ -630,7 +679,7 @@ export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>({
         <MessageEmojiPicker
           anchorRect={reactionPicker.anchorRect}
           onSelect={handleMenuReactionSelected}
-          onClose={() => setReactionPicker(null)}
+          onClose={() => dispatchUi({ type: 'patch', patch: { reactionPicker: null } })}
         />
       )}
 
@@ -647,15 +696,21 @@ export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>({
           authorMap={authorMap}
           onMessageSelected={handlePinnedMessageSelected}
           onMessageUnpinned={(messageId) => setMessagePinned(messageId, false)}
-          onClose={() => setPinnedMessagesOpen(false)}
+          onClose={() => dispatchUi({ type: 'patch', patch: { pinnedMessagesOpen: false } })}
         />
       )}
 
       {pendingDeleteMessageId && (
-        <Modal title={t('channel.messages.delete')} onClose={() => setPendingDeleteMessageId(null)}>
+        <Modal
+          title={t('channel.messages.delete')}
+          onClose={() => dispatchUi({ type: 'patch', patch: { pendingDeleteMessageId: null } })}
+        >
           <p className="font-body text-sm text-text-2">{t('channel.messages.deleteConfirm')}</p>
           <div className="flex justify-end gap-2">
-            <Button variant="tertiary" onClick={() => setPendingDeleteMessageId(null)}>
+            <Button
+              variant="tertiary"
+              onClick={() => dispatchUi({ type: 'patch', patch: { pendingDeleteMessageId: null } })}
+            >
               {t('channel.messages.deleteCancel')}
             </Button>
             <Button variant="danger" onClick={handleConfirmDelete}>
@@ -667,3 +722,7 @@ export const MessageThread = <TAuthor extends MessageAuthor = MessageAuthor>({
     </>
   );
 };
+
+const MessageThreadContent = <TAuthor extends MessageAuthor = MessageAuthor>(
+  props: MessageThreadProps<TAuthor>
+) => useMessageThreadContent(props);

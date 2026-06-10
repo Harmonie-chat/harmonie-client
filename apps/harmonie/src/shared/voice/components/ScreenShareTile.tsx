@@ -84,8 +84,11 @@ export const ScreenShareTile = ({
         autoPlay
         playsInline
         muted={screenShare.isLocal}
+        aria-label={t('voice.screenSharingLabel', { name: label })}
         className="h-full w-full bg-black object-contain"
-      />
+      >
+        <track kind="captions" label={t('voice.noCaptionsAvailable')} />
+      </video>
       <div className="pointer-events-none absolute left-3 top-3 flex max-w-[calc(100%-4.5rem)] items-center gap-2 rounded-full bg-surface-1/90 px-3 py-1 text-xs font-medium text-text-1 shadow-sm">
         <ScreenShare size={14} className="shrink-0" />
         <span className="truncate">{t('voice.screenSharingLabel', { name: label })}</span>

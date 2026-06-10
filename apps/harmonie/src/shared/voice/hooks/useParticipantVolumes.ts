@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 
 const PARTICIPANT_VOLUME_STORAGE_KEY = 'harmonie:voiceParticipantVolumes';
 export const DEFAULT_PARTICIPANT_VOLUME = 0.5;
@@ -12,22 +12,25 @@ export const useParticipantVolumes = (
       const stored = window.localStorage.getItem(PARTICIPANT_VOLUME_STORAGE_KEY);
       if (!stored) return {};
       const parsed = JSON.parse(stored) as Record<string, unknown>;
-      return Object.fromEntries(
-        Object.entries(parsed)
-          .filter(([, value]) => typeof value === 'number' && Number.isFinite(value))
-          .map(([participantId, value]) => [
-            participantId,
-            Math.min(1, Math.max(0, value as number)),
-          ])
-      );
+      const volumes: Record<string, number> = {};
+      for (const [participantId, value] of Object.entries(parsed)) {
+        if (typeof value !== 'number' || !Number.isFinite(value)) continue;
+        volumes[participantId] = Math.min(1, Math.max(0, value));
+      }
+      return volumes;
     } catch {
       return {};
     }
   });
   const participantVolumesRef = useRef(participantVolumes);
-  const previousNonZeroParticipantVolumesRef = useRef<Record<string, number>>(
-    Object.fromEntries(Object.entries(participantVolumes).filter(([, volume]) => volume > 0))
-  );
+  const previousNonZeroParticipantVolumesRef = useRef<Record<string, number>>(null!);
+  if (previousNonZeroParticipantVolumesRef.current === null) {
+    const previousVolumes: Record<string, number> = {};
+    for (const [participantId, volume] of Object.entries(participantVolumes)) {
+      if (volume > 0) previousVolumes[participantId] = volume;
+    }
+    previousNonZeroParticipantVolumesRef.current = previousVolumes;
+  }
 
   useEffect(() => {
     participantVolumesRef.current = participantVolumes;
@@ -35,56 +38,45 @@ export const useParticipantVolumes = (
     window.localStorage.setItem(PARTICIPANT_VOLUME_STORAGE_KEY, JSON.stringify(participantVolumes));
   }, [participantVolumes]);
 
-  const getParticipantVolume = useCallback(
-    (participantId: string) => participantVolumes[participantId] ?? DEFAULT_PARTICIPANT_VOLUME,
-    [participantVolumes]
-  );
+  const getParticipantVolume = (participantId: string) =>
+    participantVolumes[participantId] ?? DEFAULT_PARTICIPANT_VOLUME;
 
-  const applyParticipantVolume = useCallback(
-    (participantId: string, volume: number) => {
-      remoteAudioElementsRef.current?.forEach((audioEl) => {
-        if (audioEl.dataset.participantId === participantId) {
-          audioEl.volume = volume;
-        }
-      });
-    },
-    [remoteAudioElementsRef]
-  );
-
-  const setParticipantVolume = useCallback(
-    (participantId: string, volume: number) => {
-      const nextVolume = Math.min(1, Math.max(0, volume));
-      if (nextVolume > 0) {
-        previousNonZeroParticipantVolumesRef.current[participantId] = nextVolume;
+  const applyParticipantVolume = (participantId: string, volume: number) => {
+    remoteAudioElementsRef.current?.forEach((audioEl) => {
+      if (audioEl.dataset.participantId === participantId) {
+        audioEl.volume = volume;
       }
-      setParticipantVolumes((prev) => {
-        const next = { ...prev, [participantId]: nextVolume };
-        participantVolumesRef.current = next;
-        return next;
-      });
-      applyParticipantVolume(participantId, nextVolume);
-    },
-    [applyParticipantVolume]
-  );
+    });
+  };
 
-  const toggleParticipantMute = useCallback(
-    (participantId: string) => {
-      const currentVolume =
-        participantVolumesRef.current[participantId] ?? DEFAULT_PARTICIPANT_VOLUME;
+  const setParticipantVolume = (participantId: string, volume: number) => {
+    const nextVolume = Math.min(1, Math.max(0, volume));
+    if (nextVolume > 0) {
+      previousNonZeroParticipantVolumesRef.current[participantId] = nextVolume;
+    }
+    setParticipantVolumes((prev) => {
+      const next = { ...prev, [participantId]: nextVolume };
+      participantVolumesRef.current = next;
+      return next;
+    });
+    applyParticipantVolume(participantId, nextVolume);
+  };
 
-      if (currentVolume === 0) {
-        setParticipantVolume(
-          participantId,
-          previousNonZeroParticipantVolumesRef.current[participantId] ?? DEFAULT_PARTICIPANT_VOLUME
-        );
-        return;
-      }
+  const toggleParticipantMute = (participantId: string) => {
+    const currentVolume =
+      participantVolumesRef.current[participantId] ?? DEFAULT_PARTICIPANT_VOLUME;
 
-      previousNonZeroParticipantVolumesRef.current[participantId] = currentVolume;
-      setParticipantVolume(participantId, 0);
-    },
-    [setParticipantVolume]
-  );
+    if (currentVolume === 0) {
+      setParticipantVolume(
+        participantId,
+        previousNonZeroParticipantVolumesRef.current[participantId] ?? DEFAULT_PARTICIPANT_VOLUME
+      );
+      return;
+    }
+
+    previousNonZeroParticipantVolumesRef.current[participantId] = currentVolume;
+    setParticipantVolume(participantId, 0);
+  };
 
   return {
     participantVolumes,

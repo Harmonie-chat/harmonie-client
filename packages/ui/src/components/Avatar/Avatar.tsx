@@ -28,12 +28,10 @@ export const Avatar = ({
       <img
         src={avatarUrl}
         alt={alt}
+        className="shrink-0 rounded-full object-cover"
         style={{
           width: dimension,
           height: dimension,
-          borderRadius: '50%',
-          objectFit: 'cover',
-          flexShrink: 0,
         }}
       />
     );
@@ -44,15 +42,11 @@ export const Avatar = ({
   if (Icon) {
     return (
       <div
+        className="flex shrink-0 items-center justify-center rounded-full"
         style={{
           width: dimension,
           height: dimension,
-          borderRadius: '50%',
           backgroundColor: bg,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
         }}
       >
         <Icon size={iconSize} color={color} />
@@ -67,11 +61,9 @@ export const Avatar = ({
         style={{
           width: dimension,
           height: dimension,
-          borderRadius: '50%',
           fontSize: `${fontSize}px`,
-          flexShrink: 0,
         }}
-        className="bg-surface-3 flex items-center justify-center font-semibold text-text-2"
+        className="flex shrink-0 items-center justify-center rounded-full bg-surface-3 font-semibold text-text-2"
       >
         {fallback[0]?.toUpperCase()}
       </div>

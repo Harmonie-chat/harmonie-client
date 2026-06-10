@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileText, Globe, LogOut, Palette, UserRound } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { ModalPanel, NavList, Separator } from '@harmonie/ui';
+import { ModalPanel, NavList, NavListItem, Separator } from '@harmonie/ui';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useUser } from '@/features/user/UserContext';
 import { AvatarSection } from './AvatarSection';
@@ -37,7 +37,7 @@ export const SettingsPanel = ({ onClose }: SettingsPanelProps) => {
       <Separator />
       <NavList className="mt-2">
         {NAV_ITEMS.map(({ id, icon: Icon }) => (
-          <NavList.Item
+          <NavListItem
             key={id}
             icon={<Icon size={15} />}
             label={t(`settings.nav.${id}`)}
@@ -49,7 +49,7 @@ export const SettingsPanel = ({ onClose }: SettingsPanelProps) => {
       <div className="mt-auto flex flex-col gap-1">
         <Separator />
         <NavList>
-          <NavList.Item icon={<LogOut size={15} />} label={t('user.logout')} onClick={logout} />
+          <NavListItem icon={<LogOut size={15} />} label={t('user.logout')} onClick={logout} />
         </NavList>
       </div>
     </>

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Gavel, UserMinus } from 'lucide-react';
 import { UserListItem } from './UserListItem';
 

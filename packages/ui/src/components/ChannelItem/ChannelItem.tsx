@@ -44,6 +44,7 @@ export const ChannelItem = ({
       ].join(' ')}
     >
       <button
+        type="button"
         onClick={(e) => {
           if (longPress.consumeTriggeredPress(e)) return;
           onClick();

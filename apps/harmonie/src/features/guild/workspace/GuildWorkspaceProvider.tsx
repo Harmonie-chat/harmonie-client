@@ -1,12 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, use, useState, type ReactNode } from 'react';
 import { matchPath, useLocation } from 'react-router-dom';
 
 interface GuildWorkspaceContextValue {
@@ -39,79 +31,59 @@ export const GuildWorkspaceProvider = ({ children }: GuildWorkspaceProviderProps
   const hasSearch =
     searchQuery.trim() !== '' || searchAuthorId !== null || searchChannelId !== null;
 
-  const clearSearch = useCallback(() => {
+  const clearSearch = () => {
     setSearchQueryState('');
     setSearchAuthorIdState(null);
     setSearchChannelIdState(null);
-  }, []);
+  };
 
-  const toggleMembersPanel = useCallback(() => {
+  const toggleMembersPanel = () => {
     clearSearch();
     setMembersOpen((open) => !open);
-  }, [clearSearch]);
+  };
 
-  const closeMembersPanel = useCallback(() => {
+  const closeMembersPanel = () => {
     setMembersOpen(false);
-  }, []);
+  };
 
-  const setSearchQuery = useCallback((q: string) => {
+  const setSearchQuery = (q: string) => {
     setSearchQueryState(q);
     if (q.trim()) setMembersOpen(false);
-  }, []);
+  };
 
-  const setSearchAuthorId = useCallback((id: string | null) => {
+  const setSearchAuthorId = (id: string | null) => {
     setSearchAuthorIdState(id);
     setMembersOpen(false);
-  }, []);
+  };
 
-  const setSearchChannelId = useCallback((id: string | null) => {
+  const setSearchChannelId = (id: string | null) => {
     setSearchChannelIdState(id);
     setMembersOpen(false);
-  }, []);
+  };
 
   const isTextChannelRoute =
     matchPath('/guilds/:guildId/channels/:channelId', location.pathname) !== null;
+  const visibleMembersOpen = isTextChannelRoute && membersOpen;
 
-  useEffect(() => {
-    if (!isTextChannelRoute) {
-      setMembersOpen(false);
-    }
-  }, [isTextChannelRoute]);
-
-  const value = useMemo<GuildWorkspaceContextValue>(
-    () => ({
-      membersOpen,
-      searchQuery,
-      searchAuthorId,
-      searchChannelId,
-      hasSearch,
-      toggleMembersPanel,
-      closeMembersPanel,
-      setSearchQuery,
-      setSearchAuthorId,
-      setSearchChannelId,
-      clearSearch,
-    }),
-    [
-      clearSearch,
-      closeMembersPanel,
-      hasSearch,
-      membersOpen,
-      searchAuthorId,
-      searchChannelId,
-      searchQuery,
-      setSearchAuthorId,
-      setSearchChannelId,
-      setSearchQuery,
-      toggleMembersPanel,
-    ]
-  );
+  const value: GuildWorkspaceContextValue = {
+    membersOpen: visibleMembersOpen,
+    searchQuery,
+    searchAuthorId,
+    searchChannelId,
+    hasSearch,
+    toggleMembersPanel,
+    closeMembersPanel,
+    setSearchQuery,
+    setSearchAuthorId,
+    setSearchChannelId,
+    clearSearch,
+  };
 
   return <GuildWorkspaceContext.Provider value={value}>{children}</GuildWorkspaceContext.Provider>;
 };
 
 export const useGuildWorkspace = () => {
-  const context = useContext(GuildWorkspaceContext);
+  const context = use(GuildWorkspaceContext);
 
   if (!context) {
     throw new Error('useGuildWorkspace must be used within a GuildWorkspaceProvider');

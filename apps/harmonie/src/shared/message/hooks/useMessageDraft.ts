@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { stripHtmlToText } from '../utils/messageHtml';
 
 const DRAFT_STORAGE_PREFIX = 'harmonie:message-draft:';
@@ -47,18 +47,15 @@ const clearStoredDraft = (draftKey?: string) => {
 export const useMessageDraft = (draftKey?: string) => {
   const [content, setContentState] = useState(() => readStoredDraft(draftKey));
 
-  const setContent = useCallback(
-    (value: string) => {
-      setContentState(value);
-      writeStoredDraft(draftKey, value);
-    },
-    [draftKey]
-  );
+  const setContent = (value: string) => {
+    setContentState(value);
+    writeStoredDraft(draftKey, value);
+  };
 
-  const clearDraft = useCallback(() => {
+  const clearDraft = () => {
     setContentState('');
     clearStoredDraft(draftKey);
-  }, [draftKey]);
+  };
 
   return { clearDraft, content, setContent };
 };

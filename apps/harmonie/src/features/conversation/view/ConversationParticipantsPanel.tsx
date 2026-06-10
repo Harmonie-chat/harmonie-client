@@ -23,30 +23,32 @@ interface SelectedParticipant {
 
 const ConversationParticipantItem = ({
   participant,
-  showCallPresence,
-  isInCall,
-  isMuted,
-  isCameraEnabled,
-  isScreenSharing,
+  callState,
   onSelect,
 }: {
   participant: ConversationParticipant;
-  showCallPresence: boolean;
-  isInCall: boolean;
-  isMuted: boolean;
-  isCameraEnabled: boolean;
-  isScreenSharing: boolean;
+  callState: {
+    showPresence: boolean;
+    isInCall: boolean;
+    isMuted: boolean;
+    isCameraEnabled: boolean;
+    isScreenSharing: boolean;
+  };
   onSelect: (participant: ConversationParticipant, rect: DOMRect) => void;
 }) => {
   const { t } = useTranslation();
   const avatarUrl = useFileBlobUrl(participant.avatarFileId ?? null);
   const label = participant.displayName ?? participant.username;
   const usernameSubtitle = participant.displayName ? `@${participant.username}` : undefined;
-  const callSubtitle = showCallPresence
-    ? t(isInCall ? 'conversation.call.inCall' : 'conversation.call.notInCall')
+  const callSubtitle = callState.showPresence
+    ? t(callState.isInCall ? 'conversation.call.inCall' : 'conversation.call.notInCall')
     : undefined;
   const subtitle = callSubtitle ?? usernameSubtitle;
-  const hasVoiceStatus = isInCall || isMuted || isCameraEnabled || isScreenSharing;
+  const hasVoiceStatus =
+    callState.isInCall ||
+    callState.isMuted ||
+    callState.isCameraEnabled ||
+    callState.isScreenSharing;
 
   return (
     <UserListItem
@@ -61,47 +63,35 @@ const ConversationParticipantItem = ({
       trailing={
         hasVoiceStatus ? (
           <span className="flex shrink-0 items-center gap-1 text-text-3/80">
-            {isInCall && (
+            {callState.isInCall && (
               <Tooltip content={t('conversation.call.inCall')} side="top">
-                <span
-                  className="inline-flex h-4 w-4 items-center justify-center rounded-full text-primary"
-                  aria-label={t('conversation.call.inCall')}
-                  role="img"
-                >
-                  <PhoneCall size={12} />
+                <span className="inline-flex size-4 items-center justify-center rounded-full text-primary">
+                  <span className="sr-only">{t('conversation.call.inCall')}</span>
+                  <PhoneCall size={12} aria-hidden="true" />
                 </span>
               </Tooltip>
             )}
-            {isMuted && (
+            {callState.isMuted && (
               <Tooltip content={t('voice.participantMuted', { name: label })} side="top">
-                <span
-                  className="inline-flex h-4 w-4 items-center justify-center rounded-full"
-                  aria-label={t('voice.participantMuted', { name: label })}
-                  role="img"
-                >
-                  <MicOff size={12} />
+                <span className="inline-flex size-4 items-center justify-center rounded-full">
+                  <span className="sr-only">{t('voice.participantMuted', { name: label })}</span>
+                  <MicOff size={12} aria-hidden="true" />
                 </span>
               </Tooltip>
             )}
-            {isCameraEnabled && (
+            {callState.isCameraEnabled && (
               <Tooltip content={t('voice.participantCameraOn', { name: label })} side="top">
-                <span
-                  className="inline-flex h-4 w-4 items-center justify-center rounded-full"
-                  aria-label={t('voice.participantCameraOn', { name: label })}
-                  role="img"
-                >
-                  <Video size={12} />
+                <span className="inline-flex size-4 items-center justify-center rounded-full">
+                  <span className="sr-only">{t('voice.participantCameraOn', { name: label })}</span>
+                  <Video size={12} aria-hidden="true" />
                 </span>
               </Tooltip>
             )}
-            {isScreenSharing && (
+            {callState.isScreenSharing && (
               <Tooltip content={t('voice.screenSharingLabel', { name: label })} side="top">
-                <span
-                  className="inline-flex h-4 w-4 items-center justify-center rounded-full"
-                  aria-label={t('voice.screenSharingLabel', { name: label })}
-                  role="img"
-                >
-                  <ScreenShare size={12} />
+                <span className="inline-flex size-4 items-center justify-center rounded-full">
+                  <span className="sr-only">{t('voice.screenSharingLabel', { name: label })}</span>
+                  <ScreenShare size={12} aria-hidden="true" />
                 </span>
               </Tooltip>
             )}
@@ -218,11 +208,13 @@ export const ConversationParticipantsPanel = ({
             <ConversationParticipantItem
               key={participant.userId}
               participant={participant}
-              showCallPresence={showVoiceStatus}
-              isInCall={voiceParticipantIds.has(participant.userId)}
-              isMuted={showVoiceStatus && voice.mutedUserIds.has(participant.userId)}
-              isCameraEnabled={cameraUserIds.has(participant.userId)}
-              isScreenSharing={screenSharingUserIds.has(participant.userId)}
+              callState={{
+                showPresence: showVoiceStatus,
+                isInCall: voiceParticipantIds.has(participant.userId),
+                isMuted: showVoiceStatus && voice.mutedUserIds.has(participant.userId),
+                isCameraEnabled: cameraUserIds.has(participant.userId),
+                isScreenSharing: screenSharingUserIds.has(participant.userId),
+              }}
               onSelect={handleSelect}
             />
           ))}

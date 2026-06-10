@@ -4,7 +4,7 @@ import { Avatar, Lightbox } from '@harmonie/ui';
 import { useFileDownload } from '@/shared/hooks/useFileDownload';
 import { useFileBlobUrl } from '@/shared/hooks/useFileBlobUrl';
 import { formatContextualDateTime } from '@/shared/utils/date';
-import type { MessageAuthor } from '@/shared/message/types';
+import type { MessageAuthor } from '@/shared/message/messageAuthor';
 
 export interface MessageAttachmentLightboxProps {
   fileId: string;

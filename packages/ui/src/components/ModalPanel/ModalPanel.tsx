@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { IconButton } from '../IconButton/IconButton';
 
@@ -17,23 +17,31 @@ export const ModalPanel = ({
   children,
   closeLabel = 'Close',
 }: ModalPanelProps) => {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (!dialog.open) dialog.showModal();
+    return () => {
+      if (dialog.open) dialog.close();
     };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, []);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
+      className="fixed inset-0 z-50 m-0 flex h-auto max-h-none w-auto max-w-none items-end justify-center border-0 bg-transparent p-0 text-inherit sm:items-center sm:p-4"
       aria-label={title}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
     >
       {/* Backdrop */}
-      <div
+      <button
+        type="button"
+        aria-label={closeLabel}
         className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-default"
         onClick={onClose}
       />
@@ -74,6 +82,6 @@ export const ModalPanel = ({
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 };

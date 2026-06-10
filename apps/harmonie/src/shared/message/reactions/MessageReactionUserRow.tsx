@@ -1,6 +1,6 @@
 import { Avatar } from '@harmonie/ui';
 import { useFileBlobUrl } from '@/shared/hooks/useFileBlobUrl';
-import type { MessageAuthor } from '@/shared/message/types';
+import type { MessageAuthor } from '@/shared/message/messageAuthor';
 import type { MessageReactionUser } from '@/types/channel';
 
 interface MessageReactionUserRowProps {

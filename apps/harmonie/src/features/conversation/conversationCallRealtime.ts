@@ -30,7 +30,7 @@ const getString = (payload: RealtimePayload, ...keys: string[]) => {
   return null;
 };
 
-export const normalizeConversationCallIncoming = (
+const normalizeConversationCallIncoming = (
   payload: unknown
 ): ConversationCallIncomingEvent | null => {
   if (!payload || typeof payload !== 'object') return null;
@@ -66,9 +66,7 @@ export const normalizeConversationCallIncoming = (
   };
 };
 
-export const normalizeConversationCallClosed = (
-  payload: unknown
-): { conversationId: string } | null => {
+const normalizeConversationCallClosed = (payload: unknown): { conversationId: string } | null => {
   if (!payload || typeof payload !== 'object') return null;
   const conversationId = getString(payload as RealtimePayload, 'conversationId', 'ConversationId');
   return conversationId ? { conversationId } : null;
@@ -82,14 +80,21 @@ const sendFirstAvailable = async (
   if (!connection) return;
 
   let lastError: unknown = null;
-  for (const method of methods) {
+
+  const sendAtIndex = async (index: number): Promise<boolean> => {
+    const method = methods[index];
+    if (!method) return false;
+
     try {
       await connection.send(method, conversationId);
-      return;
+      return true;
     } catch (error) {
       lastError = error;
+      return sendAtIndex(index + 1);
     }
-  }
+  };
+
+  if (await sendAtIndex(0)) return;
 
   console.warn('[ConversationCall] No SignalR call method succeeded.', {
     conversationId,

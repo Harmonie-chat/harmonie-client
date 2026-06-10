@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { RemoveMemberModal } from '@/features/guild/members/modals/RemoveMemberModal';
 import { useCurrentGuild, useGuilds } from '@/features/guild/GuildContext';
-import { useGuildPermissions } from '@/features/guild/hooks/useGuildPermissions';
+import { useGuildPermissions } from '@/features/guild/useGuildPermissions';
 import type { GuildMember } from '@/types/guild';
 
 export const useMemberRemoveActions = (guildId: string | undefined, onRemoved?: () => void) => {

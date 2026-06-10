@@ -1,24 +1,29 @@
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { useChannels } from '@/features/channel/ChannelContext';
 import { useGuilds } from '@/features/guild/GuildContext';
 
 const MOBILE_MEDIA_QUERY = '(max-width: 767px)';
 
+const getIsMobileSnapshot = () =>
+  typeof window !== 'undefined' && window.matchMedia(MOBILE_MEDIA_QUERY).matches;
+
+const getServerIsMobileSnapshot = () => false;
+
+const subscribeToMobileViewport = (callback: () => void) => {
+  if (typeof window === 'undefined') return () => {};
+
+  const mediaQuery = window.matchMedia(MOBILE_MEDIA_QUERY);
+  mediaQuery.addEventListener('change', callback);
+  return () => mediaQuery.removeEventListener('change', callback);
+};
+
 const useIsMobileViewport = () => {
-  const [isMobile, setIsMobile] = useState(() =>
-    typeof window === 'undefined' ? false : window.matchMedia(MOBILE_MEDIA_QUERY).matches
+  return useSyncExternalStore(
+    subscribeToMobileViewport,
+    getIsMobileSnapshot,
+    getServerIsMobileSnapshot
   );
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia(MOBILE_MEDIA_QUERY);
-    const handleChange = () => setIsMobile(mediaQuery.matches);
-    handleChange();
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
-
-  return isMobile;
 };
 
 export const ChannelIndexPage = () => {

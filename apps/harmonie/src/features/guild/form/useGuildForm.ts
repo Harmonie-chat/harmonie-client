@@ -126,9 +126,8 @@ export const useGuildForm = ({ mode, guild, onUpdated, onSuccess }: UseGuildForm
       onSuccess?.();
     } catch {
       setError(true);
-    } finally {
-      setIsLoading(false);
     }
+    setIsLoading(false);
   };
 
   return {

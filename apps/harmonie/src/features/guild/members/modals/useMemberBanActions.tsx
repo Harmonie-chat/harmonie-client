@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { BanMemberModal } from '@/features/guild/members/modals/BanMemberModal';
 import { useCurrentGuild, useGuilds } from '@/features/guild/GuildContext';
-import { useGuildPermissions } from '@/features/guild/hooks/useGuildPermissions';
+import { useGuildPermissions } from '@/features/guild/useGuildPermissions';
 import type { GuildMember } from '@/types/guild';
 
 export const useMemberBanActions = (guildId: string | undefined, onBanned?: () => void) => {

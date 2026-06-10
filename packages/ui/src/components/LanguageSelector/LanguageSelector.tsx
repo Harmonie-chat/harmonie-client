@@ -44,26 +44,24 @@ export const LanguageSelector = ({ languages, currentLang, onChange }: LanguageS
       </Button>
 
       {open && (
-        <ul
-          role="listbox"
-          className="absolute right-0 top-full mt-1 min-w-full bg-surface-1 border border-border-2 rounded-sm shadow-[0_4px_16px_rgba(61,53,48,0.10)] overflow-hidden z-50"
-        >
+        <ul className="absolute right-0 top-full mt-1 min-w-full bg-surface-1 border border-border-2 rounded-sm shadow-[0_4px_16px_rgba(61,53,48,0.10)] overflow-hidden z-50">
           {languages.map((lang) => (
-            <li
-              key={lang.code}
-              role="option"
-              aria-selected={lang.code === currentLang}
-              onClick={() => {
-                onChange(lang.code);
-                setOpen(false);
-              }}
-              className={`px-3 py-2 font-body text-sm cursor-pointer select-none transition-colors whitespace-nowrap ${
-                lang.code === currentLang
-                  ? 'text-text-1 bg-surface-3'
-                  : 'text-tertiary-fg hover:bg-surface-3'
-              }`}
-            >
-              {lang.label}
+            <li key={lang.code}>
+              <button
+                type="button"
+                aria-current={lang.code === currentLang ? 'true' : undefined}
+                className={`w-full px-3 py-2 text-left font-body text-sm cursor-pointer select-none transition-colors whitespace-nowrap ${
+                  lang.code === currentLang
+                    ? 'text-text-1 bg-surface-3'
+                    : 'text-tertiary-fg hover:bg-surface-3'
+                }`}
+                onClick={() => {
+                  onChange(lang.code);
+                  setOpen(false);
+                }}
+              >
+                {lang.label}
+              </button>
             </li>
           ))}
         </ul>

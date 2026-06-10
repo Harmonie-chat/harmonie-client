@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { DoorOpen, Mailbox, Pencil, ShieldBan, Trash2, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { ModalPanel, NavList, Separator } from '@harmonie/ui';
+import { ModalPanel, NavList, NavListItem, Separator } from '@harmonie/ui';
 import type { Guild } from '@/types/guild';
 import { GuildDangerSection } from '@/features/guild/settings/GuildDangerSection';
 import { GuildLeaveSection } from '@/features/guild/settings/GuildLeaveSection';
@@ -9,8 +9,8 @@ import { GuildForm } from '@/features/guild/form/GuildForm';
 import { GuildInvites } from '@/features/guild/invites/GuildInvites';
 import { GuildBans } from '@/features/guild/members/admin/GuildBans';
 import { GuildMembers } from '@/features/guild/members/admin/GuildMembers';
-import { useGuildPermissions } from '@/features/guild/hooks/useGuildPermissions';
-import { AdminSectionMenu } from '@/features/guild/types/adminSection';
+import { useGuildPermissions } from '@/features/guild/useGuildPermissions';
+import { AdminSectionMenu } from '@/features/guild/settings/adminSection';
 
 interface EditGuildModalProps {
   guild: Guild;
@@ -49,7 +49,7 @@ export const GuildSettingsModal = ({
       <Separator />
       <NavList className="mt-2">
         {canManageGuild && (
-          <NavList.Item
+          <NavListItem
             icon={<Pencil size={15} />}
             label={t('guild.edit.nav.identity')}
             active={section === 'identity'}
@@ -57,7 +57,7 @@ export const GuildSettingsModal = ({
           />
         )}
         {canManageGuild && (
-          <NavList.Item
+          <NavListItem
             icon={<Users size={15} />}
             label={t('guild.edit.nav.members')}
             active={section === 'members'}
@@ -65,7 +65,7 @@ export const GuildSettingsModal = ({
           />
         )}
         {canManageGuild && (
-          <NavList.Item
+          <NavListItem
             icon={<Mailbox size={15} />}
             label={t('guild.edit.nav.invites')}
             active={section === 'invites'}
@@ -73,7 +73,7 @@ export const GuildSettingsModal = ({
           />
         )}
         {canManageGuild && (
-          <NavList.Item
+          <NavListItem
             icon={<ShieldBan size={15} />}
             label={t('guild.edit.nav.bans')}
             active={section === 'bans'}
@@ -81,7 +81,7 @@ export const GuildSettingsModal = ({
           />
         )}
         {canAccessDangerZone && (
-          <NavList.Item
+          <NavListItem
             icon={<Trash2 size={15} />}
             label={t('guild.edit.nav.danger')}
             active={section === 'danger'}
@@ -89,7 +89,7 @@ export const GuildSettingsModal = ({
           />
         )}
         {canLeaveGuild && (
-          <NavList.Item
+          <NavListItem
             icon={<DoorOpen size={15} />}
             label={t('guild.edit.nav.leave')}
             active={section === 'leave'}

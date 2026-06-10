@@ -1,10 +1,11 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ChevronUp, HeadphoneOff, Headphones } from 'lucide-react';
 import { SplitIconButton } from './SplitIconButton';
 
 const meta: Meta<typeof SplitIconButton> = {
   title: 'Actions/SplitIconButton',
   component: SplitIconButton,
+  tags: ['autodocs'],
   args: {
     size: 'small',
     selected: false,

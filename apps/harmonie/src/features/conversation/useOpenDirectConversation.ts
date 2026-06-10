@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { openDirectConversation } from '@/api/conversations';
 import type { Conversation, ConversationParticipant } from '@/types/conversation';
@@ -14,27 +13,24 @@ export const useOpenDirectConversation = () => {
   const { user } = useUser();
   const { addConversation } = useConversations();
 
-  return useCallback(
-    async (targetUser: DirectConversationUser) => {
-      const response = await openDirectConversation(targetUser.userId);
-      const currentUserParticipant = user ? userToConversationParticipant(user) : null;
-      const targetParticipant = userToConversationParticipant(targetUser);
-      const participants = [
-        targetParticipant,
-        ...(currentUserParticipant ? [currentUserParticipant] : []),
-      ];
+  return async (targetUser: DirectConversationUser) => {
+    const response = await openDirectConversation(targetUser.userId);
+    const currentUserParticipant = user ? userToConversationParticipant(user) : null;
+    const targetParticipant = userToConversationParticipant(targetUser);
+    const participants = [
+      targetParticipant,
+      ...(currentUserParticipant ? [currentUserParticipant] : []),
+    ];
 
-      const conversation: Conversation = {
-        conversationId: response.conversationId,
-        type: 'Direct',
-        name: response.name ?? null,
-        participants,
-        createdAtUtc: response.createdAtUtc,
-      };
+    const conversation: Conversation = {
+      conversationId: response.conversationId,
+      type: 'Direct',
+      name: response.name ?? null,
+      participants,
+      createdAtUtc: response.createdAtUtc,
+    };
 
-      addConversation(conversation);
-      navigate(`/conversations/${conversation.conversationId}`);
-    },
-    [addConversation, navigate, user]
-  );
+    addConversation(conversation);
+    navigate(`/conversations/${conversation.conversationId}`);
+  };
 };

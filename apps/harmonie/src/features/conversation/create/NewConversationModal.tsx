@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useReducer, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Avatar, Button, Modal } from '@harmonie/ui';
@@ -6,7 +6,6 @@ import { Check } from 'lucide-react';
 import { createGroupConversation, openDirectConversation, searchUsers } from '@/api/conversations';
 import type { Conversation, SearchUser } from '@/types/conversation';
 import { useFileBlobUrl } from '@/shared/hooks/useFileBlobUrl';
-import { useCoarsePointer } from '@/shared/hooks/useCoarsePointer';
 import { useUser } from '@/features/user/UserContext';
 import { useConversations } from '../ConversationContext';
 import { userToConversationParticipant } from '../conversationUtils';
@@ -51,7 +50,7 @@ const UserListItem = ({
       </div>
       <div
         className={[
-          'w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors',
+          'size-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors',
           isSelected ? 'bg-primary border-primary' : 'border-border-2',
         ].join(' ')}
       >
@@ -65,55 +64,105 @@ interface NewConversationModalProps {
   onClose: () => void;
 }
 
+interface SearchState {
+  key: string;
+  results: SearchUser[];
+}
+
+interface NewConversationState {
+  query: string;
+  searchState: SearchState;
+  selected: SearchUser[];
+  groupName: string;
+  submitting: boolean;
+  error: boolean;
+}
+
+type NewConversationAction =
+  | { type: 'patch'; patch: Partial<NewConversationState> }
+  | { type: 'searchCompleted'; searchState: SearchState }
+  | { type: 'userToggled'; user: SearchUser };
+
+const newConversationInitialState: NewConversationState = {
+  query: '',
+  searchState: { key: '', results: [] },
+  selected: [],
+  groupName: '',
+  submitting: false,
+  error: false,
+};
+
+const newConversationReducer = (
+  state: NewConversationState,
+  action: NewConversationAction
+): NewConversationState => {
+  switch (action.type) {
+    case 'patch':
+      return { ...state, ...action.patch };
+    case 'searchCompleted':
+      return { ...state, searchState: action.searchState };
+    case 'userToggled': {
+      const isSelected = state.selected.some(
+        (selectedUser) => selectedUser.userId === action.user.userId
+      );
+      if (isSelected) {
+        return {
+          ...state,
+          selected: state.selected.filter(
+            (selectedUser) => selectedUser.userId !== action.user.userId
+          ),
+        };
+      }
+      if (state.selected.length >= MAX_PARTICIPANTS) return state;
+      return { ...state, selected: [...state.selected, action.user] };
+    }
+  }
+};
+
 export const NewConversationModal = ({ onClose }: NewConversationModalProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { addConversation } = useConversations();
   const { user } = useUser();
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchUser[]>([]);
-  const [selected, setSelected] = useState<SearchUser[]>([]);
-  const [groupName, setGroupName] = useState('');
-  const [searching, setSearching] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(false);
-  const isCoarsePointer = useCoarsePointer();
+  const [state, dispatch] = useReducer(newConversationReducer, newConversationInitialState);
+  const { query, searchState, selected, groupName, submitting, error } = state;
+  const searchKey = `${query}\u0000${user?.userId ?? ''}`;
+  const results = query.length >= 2 && searchState.key === searchKey ? searchState.results : [];
+  const searching = query.length >= 2 && searchState.key !== searchKey;
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (query.length < 2) {
-      setResults([]);
-      setSearching(false);
-      return;
-    }
-    setSearching(true);
+    if (query.length < 2) return;
     debounceRef.current = setTimeout(() => {
       searchUsers(query)
-        .then((data) => setResults(data.users.filter((u) => u.userId !== user?.userId)))
-        .catch(() => setResults([]))
-        .finally(() => setSearching(false));
+        .then((data) =>
+          dispatch({
+            type: 'searchCompleted',
+            searchState: {
+              key: searchKey,
+              results: data.users.filter((u) => u.userId !== user?.userId),
+            },
+          })
+        )
+        .catch(() =>
+          dispatch({ type: 'searchCompleted', searchState: { key: searchKey, results: [] } })
+        );
     }, 300);
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, user?.userId]);
+  }, [query, searchKey, user?.userId]);
 
   const toggleUser = (user: SearchUser) => {
-    setSelected((prev) => {
-      const isSelected = prev.some((s) => s.userId === user.userId);
-      if (isSelected) return prev.filter((s) => s.userId !== user.userId);
-      if (prev.length >= MAX_PARTICIPANTS) return prev;
-      return [...prev, user];
-    });
+    dispatch({ type: 'userToggled', user });
   };
 
   const handleCreate = async () => {
     if (selected.length === 0) return;
-    setSubmitting(true);
-    setError(false);
+    dispatch({ type: 'patch', patch: { submitting: true, error: false } });
     try {
       const response =
         selected.length === 1
@@ -141,10 +190,9 @@ export const NewConversationModal = ({ onClose }: NewConversationModalProps) => 
       navigate(`/conversations/${conversation.conversationId}`);
       onClose();
     } catch {
-      setError(true);
-    } finally {
-      setSubmitting(false);
+      dispatch({ type: 'patch', patch: { error: true } });
     }
+    dispatch({ type: 'patch', patch: { submitting: false } });
   };
 
   const remaining = MAX_PARTICIPANTS - selected.length;
@@ -158,10 +206,7 @@ export const NewConversationModal = ({ onClose }: NewConversationModalProps) => 
       onClose={onClose}
     >
       {/* Chips + search input */}
-      <div
-        className="flex flex-wrap gap-1.5 items-center px-3 py-2 rounded-md border border-border-2 bg-surface-2 min-h-10 focus-within:border-primary transition-colors cursor-text"
-        onClick={() => inputRef.current?.focus()}
-      >
+      <div className="flex flex-wrap gap-1.5 items-center px-3 py-2 rounded-md border border-border-2 bg-surface-2 min-h-10 focus-within:border-primary transition-colors">
         {selected.map((u) => (
           <span
             key={u.userId}
@@ -170,11 +215,14 @@ export const NewConversationModal = ({ onClose }: NewConversationModalProps) => 
             {u.displayName ?? u.username}
             <button
               type="button"
+              aria-label={t('conversation.removeParticipant', {
+                name: u.displayName ?? u.username,
+              })}
               onClick={(e) => {
                 e.stopPropagation();
                 toggleUser(u);
               }}
-              className="flex items-center justify-center w-4 h-4 rounded-full hover:bg-primary/20 cursor-pointer text-xs leading-none"
+              className="flex items-center justify-center size-4 rounded-full hover:bg-primary/20 cursor-pointer text-xs leading-none"
             >
               ×
             </button>
@@ -183,10 +231,10 @@ export const NewConversationModal = ({ onClose }: NewConversationModalProps) => 
         <input
           ref={inputRef}
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          aria-label={t('conversation.searchUsers')}
+          onChange={(e) => dispatch({ type: 'patch', patch: { query: e.target.value } })}
           placeholder={selected.length === 0 ? t('conversation.searchUsers') : ''}
           className="flex-1 min-w-28 bg-transparent outline-none text-sm text-text-1 placeholder:text-text-3"
-          autoFocus={!isCoarsePointer}
         />
       </div>
 
@@ -218,7 +266,8 @@ export const NewConversationModal = ({ onClose }: NewConversationModalProps) => 
         <div className="border-t border-border-2 pt-2 -mt-2">
           <input
             value={groupName}
-            onChange={(e) => setGroupName(e.target.value)}
+            aria-label={t('conversation.groupName')}
+            onChange={(e) => dispatch({ type: 'patch', patch: { groupName: e.target.value } })}
             placeholder={groupPlaceholder}
             className="w-full border-b border-border-2 pb-1 bg-transparent outline-none text-sm text-text-1 placeholder:text-text-3 focus:border-primary transition-colors"
           />

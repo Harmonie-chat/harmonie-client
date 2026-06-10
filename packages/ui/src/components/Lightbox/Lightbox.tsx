@@ -33,37 +33,42 @@ export const Lightbox = ({
   zoomOutLabel = 'Zoom out',
   closeLabel = 'Close',
 }: LightboxProps) => {
-  const [zoomed, setZoomed] = useState(false);
-  const [baseSize, setBaseSize] = useState<{ w: number; h: number } | null>(null);
+  const [zoomState, setZoomState] = useState({ src, zoomed: false });
+  const [baseSizeState, setBaseSizeState] = useState<{
+    src?: string;
+    size: { w: number; h: number } | null;
+  }>({ src, size: null });
   const [isDragging, setIsDragging] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLButtonElement>(null);
   const dragRef = useRef<DragState | null>(null);
   const wasDragRef = useRef(false);
+  const onCloseRef = useRef(onClose);
+  const zoomed = zoomState.src === src ? zoomState.zoomed : false;
+  const baseSize = baseSizeState.src === src ? baseSizeState.size : null;
 
   useEffect(() => {
-    setZoomed(false);
-    setBaseSize(null);
-  }, [src]);
+    onCloseRef.current = onClose;
+  });
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      if (e.key === '+' || e.key === '=') setZoomed(true);
-      if (e.key === '-') setZoomed(false);
+      if (e.key === 'Escape') onCloseRef.current();
+      if (e.key === '+' || e.key === '=') setZoomState({ src, zoomed: true });
+      if (e.key === '-') setZoomState({ src, zoomed: false });
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [onClose]);
+  }, [src]);
 
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
     const maxW = window.innerWidth * 0.9;
     const maxH = window.innerHeight - 96;
     const scale = Math.min(1, maxW / img.naturalWidth, maxH / img.naturalHeight);
-    setBaseSize({ w: img.naturalWidth * scale, h: img.naturalHeight * scale });
+    setBaseSizeState({ src, size: { w: img.naturalWidth * scale, h: img.naturalHeight * scale } });
   };
 
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!zoomed || !containerRef.current) return;
     e.preventDefault();
     dragRef.current = {
@@ -76,7 +81,7 @@ export const Lightbox = ({
     setIsDragging(true);
   };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!dragRef.current || !containerRef.current) return;
     const dx = e.clientX - dragRef.current.startX;
     const dy = e.clientY - dragRef.current.startY;
@@ -93,12 +98,12 @@ export const Lightbox = ({
       dragRef.current = null;
       setIsDragging(false);
       if (!moved && (e.target as HTMLElement).tagName !== 'IMG') {
-        onClose();
+        onCloseRef.current();
       }
     };
     document.addEventListener('mouseup', handleDocMouseUp);
     return () => document.removeEventListener('mouseup', handleDocMouseUp);
-  }, [onClose]);
+  }, []);
 
   const zoom = zoomed ? ZOOM_LEVEL : 1;
   const imageStyle = baseSize
@@ -117,7 +122,7 @@ export const Lightbox = ({
           {headerActions}
           <button
             type="button"
-            onClick={() => setZoomed((z) => !z)}
+            onClick={() => setZoomState({ src, zoomed: !zoomed })}
             className={actionButtonClass}
             aria-label={zoomed ? zoomOutLabel : zoomInLabel}
             title={zoomed ? zoomOutLabel : zoomInLabel}
@@ -137,31 +142,39 @@ export const Lightbox = ({
       </div>
 
       {/* Scrollable image area */}
-      <div
+      <button
+        type="button"
         ref={containerRef}
-        className="flex-1 overflow-auto flex"
+        aria-label={closeLabel}
+        className="flex flex-1 overflow-auto border-0 bg-transparent p-0 text-left"
         style={{ cursor: isDragging ? 'grabbing' : zoomed ? 'grab' : 'default' }}
-        onClick={!zoomed ? onClose : undefined}
+        onClick={(event) => {
+          if ((event.target as HTMLElement).tagName === 'IMG') {
+            if (wasDragRef.current) {
+              wasDragRef.current = false;
+              return;
+            }
+            setZoomState({ src, zoomed: !zoomed });
+            return;
+          }
+          if (!zoomed) onClose();
+        }}
+        onKeyDown={(event) => {
+          if (!zoomed && (event.key === 'Enter' || event.key === ' ')) {
+            event.preventDefault();
+            onClose();
+          }
+        }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
       >
-        <div
-          style={{ margin: 'auto', padding: '16px', flexShrink: 0 }}
-          onClick={(e) => e.stopPropagation()}
-        >
+        <div style={{ margin: 'auto', padding: '16px', flexShrink: 0 }}>
           {src ? (
             <img
               src={src}
               alt={alt}
               onLoad={handleImageLoad}
               draggable={false}
-              onClick={() => {
-                if (wasDragRef.current) {
-                  wasDragRef.current = false;
-                  return;
-                }
-                setZoomed((z) => !z);
-              }}
               className="object-contain block rounded-sm select-none"
               style={{
                 ...imageStyle,
@@ -169,10 +182,10 @@ export const Lightbox = ({
               }}
             />
           ) : (
-            <div className="w-64 h-64 rounded-md bg-white/10 animate-pulse" />
+            <div className="size-64 rounded-md bg-white/10 animate-pulse" />
           )}
         </div>
-      </div>
+      </button>
     </div>,
     document.body
   );

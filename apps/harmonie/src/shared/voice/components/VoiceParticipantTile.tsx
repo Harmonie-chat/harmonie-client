@@ -10,40 +10,40 @@ import type { VoiceCardSizes, VoiceParticipantCardData } from '../layout/voiceLa
 interface VoiceParticipantTileProps {
   card: VoiceParticipantCardData;
   cardSizes: VoiceCardSizes;
-  isDarkTheme: boolean;
   cardWidth?: string;
   className?: string;
-  cameraFit?: 'cover' | 'contain';
-  isSpeaking: boolean;
+  presentation: {
+    isDarkTheme: boolean;
+    isSpeaking: boolean;
+    isPinned: boolean;
+    cameraFit?: 'cover' | 'contain';
+  };
   cameraTrack?: VoiceCameraTrack;
-  isPinned: boolean;
-  canAdjustVolume?: boolean;
-  participantVolume?: number;
+  volumeControls?: {
+    enabled: boolean;
+    volume: number;
+    onChange: (volume: number) => void;
+    onToggleMute: () => void;
+  };
   onTogglePin: () => void;
-  onParticipantVolumeChange?: (volume: number) => void;
-  onToggleParticipantMute?: () => void;
 }
 
 export const VoiceParticipantTile = ({
   card,
   cardSizes,
-  isDarkTheme,
   cardWidth,
   className = '',
-  cameraFit = 'cover',
-  isSpeaking,
+  presentation,
   cameraTrack,
-  isPinned,
-  canAdjustVolume = false,
-  participantVolume = 1,
+  volumeControls,
   onTogglePin,
-  onParticipantVolumeChange,
-  onToggleParticipantMute,
 }: VoiceParticipantTileProps) => {
   const { t } = useTranslation();
   const avatarUrl = useFileBlobUrl(card.avatarFileId);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const isCompactTile = cardSizes.avatarSize <= 48;
+  const cameraFit = presentation.cameraFit ?? 'cover';
+  const participantVolume = volumeControls?.volume ?? 1;
   const participantVolumePercent = Math.round(participantVolume * 100);
   const volumeToggleLabel = t(
     participantVolume === 0 ? 'voice.unmuteParticipant' : 'voice.muteParticipant',
@@ -69,7 +69,7 @@ export const VoiceParticipantTile = ({
         <div
           className={[
             'relative h-full min-h-[11rem] w-full overflow-hidden rounded-md border bg-surface-3 transition-all duration-150 hover:scale-[1.01]',
-            isSpeaking
+            presentation.isSpeaking
               ? 'border-primary shadow-[inset_0_0_0_2px_var(--color-primary)]'
               : 'border-border-2',
           ].join(' ')}
@@ -79,11 +79,14 @@ export const VoiceParticipantTile = ({
             autoPlay
             playsInline
             muted={cameraTrack.isLocal}
+            aria-label={t('voice.participantCameraOn', { name: card.label })}
             className={[
               'absolute inset-0 h-full w-full',
               cameraFit === 'contain' ? 'bg-black object-contain' : 'object-cover',
             ].join(' ')}
-          />
+          >
+            <track kind="captions" label={t('voice.noCaptionsAvailable')} />
+          </video>
           <div
             className={[
               'pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent',
@@ -111,21 +114,18 @@ export const VoiceParticipantTile = ({
           avatarBg={card.avatarBg ?? undefined}
           avatarLabel={card.label[0]?.toUpperCase() ?? '?'}
           title={card.label}
-          isSpeaking={isSpeaking}
+          isSpeaking={presentation.isSpeaking}
           style={{
-            background: getUserGradient(card.userId, isDarkTheme),
+            background: getUserGradient(card.userId, presentation.isDarkTheme),
           }}
         />
       )}
       {card.isMuted && (
         <div className="absolute left-2 top-2">
           <Tooltip content={t('voice.participantMuted', { name: card.label })} side="bottom">
-            <div
-              className="flex h-7 w-7 items-center justify-center rounded-full border border-border-2/50 bg-surface-1/70 text-text-2/80 shadow-sm backdrop-blur-sm"
-              aria-label={t('voice.participantMuted', { name: card.label })}
-              role="img"
-            >
-              <MicOff size={15} />
+            <div className="flex size-7 items-center justify-center rounded-full border border-border-2/50 bg-surface-1/70 text-text-2/80 shadow-sm backdrop-blur-sm">
+              <span className="sr-only">{t('voice.participantMuted', { name: card.label })}</span>
+              <MicOff size={15} aria-hidden="true" />
             </div>
           </Tooltip>
         </div>
@@ -134,21 +134,23 @@ export const VoiceParticipantTile = ({
         <IconButton
           size="small"
           variant="filled"
-          selected={isPinned}
+          selected={presentation.isPinned}
           onClick={onTogglePin}
-          aria-label={isPinned ? t('voice.unpinParticipant') : t('voice.pinParticipant')}
-          title={isPinned ? t('voice.unpinParticipant') : t('voice.pinParticipant')}
+          aria-label={
+            presentation.isPinned ? t('voice.unpinParticipant') : t('voice.pinParticipant')
+          }
+          title={presentation.isPinned ? t('voice.unpinParticipant') : t('voice.pinParticipant')}
         >
-          {isPinned ? <PinOff size={15} /> : <Pin size={15} />}
+          {presentation.isPinned ? <PinOff size={15} /> : <Pin size={15} />}
         </IconButton>
       </div>
-      {canAdjustVolume && onParticipantVolumeChange && (
+      {volumeControls?.enabled && (
         <div className="absolute inset-x-3 bottom-6 flex items-center gap-2 rounded-full border border-border-2 bg-surface-1/95 px-3 py-2 shadow-[0_4px_16px_rgba(61,53,48,0.14)] opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
           <IconButton
             size="small"
             variant="ghost"
-            className="h-6 min-h-6 w-6 min-w-6 shrink-0"
-            onClick={onToggleParticipantMute}
+            className="h-6 min-size-6 min-w-6 shrink-0"
+            onClick={volumeControls.onToggleMute}
             aria-label={volumeToggleLabel}
             title={volumeToggleLabel}
           >
@@ -160,7 +162,7 @@ export const VoiceParticipantTile = ({
             max={100}
             step={5}
             value={participantVolumePercent}
-            onChange={(event) => onParticipantVolumeChange(Number(event.target.value) / 100)}
+            onChange={(event) => volumeControls.onChange(Number(event.target.value) / 100)}
             className="h-1 min-w-0 flex-1 cursor-pointer appearance-none rounded-full bg-transparent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary/35 [&::-moz-range-progress]:h-1 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-primary [&::-moz-range-thumb]:h-2.5 [&::-moz-range-thumb]:w-2.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:shadow-none [&::-moz-range-track]:h-1 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-border-1/25 [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-transparent [&::-webkit-slider-thumb]:mt-[-3px] [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-0 [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow-none"
             style={
               {

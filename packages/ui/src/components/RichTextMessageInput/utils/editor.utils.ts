@@ -4,7 +4,7 @@ import { type ActiveFormats } from '../types';
 const HTML_TAG_PATTERN = /<\/?[a-z][\s\S]*>/i;
 let mentionBlotRegistered = false;
 
-export const escapeHtml = (value: string) =>
+const escapeHtml = (value: string) =>
   value
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -12,7 +12,7 @@ export const escapeHtml = (value: string) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
-export const isHtmlMessage = (content: string) => HTML_TAG_PATTERN.test(content);
+const isHtmlMessage = (content: string) => HTML_TAG_PATTERN.test(content);
 
 export const toEditorHtml = (content: string) => {
   if (!content) return '<p><br></p>';
@@ -68,7 +68,7 @@ export const registerMentionBlot = () => {
 
 export const normalizeHtml = (value: string) => value.replace(/\s+/g, ' ').trim();
 
-export const applyInlineFormatWithHistory = (
+const applyInlineFormatWithHistory = (
   quill: Quill,
   format: 'bold' | 'italic' | 'underline',
   active: boolean

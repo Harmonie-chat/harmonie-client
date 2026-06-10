@@ -18,11 +18,17 @@ export const useTyping = ({
   eventName,
   entityIdField,
 }: UseTypingParams) => {
-  const [typingUserIds, setTypingUserIds] = useState<string[]>([]);
-  const typingTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const [typingState, setTypingState] = useState<{ entityId?: string; userIds: string[] }>({
+    entityId: undefined,
+    userIds: [],
+  });
+  const typingUserIds = typingState.entityId === entityId ? typingState.userIds : [];
+  const typingTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(null!);
+  if (typingTimeoutsRef.current === null) {
+    typingTimeoutsRef.current = new Map();
+  }
 
   useEffect(() => {
-    setTypingUserIds([]);
     typingTimeoutsRef.current.forEach(clearTimeout);
     typingTimeoutsRef.current.clear();
   }, [entityId]);
@@ -34,13 +40,23 @@ export const useTyping = ({
       if (event[entityIdField] !== entityId || event.userId === currentUserId) return;
 
       const { userId } = event;
-      setTypingUserIds((prev) => (prev.includes(userId) ? prev : [...prev, userId]));
+      setTypingState((prev) => {
+        const userIds = prev.entityId === entityId ? prev.userIds : [];
+        return {
+          entityId,
+          userIds: userIds.includes(userId) ? userIds : [...userIds, userId],
+        };
+      });
 
       const existing = typingTimeoutsRef.current.get(userId);
       if (existing) clearTimeout(existing);
 
       const timeout = setTimeout(() => {
-        setTypingUserIds((prev) => prev.filter((id) => id !== userId));
+        setTypingState((prev) =>
+          prev.entityId === entityId
+            ? { entityId, userIds: prev.userIds.filter((id) => id !== userId) }
+            : prev
+        );
         typingTimeoutsRef.current.delete(userId);
       }, 6000);
 

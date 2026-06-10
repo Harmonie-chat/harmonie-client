@@ -30,6 +30,11 @@ export const AudioInputPopover = ({ anchorRef, onClose }: AudioInputPopoverProps
     visibility: 'hidden',
   });
   const [requesting, setRequesting] = useState(false);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
 
   useLayoutEffect(() => {
     const gap = 8;
@@ -99,10 +104,10 @@ export const AudioInputPopover = ({ anchorRef, onClose }: AudioInputPopoverProps
         anchorRef.current?.contains(e.target as Node)
       )
         return;
-      onClose();
+      onCloseRef.current();
     };
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') onCloseRef.current();
     };
     document.addEventListener('mousedown', handleMouseDown);
     document.addEventListener('keydown', handleKeyDown);
@@ -110,7 +115,7 @@ export const AudioInputPopover = ({ anchorRef, onClose }: AudioInputPopoverProps
       document.removeEventListener('mousedown', handleMouseDown);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [anchorRef, onClose]);
+  }, [anchorRef]);
 
   const getLabel = (device: { deviceId: string; label: string }) => {
     if (device.deviceId === 'default') return t('audio.input.default');
@@ -137,7 +142,7 @@ export const AudioInputPopover = ({ anchorRef, onClose }: AudioInputPopoverProps
             type="button"
             onClick={onClose}
             aria-label={t('common.close')}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-text-2"
+            className="inline-flex size-8 items-center justify-center rounded-full text-text-2"
           >
             <X size={16} />
           </button>

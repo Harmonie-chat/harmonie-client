@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useReducer, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button, IconButton } from '@harmonie/ui';
@@ -23,6 +23,27 @@ import { getConversationLabel } from './conversationUtils';
 const getCallNotificationKey = (event: ConversationCallIncomingEvent) =>
   event.startedAtUtc ? `${event.conversationId}:${event.startedAtUtc}` : event.conversationId;
 
+type IncomingCallAction =
+  | { type: 'show'; call: ConversationCallIncomingEvent }
+  | { type: 'clear' }
+  | { type: 'clearConversation'; conversationId: string };
+
+const incomingCallReducer = (
+  current: ConversationCallIncomingEvent | null,
+  action: IncomingCallAction
+) => {
+  switch (action.type) {
+    case 'show':
+      return action.call;
+    case 'clear':
+      return null;
+    case 'clearConversation':
+      return current?.conversationId === action.conversationId ? null : current;
+    default:
+      return current;
+  }
+};
+
 export const ConversationCallIncomingToast = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -37,22 +58,25 @@ export const ConversationCallIncomingToast = () => {
     joinConversation,
     updateActiveConversationMeta,
   } = voice;
-  const [incomingCall, setIncomingCall] = useState<ConversationCallIncomingEvent | null>(null);
-  const notifiedCallKeysByConversationRef = useRef<Map<string, string>>(new Map());
-  const conversationsWithVoicePresenceRef = useRef<Set<string>>(new Set());
+  const [incomingCall, dispatchIncomingCall] = useReducer(incomingCallReducer, null);
+  const notifiedCallKeysByConversationRef = useRef<Map<string, string>>(null!);
+  const conversationsWithVoicePresenceRef = useRef<Set<string>>(null!);
 
-  const conversation = useMemo(
-    () =>
-      incomingCall
-        ? conversations?.find((item) => item.conversationId === incomingCall.conversationId)
-        : null,
-    [conversations, incomingCall]
-  );
-  const conversationTitle = useMemo(() => {
-    if (!incomingCall) return '';
-    if (conversation) return getConversationLabel(conversation, user?.userId);
-    return incomingCall.conversationName ?? incomingCall.conversationId;
-  }, [conversation, incomingCall, user?.userId]);
+  if (notifiedCallKeysByConversationRef.current === null) {
+    notifiedCallKeysByConversationRef.current = new Map();
+  }
+  if (conversationsWithVoicePresenceRef.current === null) {
+    conversationsWithVoicePresenceRef.current = new Set();
+  }
+
+  const conversation = incomingCall
+    ? conversations?.find((item) => item.conversationId === incomingCall.conversationId)
+    : null;
+  const conversationTitle = !incomingCall
+    ? ''
+    : conversation
+      ? getConversationLabel(conversation, user?.userId)
+      : (incomingCall.conversationName ?? incomingCall.conversationId);
 
   useEffect(() => {
     if (!connection || !user?.userId) return;
@@ -65,21 +89,19 @@ export const ConversationCallIncomingToast = () => {
 
       notifiedCallKeysByConversationRef.current.set(event.conversationId, callKey);
       playConversationCallIncomingSound(applySinkId, outputMuted);
-      setIncomingCall(event);
+      dispatchIncomingCall({ type: 'show', call: event });
     };
+
     const handleCallDismissed = (event: { conversationId: string }) => {
       stopConversationCallIncomingSound();
-      setIncomingCall((current) =>
-        current?.conversationId === event.conversationId ? null : current
-      );
+      dispatchIncomingCall({ type: 'clearConversation', conversationId: event.conversationId });
     };
+
     const handleCallEnded = (event: { conversationId: string }) => {
       notifiedCallKeysByConversationRef.current.delete(event.conversationId);
       conversationsWithVoicePresenceRef.current.delete(event.conversationId);
       stopConversationCallIncomingSound();
-      setIncomingCall((current) =>
-        current?.conversationId === event.conversationId ? null : current
-      );
+      dispatchIncomingCall({ type: 'clearConversation', conversationId: event.conversationId });
     };
 
     const unsubscribe = subscribeConversationCallEvents(connection, {
@@ -116,7 +138,7 @@ export const ConversationCallIncomingToast = () => {
 
   const handleAcceptCall = async () => {
     stopConversationCallIncomingSound();
-    setIncomingCall(null);
+    dispatchIncomingCall({ type: 'clear' });
     void sendAcceptConversationCall(connection, incomingCall.conversationId);
     navigate(`/conversations/${incomingCall.conversationId}`);
     await joinConversation(incomingCall.conversationId, conversationTitle);
@@ -125,13 +147,13 @@ export const ConversationCallIncomingToast = () => {
 
   const handleDeclineCall = () => {
     stopConversationCallIncomingSound();
-    setIncomingCall(null);
+    dispatchIncomingCall({ type: 'clear' });
     void sendDeclineConversationCall(connection, incomingCall.conversationId);
   };
 
   const handleDismissCall = () => {
     stopConversationCallIncomingSound();
-    setIncomingCall(null);
+    dispatchIncomingCall({ type: 'clear' });
   };
 
   return (
@@ -145,7 +167,7 @@ export const ConversationCallIncomingToast = () => {
         <X size={14} />
       </IconButton>
       <div className="flex min-w-0 items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-fg">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-fg">
           <PhoneIncoming size={19} />
         </div>
         <div className="min-w-0">

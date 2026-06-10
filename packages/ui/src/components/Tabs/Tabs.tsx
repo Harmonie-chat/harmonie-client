@@ -13,6 +13,7 @@ export const Tabs = ({ tabs, activeTab, onChange }: TabsProps) => (
   <div className="flex gap-1 border-b border-border-2">
     {tabs.map((tab) => (
       <button
+        type="button"
         key={tab.id}
         onClick={() => onChange(tab.id)}
         className={[

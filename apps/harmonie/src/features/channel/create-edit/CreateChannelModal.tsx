@@ -42,9 +42,8 @@ export const CreateChannelModal = ({
       onCreated(channel);
     } catch {
       setError(true);
-    } finally {
-      setIsLoading(false);
     }
+    setIsLoading(false);
   };
 
   return (

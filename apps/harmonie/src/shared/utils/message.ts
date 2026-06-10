@@ -1,6 +1,6 @@
 import type { Message } from '@/types/channel';
 
 export const sortMessagesAsc = (items: Message[]) =>
-  [...items].sort(
-    (a, b) => new Date(a.createdAtUtc).getTime() - new Date(b.createdAtUtc).getTime()
-  );
+  items
+    .slice()
+    .sort((a, b) => new Date(a.createdAtUtc).getTime() - new Date(b.createdAtUtc).getTime());

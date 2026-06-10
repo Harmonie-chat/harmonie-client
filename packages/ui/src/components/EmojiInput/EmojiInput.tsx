@@ -79,7 +79,7 @@ export const EmojiInput = ({
           <button
             type="button"
             onClick={() => setIsPickerOpen((previous) => !previous)}
-            className="flex h-6 w-6 items-center justify-center cursor-pointer rounded text-text-3 transition-colors hover:text-text-1"
+            className="flex size-6 items-center justify-center cursor-pointer rounded text-text-3 transition-colors hover:text-text-1"
             aria-label={emojiButtonLabel}
           >
             <Smile size={16} />

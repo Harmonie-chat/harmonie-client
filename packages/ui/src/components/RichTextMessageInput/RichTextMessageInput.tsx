@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useMemo } from 'react';
+import { useImperativeHandle, type Ref } from 'react';
 import { createPortal } from 'react-dom';
 import { EmojiPickerBase } from '../EmojiPickerBase/EmojiPickerBase';
 import { EmojiAutocomplete } from '../EmojiTextarea/EmojiAutocomplete';
@@ -35,41 +35,37 @@ export interface RichTextMessageInputProps {
   mentionOptions?: RichTextMentionOption[];
   onMentionSelected?: (mention: RichTextMentionOption) => void;
   labels?: Partial<RichTextMessageInputLabels>;
+  ref?: Ref<RichTextMessageInputHandle>;
 }
 
 export interface RichTextMessageInputHandle {
   focus: (placement?: 'start' | 'end') => void;
 }
 
-export const RichTextMessageInput = forwardRef<
-  RichTextMessageInputHandle,
-  RichTextMessageInputProps
->(function RichTextMessageInput(
-  {
-    value,
-    onChange,
-    placeholder = '',
-    disabled = false,
-    error,
-    pickerProps,
-    showFormattingTools = false,
-    onToggleFormattingTools,
-    autoFocus = false,
-    autoFocusPlacement = 'start',
-    onSubmit,
-    onEscape,
-    submitDisabled = false,
-    showSubmitButton = true,
-    onArrowUpWhenEmpty,
-    onPasteFiles,
-    onAttachClick,
-    mentionOptions,
-    onMentionSelected,
-    labels,
-  },
-  ref
-) {
-  const mergedLabels = useMemo(() => ({ ...DEFAULT_LABELS, ...(labels ?? {}) }), [labels]);
+export const RichTextMessageInput = ({
+  value,
+  onChange,
+  placeholder = '',
+  disabled = false,
+  error,
+  pickerProps,
+  showFormattingTools = false,
+  onToggleFormattingTools,
+  autoFocus = false,
+  autoFocusPlacement = 'start',
+  onSubmit,
+  onEscape,
+  submitDisabled = false,
+  showSubmitButton = true,
+  onArrowUpWhenEmpty,
+  onPasteFiles,
+  onAttachClick,
+  mentionOptions,
+  onMentionSelected,
+  labels,
+  ref,
+}: RichTextMessageInputProps) => {
+  const mergedLabels = { ...DEFAULT_LABELS, ...(labels ?? {}) };
   const {
     activeFormats,
     autocompletePos,
@@ -146,9 +142,9 @@ export const RichTextMessageInput = forwardRef<
             <div className="rounded-sm border border-border-2 bg-surface-1 p-1 shadow-lg sm:border-0 sm:bg-transparent sm:p-0 sm:pb-1 sm:shadow-none">
               <RichTextToolbar
                 activeFormats={activeFormats}
+                getQuill={() => quillRef.current}
                 labels={mergedLabels}
                 onOpenLinkDialog={openLinkDialog}
-                quill={quillRef.current}
                 setActiveFormats={setActiveFormats}
                 setSelectedRange={setSelectedRange}
                 updateLinkBubble={updateLinkBubble}
@@ -197,9 +193,9 @@ export const RichTextMessageInput = forwardRef<
                 <div className="rounded-full border border-border-2 bg-surface-1 p-0.5 shadow-lg">
                   <RichTextToolbar
                     activeFormats={activeFormats}
+                    getQuill={() => quillRef.current}
                     labels={mergedLabels}
                     onOpenLinkDialog={openLinkDialog}
-                    quill={quillRef.current}
                     setActiveFormats={setActiveFormats}
                     setSelectedRange={setSelectedRange}
                     updateLinkBubble={updateLinkBubble}
@@ -343,4 +339,4 @@ export const RichTextMessageInput = forwardRef<
       )}
     </div>
   );
-});
+};

@@ -19,7 +19,7 @@ export interface VoiceCardSizes {
 
 export const PIN_DISABLED = 'none';
 
-export function getParticipantLabel(
+function getParticipantLabel(
   participant: Pick<VoiceParticipant, 'userId' | 'username' | 'displayName'>
 ): string {
   const trimmedDisplay = participant.displayName?.trim();

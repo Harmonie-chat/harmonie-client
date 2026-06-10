@@ -12,8 +12,8 @@ import type {
 interface RichTextToolbarProps {
   activeFormats: ActiveFormats;
   labels: RichTextMessageInputLabels;
+  getQuill: () => Quill | null;
   onOpenLinkDialog: (quill: Quill) => void;
-  quill: Quill | null;
   setActiveFormats: (formats: ActiveFormats) => void;
   setSelectedRange: (range: QuillRange) => void;
   updateLinkBubble: (quill: Quill, range: QuillRange) => void;
@@ -21,9 +21,9 @@ interface RichTextToolbarProps {
 
 export const RichTextToolbar = ({
   activeFormats,
+  getQuill,
   labels,
   onOpenLinkDialog,
-  quill,
   setActiveFormats,
   setSelectedRange,
   updateLinkBubble,
@@ -32,6 +32,7 @@ export const RichTextToolbar = ({
   const toolbarItems = createToolbarItems(toolbarButtons);
 
   const runToolbarButton = (config: ToolbarButtonConfig) => {
+    const quill = getQuill();
     if (!quill) return;
     quill.history.cutoff();
     config.run(quill, activeFormats);

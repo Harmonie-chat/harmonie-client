@@ -9,10 +9,10 @@ Web client for Harmonie, a **text and voice chat** application.
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) v20+
-- [pnpm](https://pnpm.io/) v9.15.4+
+- [pnpm](https://pnpm.io/) v10.34.1
 
 ```bash
-npm install -g pnpm@9.15.4
+npm install -g pnpm@10.34.1
 ```
 
 ## Getting started
@@ -94,12 +94,12 @@ harmonie-client/
 
 ## Tech stack
 
-- **React 18** + **TypeScript 5** + **Vite 5**
+- **React 19** + **TypeScript 5** + **Vite 5**
 - **Tailwind CSS v4** (CSS-first configuration)
 - **React Router v6**
 - **SignalR** for real-time messaging
 - **LiveKit** for voice/video channels
-- **pnpm workspaces** + **Turborepo**
+- **pnpm 10 workspaces** + **Turborepo**
 
 ## License
 

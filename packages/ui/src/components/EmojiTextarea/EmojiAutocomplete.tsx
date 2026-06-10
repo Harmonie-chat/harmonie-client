@@ -7,7 +7,7 @@ interface EmojiAutocompleteProps {
   selectedIndex: number;
   pos: { bottom: number; left: number; width: number };
   onSelect: (result: AutocompleteResult) => void;
-  containerRef: RefObject<HTMLDivElement>;
+  containerRef: RefObject<HTMLDivElement | null>;
 }
 
 const ITEM_H = 36;
@@ -28,10 +28,11 @@ export const EmojiAutocomplete = ({
       style={{ bottom: pos.bottom, left: pos.left, width: pos.width }}
     >
       {results.map((result, i) => (
-        <div
+        <button
+          type="button"
           key={result.name}
           className={[
-            'flex cursor-pointer items-center gap-2 px-3 font-body text-sm transition-colors',
+            'flex w-full cursor-pointer items-center gap-2 px-3 text-left font-body text-sm transition-colors',
             i === selectedIndex
               ? 'bg-surface-hover text-text-1'
               : 'text-text-2 hover:bg-surface-hover hover:text-text-1',
@@ -44,7 +45,7 @@ export const EmojiAutocomplete = ({
         >
           <span className="text-base leading-none">{result.emoji}</span>
           <span>:{result.name}:</span>
-        </div>
+        </button>
       ))}
     </div>,
     document.body

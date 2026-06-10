@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, X } from 'lucide-react';
 import { IconButton, RichTextMessageInput, type RichTextMentionOption } from '@harmonie/ui';
@@ -29,30 +29,52 @@ export const MessageInlineEditor = ({
   mentionOptions = EMPTY_MENTION_OPTIONS,
 }: MessageInlineEditorProps) => {
   const { t } = useTranslation();
-  const [content, setContent] = useState(initialValue ?? '');
+  const sourceContent = initialValue ?? '';
+  const sourceMentionKey = initialMentionedUserIds.join('\u0000');
+  const [draft, setDraft] = useState(() => ({
+    sourceContent,
+    sourceMentionKey,
+    content: sourceContent,
+    selectedMentionIds: new Set(initialMentionedUserIds),
+    error: undefined as string | undefined,
+  }));
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | undefined>(undefined);
-  const [selectedMentionIds, setSelectedMentionIds] = useState<Set<string>>(
-    () => new Set(initialMentionedUserIds)
-  );
   const { formattingOpen, toggleFormattingOpen } = useMessageFormattingPreference();
   const isCoarsePointer = useCoarsePointer();
   const inputLabels = getRichTextMessageInputLabels(t);
   const mentionMap = new Map(mentionOptions.map((mention) => [mention.userId, mention]));
+  const isDraftCurrent =
+    draft.sourceContent === sourceContent && draft.sourceMentionKey === sourceMentionKey;
+  const content = isDraftCurrent ? draft.content : sourceContent;
+  const selectedMentionIds = isDraftCurrent
+    ? draft.selectedMentionIds
+    : new Set(initialMentionedUserIds);
+  const error = isDraftCurrent ? draft.error : undefined;
   const textContent = stripHtmlToText(content);
   const payloadContent = getMessagePayloadContent(content);
   const trimmedContent = textContent.trim();
   const isOverLimit = payloadContent.length > MAX_LENGTH;
 
-  useEffect(() => {
-    setContent(initialValue ?? '');
-    setSelectedMentionIds(new Set(initialMentionedUserIds));
-    setError(undefined);
-  }, [initialMentionedUserIds, initialValue]);
+  const updateDraft = (
+    nextDraft: Partial<Pick<typeof draft, 'content' | 'selectedMentionIds' | 'error'>>
+  ) =>
+    setDraft({
+      sourceContent,
+      sourceMentionKey,
+      content,
+      selectedMentionIds,
+      error,
+      ...nextDraft,
+    });
+
   const handleCancel = () => {
-    setContent(initialValue ?? '');
-    setSelectedMentionIds(new Set(initialMentionedUserIds));
-    setError(undefined);
+    setDraft({
+      sourceContent,
+      sourceMentionKey,
+      content: sourceContent,
+      selectedMentionIds: new Set(initialMentionedUserIds),
+      error: undefined,
+    });
     onCancel();
   };
 
@@ -60,7 +82,7 @@ export const MessageInlineEditor = ({
     if (!trimmedContent || isOverLimit || saving) return;
 
     setSaving(true);
-    setError(undefined);
+    updateDraft({ error: undefined });
     const mentionedUserIds = filterMentionedUserIdsFromContent(
       content,
       selectedMentionIds,
@@ -71,15 +93,14 @@ export const MessageInlineEditor = ({
     } catch (err) {
       const apiError = err as ApiError;
       if (apiError.code === 'MESSAGE_MENTIONED_USER_NOT_FOUND') {
-        setError(t('channel.input.mentionUserNotFound'));
+        updateDraft({ error: t('channel.input.mentionUserNotFound') });
       } else if (apiError.code === 'MESSAGE_MENTIONED_USER_NOT_MEMBER') {
-        setError(t('channel.input.mentionUserNotMember'));
+        updateDraft({ error: t('channel.input.mentionUserNotMember') });
       } else {
-        setError(t('channel.input.updateError'));
+        updateDraft({ error: t('channel.input.updateError') });
       }
-    } finally {
-      setSaving(false);
     }
+    setSaving(false);
   };
 
   return (
@@ -87,7 +108,7 @@ export const MessageInlineEditor = ({
       <div className="flex-1">
         <RichTextMessageInput
           value={content}
-          onChange={setContent}
+          onChange={(nextContent) => updateDraft({ content: nextContent })}
           placeholder={t('channel.input.editPlaceholder')}
           disabled={saving}
           error={
@@ -99,7 +120,9 @@ export const MessageInlineEditor = ({
           onEscape={handleCancel}
           mentionOptions={mentionOptions}
           onMentionSelected={(mention) =>
-            setSelectedMentionIds((current) => new Set(current).add(mention.userId))
+            updateDraft({
+              selectedMentionIds: new Set(selectedMentionIds).add(mention.userId),
+            })
           }
           autoFocus={!isCoarsePointer}
           autoFocusPlacement="end"

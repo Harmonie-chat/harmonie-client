@@ -24,9 +24,8 @@ export const LanguageSection = ({ updateUser }: LanguageSectionProps) => {
       updateUser(updated);
     } catch {
       await i18n.changeLanguage(previousLanguage);
-    } finally {
-      setSaving(false);
     }
+    setSaving(false);
   };
 
   return (

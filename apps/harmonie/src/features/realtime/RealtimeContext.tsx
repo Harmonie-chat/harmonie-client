@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, use, useEffect, useState, type ReactNode } from 'react';
 import {
   HubConnectionBuilder,
   HubConnectionState,
@@ -16,19 +16,27 @@ interface RealtimeContextValue {
   isReady: boolean;
 }
 
+interface RealtimeState {
+  authKey: string | null;
+  connection: HubConnection | null;
+  isReady: boolean;
+}
+
 const RealtimeContext = createContext<RealtimeContextValue>({ connection: null, isReady: false });
 
 export const RealtimeProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated } = useAuth();
-  const [connection, setConnection] = useState<HubConnection | null>(null);
-  const [isReady, setIsReady] = useState(false);
+  const authKey = isAuthenticated ? getAccessToken() : null;
+  const [state, setState] = useState<RealtimeState>({
+    authKey: null,
+    connection: null,
+    isReady: false,
+  });
+  const connection = authKey !== null && state.authKey === authKey ? state.connection : null;
+  const isReady = authKey !== null && state.authKey === authKey ? state.isReady : false;
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      setConnection(null);
-      setIsReady(false);
-      return;
-    }
+    if (authKey === null) return;
 
     const hub = new HubConnectionBuilder()
       .withUrl(HUB_URL, {
@@ -40,7 +48,11 @@ export const RealtimeProvider = ({ children }: { children: ReactNode }) => {
 
     let cancelled = false;
     const handleReady = () => {
-      if (!cancelled) setIsReady(true);
+      if (!cancelled) {
+        setState((current) =>
+          current.connection === hub ? { ...current, isReady: true } : current
+        );
+      }
     };
 
     hub.on(REALTIME_SERVER_EVENTS.ready, handleReady);
@@ -48,7 +60,7 @@ export const RealtimeProvider = ({ children }: { children: ReactNode }) => {
     hub
       .start()
       .then(() => {
-        if (!cancelled) setConnection(hub);
+        if (!cancelled) setState({ authKey, connection: hub, isReady: false });
       })
       .catch((err) => {
         console.error('[Realtime] hub.start() failed:', err);
@@ -56,18 +68,16 @@ export const RealtimeProvider = ({ children }: { children: ReactNode }) => {
 
     return () => {
       cancelled = true;
-      setConnection(null);
-      setIsReady(false);
       hub.off(REALTIME_SERVER_EVENTS.ready, handleReady);
       if (hub.state !== HubConnectionState.Disconnected) {
         hub.stop();
       }
     };
-  }, [isAuthenticated]);
+  }, [authKey]);
 
   return (
     <RealtimeContext.Provider value={{ connection, isReady }}>{children}</RealtimeContext.Provider>
   );
 };
 
-export const useRealtime = () => useContext(RealtimeContext);
+export const useRealtime = () => use(RealtimeContext);

@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { AttachmentImage } from '@harmonie/ui';
 import { useFileBlobUrl } from '@/shared/hooks/useFileBlobUrl';
 import type { MessageAttachment } from '@/types/channel';
-import type { MessageAuthor } from '@/shared/message/types';
-import type { LightboxState } from './MessageAttachments';
+import type { MessageAuthor } from '@/shared/message/messageAuthor';
+import type { LightboxState } from './MessageAttachmentLightboxState';
 
 interface MessageAttachmentImageProps {
   attachment: MessageAttachment;

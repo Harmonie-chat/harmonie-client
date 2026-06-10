@@ -1,5 +1,4 @@
 import {
-  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -21,88 +20,35 @@ interface UseTextChannelSearchTargetParams {
   channelId?: string;
   guildId?: string;
   messages: Message[];
-  loading: boolean;
-  error: boolean;
-  scrollRef: RefObject<HTMLDivElement>;
+  scrollRef: RefObject<HTMLDivElement | null>;
   previousMessageCountRef: MutableRefObject<number>;
   suppressNextScrollEffectsRef: MutableRefObject<boolean>;
-  loadUntilMessage: (messageId: string) => Promise<boolean>;
 }
 
 export const useTextChannelSearchTarget = ({
   channelId,
   guildId,
   messages,
-  loading,
-  error,
   scrollRef,
   previousMessageCountRef,
   suppressNextScrollEffectsRef,
-  loadUntilMessage,
 }: UseTextChannelSearchTargetParams) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
-  const [activeSearchTarget, setActiveSearchTarget] = useState<{
-    messageId: string;
-    nonce: string;
-  } | null>(null);
+  const [selectedMessageState, setSelectedMessageState] = useState<{
+    channelId?: string;
+    messageId: string | null;
+  }>({ channelId: undefined, messageId: null });
+  const selectedMessageId =
+    selectedMessageState.channelId === channelId ? selectedMessageState.messageId : null;
   const seekingTargetRef = useRef(false);
-  const handledSearchTargetNonceRef = useRef<string | null>(null);
-
-  const clearSearchTargetState = useCallback(() => {
-    if (!guildId || !channelId) return;
-    navigate(`/guilds/${guildId}/channels/${channelId}`, { replace: true, state: null });
-  }, [channelId, guildId, navigate]);
-
-  const scrollToMessage = useCallback(
-    (messageId: string) => {
-      const element = scrollRef.current;
-      if (!element) return false;
-
-      const targetElement = element.querySelector<HTMLElement>(`[data-message-id="${messageId}"]`);
-      if (!targetElement) return false;
-
-      requestAnimationFrame(() => {
-        suppressNextScrollEffectsRef.current = true;
-        const containerRect = element.getBoundingClientRect();
-        const targetRect = targetElement.getBoundingClientRect();
-        const nextScrollTop =
-          element.scrollTop +
-          (targetRect.top - containerRect.top) -
-          element.clientHeight / 2 +
-          targetRect.height / 2;
-        element.scrollTop = Math.max(0, nextScrollTop);
-      });
-
-      setSelectedMessageId(messageId);
-      previousMessageCountRef.current = messages.length;
-      if (activeSearchTarget) {
-        handledSearchTargetNonceRef.current = activeSearchTarget.nonce;
-      }
-      setActiveSearchTarget(null);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          clearSearchTargetState();
-        });
-      });
-      return true;
-    },
-    [
-      activeSearchTarget,
-      clearSearchTargetState,
-      messages.length,
-      previousMessageCountRef,
-      scrollRef,
-      suppressNextScrollEffectsRef,
-    ]
-  );
-
-  useEffect(() => {
-    setSelectedMessageId(null);
-    setActiveSearchTarget(null);
-    seekingTargetRef.current = false;
-  }, [channelId]);
+  const [handledSearchTargetNonce, setHandledSearchTargetNonce] = useState<string | null>(null);
+  const locationState = location.state as SearchTargetState | null;
+  const locationSearchTarget = locationState?.searchTarget;
+  const activeSearchTarget =
+    locationSearchTarget && handledSearchTargetNonce !== locationSearchTarget.nonce
+      ? locationSearchTarget
+      : null;
 
   useEffect(() => {
     if (!selectedMessageId) return;
@@ -111,7 +57,7 @@ export const useTextChannelSearchTarget = ({
 
     const clearSelection = () => {
       if (Date.now() < ignoreInteractionsUntil) return;
-      setSelectedMessageId(null);
+      setSelectedMessageState({ channelId, messageId: null });
     };
 
     document.addEventListener('pointerdown', clearSelection);
@@ -125,54 +71,7 @@ export const useTextChannelSearchTarget = ({
       document.removeEventListener('touchstart', clearSelection);
       window.removeEventListener('keydown', clearSelection);
     };
-  }, [selectedMessageId]);
-
-  useEffect(() => {
-    const state = location.state as SearchTargetState | null;
-    const nextTarget = state?.searchTarget;
-    if (!nextTarget) return;
-    if (handledSearchTargetNonceRef.current === nextTarget.nonce) return;
-    setActiveSearchTarget(nextTarget);
-  }, [location.state]);
-
-  useEffect(() => {
-    const targetMessageId = activeSearchTarget?.messageId;
-    if (!targetMessageId) {
-      seekingTargetRef.current = false;
-      return;
-    }
-
-    if (messages.some((message) => message.messageId === targetMessageId)) {
-      seekingTargetRef.current = false;
-      return;
-    }
-
-    if (loading || error || seekingTargetRef.current) return;
-
-    let cancelled = false;
-    seekingTargetRef.current = true;
-
-    const ensureMessageVisible = async () => {
-      const found = await loadUntilMessage(targetMessageId);
-      if (cancelled) return;
-
-      seekingTargetRef.current = false;
-
-      if (!found) {
-        handledSearchTargetNonceRef.current = activeSearchTarget?.nonce ?? null;
-        setActiveSearchTarget(null);
-        clearSearchTargetState();
-      }
-    };
-
-    ensureMessageVisible().catch(() => {
-      seekingTargetRef.current = false;
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [activeSearchTarget, clearSearchTargetState, error, loadUntilMessage, loading, messages]);
+  }, [channelId, selectedMessageId]);
 
   useLayoutEffect(() => {
     const targetMessageId = activeSearchTarget?.messageId;
@@ -183,7 +82,37 @@ export const useTextChannelSearchTarget = ({
     let attempts = 0;
 
     const tryScroll = () => {
-      if (scrollToMessage(targetMessageId)) return;
+      const element = scrollRef.current;
+      const targetElement = element?.querySelector<HTMLElement>(
+        `[data-message-id="${targetMessageId}"]`
+      );
+
+      if (element && targetElement) {
+        requestAnimationFrame(() => {
+          suppressNextScrollEffectsRef.current = true;
+          const containerRect = element.getBoundingClientRect();
+          const targetRect = targetElement.getBoundingClientRect();
+          const nextScrollTop =
+            element.scrollTop +
+            (targetRect.top - containerRect.top) -
+            element.clientHeight / 2 +
+            targetRect.height / 2;
+          element.scrollTop = Math.max(0, nextScrollTop);
+        });
+
+        setSelectedMessageState({ channelId, messageId: targetMessageId });
+        previousMessageCountRef.current = messages.length;
+        setHandledSearchTargetNonce(activeSearchTarget.nonce);
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            if (guildId && channelId) {
+              navigate(`/guilds/${guildId}/channels/${channelId}`, { replace: true, state: null });
+            }
+          });
+        });
+        return;
+      }
+
       attempts += 1;
       if (attempts < 10) {
         frameId = requestAnimationFrame(tryScroll);
@@ -195,10 +124,20 @@ export const useTextChannelSearchTarget = ({
     return () => {
       cancelAnimationFrame(frameId);
     };
-  }, [activeSearchTarget, messages, scrollToMessage]);
+  }, [
+    activeSearchTarget,
+    channelId,
+    guildId,
+    messages,
+    navigate,
+    previousMessageCountRef,
+    scrollRef,
+    suppressNextScrollEffectsRef,
+  ]);
 
   return {
     activeSearchTarget,
+    setHandledSearchTargetNonce,
     selectedMessageId,
     seekingTargetRef,
   };

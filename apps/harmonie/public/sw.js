@@ -21,9 +21,13 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) =>
-        Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
-      )
+      .then((keys) => {
+        const deletions = [];
+        for (const key of keys) {
+          if (key !== CACHE_NAME) deletions.push(caches.delete(key));
+        }
+        return Promise.all(deletions);
+      })
       .then(() => self.clients.claim())
   );
 });

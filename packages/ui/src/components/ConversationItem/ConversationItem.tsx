@@ -74,10 +74,9 @@ export const ConversationItem = ({
               'flex h-6 w-6 shrink-0 items-center justify-center rounded-full',
               active ? 'text-secondary-fg' : 'text-primary',
             ].join(' ')}
-            aria-label={callLabel}
-            role="img"
           >
-            <PhoneCall size={14} />
+            <span className="sr-only">{callLabel}</span>
+            <PhoneCall size={14} aria-hidden="true" />
           </span>
         </Tooltip>
       )}

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ContextMenu, IconButton } from '@harmonie/ui';
 import { Plus, Pencil, Settings, Trash2 } from 'lucide-react';
 import { GuildSettingsModal } from '@/features/guild/settings/GuildSettingsModal';
-import { useGuildPermissions } from '@/features/guild/hooks/useGuildPermissions';
+import { useGuildPermissions } from '@/features/guild/useGuildPermissions';
 import type { Channel, Guild } from '@/types/guild';
 import { useCurrentGuild, useGuilds } from '@/features/guild/GuildContext';
 import { useMessageActivity } from '@/features/realtime/MessageActivityContext';
@@ -130,7 +130,7 @@ export const ChannelSidebar = () => {
           )}
         </header>
 
-        <div className="flex-1 overflow-y-auto px-2 py-2 flex flex-col gap-5">
+        <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-5">
           {isLoading ? (
             // Skeleton shown while channels are being fetched for the new guild
             <div className="flex flex-col gap-4 px-2 pt-1 animate-pulse">

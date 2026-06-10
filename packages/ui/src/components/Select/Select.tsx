@@ -55,7 +55,7 @@ export const Select = ({
 }: SelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLElement>(null);
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
 
   const selectedOption = options.find((o) => o.value === value);
@@ -141,7 +141,7 @@ export const Select = ({
         id={selectId}
         type="button"
         disabled={disabled}
-        aria-haspopup="listbox"
+        aria-haspopup="menu"
         aria-expanded={isOpen}
         onClick={() => !disabled && setIsOpen((o) => !o)}
         className={triggerClasses}
@@ -160,18 +160,16 @@ export const Select = ({
       </button>
 
       {isOpen && (
-        <div
+        <menu
           ref={dropdownRef}
-          role="listbox"
           style={dropdownStyle}
-          className="bg-surface-1 border border-border-2 rounded-sm shadow-lg py-1 px-1 overflow-y-auto max-h-52"
+          className="m-0 max-h-52 list-none overflow-y-auto rounded-sm border border-border-2 bg-surface-1 p-1 shadow-lg"
         >
           {options.map((opt) => (
             <button
               key={opt.value}
               type="button"
-              role="option"
-              aria-selected={opt.value === value}
+              aria-pressed={opt.value === value}
               onClick={() => handleSelect(opt.value)}
               className={[
                 'flex items-center gap-2 w-full font-body font-medium text-text-2',
@@ -188,7 +186,7 @@ export const Select = ({
               )}
             </button>
           ))}
-        </div>
+        </menu>
       )}
 
       {error && <span className="font-body text-[11px] font-normal text-error-fg">{error}</span>}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Hash, User } from 'lucide-react';
 import { Combobox } from './Combobox';
 
@@ -48,7 +48,6 @@ export const Menu: Story = {
 
 export const Searchable: Story = {
   render: () => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const [query, setQuery] = useState('');
     const items = MEMBER_ITEMS.filter((item) =>
       item.label.toLowerCase().includes(query.toLowerCase())

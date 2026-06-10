@@ -1,4 +1,4 @@
-import { ButtonHTMLAttributes, forwardRef, ReactNode, useId } from 'react';
+import { useId, type ButtonHTMLAttributes, type ReactNode, type Ref } from 'react';
 import { Tooltip, TooltipSide } from '../Tooltip/Tooltip';
 
 export type IconButtonSize = 'normal' | 'small' | 'medium';
@@ -10,6 +10,7 @@ export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
   selected?: boolean;
   tooltipSide?: TooltipSide;
   children: ReactNode;
+  ref?: Ref<HTMLButtonElement>;
 }
 
 const sizeClasses: Record<IconButtonSize, string> = {
@@ -28,22 +29,20 @@ const variantClasses: Record<IconButtonVariant, string> = {
 
 const selectedClasses = 'bg-primary text-primary-fg hover:bg-primary';
 
-export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton(
-  {
-    size = 'normal',
-    variant = 'ghost',
-    selected = false,
-    disabled,
-    children,
-    className,
-    tooltipSide,
-    title,
-    'aria-label': ariaLabel,
-    'aria-describedby': ariaDescribedBy,
-    ...props
-  },
-  ref
-) {
+export const IconButton = ({
+  size = 'normal',
+  variant = 'ghost',
+  selected = false,
+  disabled,
+  children,
+  className,
+  tooltipSide,
+  title,
+  'aria-label': ariaLabel,
+  'aria-describedby': ariaDescribedBy,
+  ref,
+  ...props
+}: IconButtonProps) => {
   const generatedTooltipId = useId();
   const tooltipId = typeof title === 'string' && title.length > 0 ? generatedTooltipId : undefined;
   const classes = [
@@ -60,6 +59,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
 
   const button = (
     <button
+      type="button"
       ref={ref}
       disabled={disabled}
       className={classes}
@@ -78,4 +78,4 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       {button}
     </Tooltip>
   );
-});
+};

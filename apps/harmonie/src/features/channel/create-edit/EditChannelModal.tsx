@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useReducer } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, EmojiInput, ModalPanel, NavList, Separator } from '@harmonie/ui';
+import { Button, EmojiInput, ModalPanel, NavList, NavListItem, Separator } from '@harmonie/ui';
 import { updateChannel, deleteChannel } from '@/api/channels';
 import type { Channel } from '@/types/guild';
 
@@ -15,6 +15,45 @@ interface EditChannelModalProps {
   onDeleted: (channelId: string) => void;
 }
 
+interface EditChannelState {
+  section: EditChannelSection;
+  name: string;
+  isSaving: boolean;
+  saveError: boolean;
+  isDeleting: boolean;
+  confirmDelete: boolean;
+  deleteError: boolean;
+}
+
+type EditChannelAction =
+  | { type: 'patch'; patch: Partial<EditChannelState> }
+  | { type: 'nameChanged'; name: string };
+
+const createEditChannelState = (
+  channel: Channel,
+  initialSection: EditChannelSection
+): EditChannelState => ({
+  section: initialSection,
+  name: channel.name,
+  isSaving: false,
+  saveError: false,
+  isDeleting: false,
+  confirmDelete: false,
+  deleteError: false,
+});
+
+const editChannelReducer = (
+  state: EditChannelState,
+  action: EditChannelAction
+): EditChannelState => {
+  switch (action.type) {
+    case 'patch':
+      return { ...state, ...action.patch };
+    case 'nameChanged':
+      return { ...state, name: action.name, saveError: false };
+  }
+};
+
 export const EditChannelModal = ({
   channel,
   initialSection = 'rename',
@@ -23,42 +62,33 @@ export const EditChannelModal = ({
   onDeleted,
 }: EditChannelModalProps) => {
   const { t } = useTranslation();
-  const [section, setSection] = useState<EditChannelSection>(initialSection);
-
-  const [name, setName] = useState(channel.name);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState(false);
-
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [deleteError, setDeleteError] = useState(false);
+  const [state, dispatch] = useReducer(editChannelReducer, undefined, () =>
+    createEditChannelState(channel, initialSection)
+  );
+  const { section, name, isSaving, saveError, isDeleting, confirmDelete, deleteError } = state;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed || trimmed === channel.name) return;
 
-    setIsSaving(true);
-    setSaveError(false);
+    dispatch({ type: 'patch', patch: { isSaving: true, saveError: false } });
     try {
       const updated = await updateChannel(channel.channelId, { name: trimmed });
       onUpdated(updated);
     } catch {
-      setSaveError(true);
-    } finally {
-      setIsSaving(false);
+      dispatch({ type: 'patch', patch: { saveError: true } });
     }
+    dispatch({ type: 'patch', patch: { isSaving: false } });
   };
 
   const handleDelete = async () => {
-    setIsDeleting(true);
-    setDeleteError(false);
+    dispatch({ type: 'patch', patch: { isDeleting: true, deleteError: false } });
     try {
       await deleteChannel(channel.channelId);
       onDeleted(channel.channelId);
     } catch {
-      setDeleteError(true);
-      setIsDeleting(false);
+      dispatch({ type: 'patch', patch: { deleteError: true, isDeleting: false } });
     }
   };
 
@@ -74,18 +104,18 @@ export const EditChannelModal = ({
       </p>
       <Separator />
       <NavList className="mt-2">
-        <NavList.Item
+        <NavListItem
           icon={<Pencil size={15} />}
           label={t('guild.channels.edit.navRename')}
           active={section === 'rename'}
-          onClick={() => setSection('rename')}
+          onClick={() => dispatch({ type: 'patch', patch: { section: 'rename' } })}
         />
         {!channel.isDefault && (
-          <NavList.Item
+          <NavListItem
             icon={<Trash2 size={15} />}
             label={t('guild.channels.edit.navDanger')}
             active={section === 'danger'}
-            onClick={() => setSection('danger')}
+            onClick={() => dispatch({ type: 'patch', patch: { section: 'danger' } })}
           />
         )}
       </NavList>
@@ -104,10 +134,7 @@ export const EditChannelModal = ({
           <EmojiInput
             label={t('guild.channels.edit.nameLabel')}
             value={name}
-            onChange={(nextValue) => {
-              setName(nextValue);
-              setSaveError(false);
-            }}
+            onChange={(nextValue) => dispatch({ type: 'nameChanged', name: nextValue })}
             error={saveError ? t('guild.channels.edit.error') : undefined}
             autoFocus
             maxLength={100}
@@ -139,7 +166,7 @@ export const EditChannelModal = ({
             <div className="flex gap-2">
               <Button
                 variant="tertiary"
-                onClick={() => setConfirmDelete(false)}
+                onClick={() => dispatch({ type: 'patch', patch: { confirmDelete: false } })}
                 disabled={isDeleting}
               >
                 {t('guild.channels.edit.deleteCancel')}
@@ -150,7 +177,10 @@ export const EditChannelModal = ({
             </div>
           ) : (
             <div>
-              <Button variant="danger" onClick={() => setConfirmDelete(true)}>
+              <Button
+                variant="danger"
+                onClick={() => dispatch({ type: 'patch', patch: { confirmDelete: true } })}
+              >
                 <Trash2 size={14} />
                 {t('guild.channels.edit.deleteButton')}
               </Button>

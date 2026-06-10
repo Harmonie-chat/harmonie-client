@@ -1,10 +1,11 @@
 import {
   createContext,
-  useCallback,
-  useContext,
+  use,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -48,6 +49,66 @@ const GuildContext = createContext<GuildContextValue>({
   fetchGuildMembers: () => {},
 });
 
+interface GuildStoreSnapshot {
+  guilds: Guild[];
+  guildsLoading: boolean;
+}
+
+let guildStoreSnapshot: GuildStoreSnapshot = {
+  guilds: [],
+  guildsLoading: true,
+};
+let guildsLoadPromise: Promise<void> | null = null;
+const guildStoreListeners = new Set<() => void>();
+
+const emitGuildStoreChange = () => {
+  guildStoreListeners.forEach((listener) => listener());
+};
+
+const setGuildStoreSnapshot = (
+  update: GuildStoreSnapshot | ((snapshot: GuildStoreSnapshot) => GuildStoreSnapshot)
+) => {
+  guildStoreSnapshot = typeof update === 'function' ? update(guildStoreSnapshot) : update;
+  emitGuildStoreChange();
+};
+
+const loadGuilds = (force = false) => {
+  if (guildsLoadPromise && !force) return guildsLoadPromise;
+
+  guildsLoadPromise = listGuilds()
+    .then((data) => {
+      setGuildStoreSnapshot({ guilds: data.guilds, guildsLoading: false });
+    })
+    .catch(() => {
+      setGuildStoreSnapshot((snapshot) => ({ ...snapshot, guildsLoading: false }));
+    })
+    .finally(() => {
+      guildsLoadPromise = null;
+    });
+
+  return guildsLoadPromise;
+};
+
+const subscribeToGuildStore = (listener: () => void) => {
+  guildStoreListeners.add(listener);
+  if (guildStoreSnapshot.guildsLoading && !guildsLoadPromise) void loadGuilds();
+  return () => guildStoreListeners.delete(listener);
+};
+
+const getGuildStoreSnapshot = () => guildStoreSnapshot;
+
+const setGuilds = (update: Guild[] | ((guilds: Guild[]) => Guild[])) => {
+  setGuildStoreSnapshot((snapshot) => ({
+    ...snapshot,
+    guilds: typeof update === 'function' ? update(snapshot.guilds) : update,
+  }));
+};
+
+const fetchGuilds = () => {
+  setGuildStoreSnapshot((snapshot) => ({ ...snapshot, guildsLoading: true }));
+  void loadGuilds(true);
+};
+
 export const GuildProvider = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -55,23 +116,24 @@ export const GuildProvider = ({ children }: { children: ReactNode }) => {
   const activeGuildId = location.pathname.match(/^\/guilds\/([^/]+)/)?.[1] ?? currentGuildId;
   const { connection } = useRealtime();
   const { user } = useUser();
-  const [guilds, setGuilds] = useState<Guild[]>([]);
-  const [guildsLoading, setGuildsLoading] = useState(true);
+  const { guilds, guildsLoading } = useSyncExternalStore(
+    subscribeToGuildStore,
+    getGuildStoreSnapshot,
+    getGuildStoreSnapshot
+  );
   const [membersByGuild, setMembersByGuild] = useState<Record<string, MembersCacheEntry>>({});
   const membersByGuildRef = useRef<Record<string, MembersCacheEntry>>({});
-  const fetchingRef = useRef<Set<string>>(new Set());
+  const fetchGuildsRef = useRef<() => void>(() => {});
+  const fetchGuildMembersRef = useRef<(guildId: string, force?: boolean) => void>(() => {});
+  const fetchingRef = useRef<Set<string>>(null!);
 
-  membersByGuildRef.current = membersByGuild;
+  if (fetchingRef.current === null) fetchingRef.current = new Set();
 
-  const fetchGuilds = useCallback(() => {
-    setGuildsLoading(true);
-    listGuilds()
-      .then((data) => setGuilds(data.guilds))
-      .catch(() => {})
-      .finally(() => setGuildsLoading(false));
-  }, []);
+  useEffect(() => {
+    membersByGuildRef.current = membersByGuild;
+  }, [membersByGuild]);
 
-  const fetchGuildMembers = useCallback((guildId: string, force = false) => {
+  const fetchGuildMembers = (guildId: string, force = false) => {
     const entry = membersByGuildRef.current[guildId];
     const isStale = !entry || Date.now() - entry.fetchedAt > MEMBERS_TTL_MS;
     if ((!isStale && !force) || fetchingRef.current.has(guildId)) return;
@@ -87,9 +149,12 @@ export const GuildProvider = ({ children }: { children: ReactNode }) => {
       .finally(() => {
         fetchingRef.current.delete(guildId);
       });
-  }, []);
+  };
 
-  useEffect(() => fetchGuilds(), [fetchGuilds]);
+  useEffect(() => {
+    fetchGuildsRef.current = fetchGuilds;
+    fetchGuildMembersRef.current = fetchGuildMembers;
+  });
 
   useEffect(() => {
     if (!connection) return;
@@ -105,10 +170,6 @@ export const GuildProvider = ({ children }: { children: ReactNode }) => {
       if (guildId === activeGuildId) navigate('/conversations', { replace: true });
     };
 
-    const refreshMembersIfCached = (guildId: string) => {
-      if (membersByGuildRef.current[guildId]) fetchGuildMembers(guildId, true);
-    };
-
     const handleGuildDeleted = (event: GuildDeletedEvent) => {
       removeGuild(event.guildId);
     };
@@ -116,6 +177,20 @@ export const GuildProvider = ({ children }: { children: ReactNode }) => {
     const handleYouWereRemoved = (event: GuildDeletedEvent) => {
       removeGuild(event.guildId);
     };
+
+    connection.on(REALTIME_SERVER_EVENTS.guildDeleted, handleGuildDeleted);
+    connection.on(REALTIME_SERVER_EVENTS.youWereBanned, handleYouWereRemoved);
+    connection.on(REALTIME_SERVER_EVENTS.youWereKicked, handleYouWereRemoved);
+
+    return () => {
+      connection.off(REALTIME_SERVER_EVENTS.guildDeleted, handleGuildDeleted);
+      connection.off(REALTIME_SERVER_EVENTS.youWereBanned, handleYouWereRemoved);
+      connection.off(REALTIME_SERVER_EVENTS.youWereKicked, handleYouWereRemoved);
+    };
+  }, [activeGuildId, connection, navigate]);
+
+  useEffect(() => {
+    if (!connection) return;
 
     const handleGuildUpdated = (event: GuildUpdatedEvent) => {
       setGuilds((prev) =>
@@ -125,6 +200,20 @@ export const GuildProvider = ({ children }: { children: ReactNode }) => {
             : guild
         )
       );
+    };
+
+    connection.on(REALTIME_SERVER_EVENTS.guildUpdated, handleGuildUpdated);
+
+    return () => {
+      connection.off(REALTIME_SERVER_EVENTS.guildUpdated, handleGuildUpdated);
+    };
+  }, [connection]);
+
+  useEffect(() => {
+    if (!connection) return;
+
+    const refreshMembersIfCached = (guildId: string) => {
+      if (membersByGuildRef.current[guildId]) fetchGuildMembersRef.current(guildId, true);
     };
 
     const handleGuildOwnershipTransferred = (event: GuildOwnershipTransferredEvent) => {
@@ -144,7 +233,7 @@ export const GuildProvider = ({ children }: { children: ReactNode }) => {
 
     const handleMemberChanged = (event: MemberEvent) => {
       if (event.userId === user?.userId) {
-        fetchGuilds();
+        fetchGuildsRef.current();
       }
       refreshMembersIfCached(event.guildId);
     };
@@ -159,6 +248,32 @@ export const GuildProvider = ({ children }: { children: ReactNode }) => {
       }
       refreshMembersIfCached(event.guildId);
     };
+
+    connection.on(
+      REALTIME_SERVER_EVENTS.guildOwnershipTransferred,
+      handleGuildOwnershipTransferred
+    );
+    connection.on(REALTIME_SERVER_EVENTS.memberJoined, handleMemberChanged);
+    connection.on(REALTIME_SERVER_EVENTS.memberLeft, handleMemberChanged);
+    connection.on(REALTIME_SERVER_EVENTS.memberBanned, handleMemberChanged);
+    connection.on(REALTIME_SERVER_EVENTS.memberRemoved, handleMemberChanged);
+    connection.on(REALTIME_SERVER_EVENTS.memberRoleUpdated, handleMemberRoleUpdated);
+
+    return () => {
+      connection.off(
+        REALTIME_SERVER_EVENTS.guildOwnershipTransferred,
+        handleGuildOwnershipTransferred
+      );
+      connection.off(REALTIME_SERVER_EVENTS.memberJoined, handleMemberChanged);
+      connection.off(REALTIME_SERVER_EVENTS.memberLeft, handleMemberChanged);
+      connection.off(REALTIME_SERVER_EVENTS.memberBanned, handleMemberChanged);
+      connection.off(REALTIME_SERVER_EVENTS.memberRemoved, handleMemberChanged);
+      connection.off(REALTIME_SERVER_EVENTS.memberRoleUpdated, handleMemberRoleUpdated);
+    };
+  }, [connection, user?.userId]);
+
+  useEffect(() => {
+    if (!connection) return;
 
     const handleUserPresenceChanged = (event: UserPresenceChangedEvent) => {
       setMembersByGuild((prev) => {
@@ -195,40 +310,14 @@ export const GuildProvider = ({ children }: { children: ReactNode }) => {
       });
     };
 
-    connection.on(REALTIME_SERVER_EVENTS.guildDeleted, handleGuildDeleted);
-    connection.on(REALTIME_SERVER_EVENTS.youWereBanned, handleYouWereRemoved);
-    connection.on(REALTIME_SERVER_EVENTS.youWereKicked, handleYouWereRemoved);
-    connection.on(REALTIME_SERVER_EVENTS.guildUpdated, handleGuildUpdated);
-    connection.on(
-      REALTIME_SERVER_EVENTS.guildOwnershipTransferred,
-      handleGuildOwnershipTransferred
-    );
-    connection.on(REALTIME_SERVER_EVENTS.memberJoined, handleMemberChanged);
-    connection.on(REALTIME_SERVER_EVENTS.memberLeft, handleMemberChanged);
-    connection.on(REALTIME_SERVER_EVENTS.memberBanned, handleMemberChanged);
-    connection.on(REALTIME_SERVER_EVENTS.memberRemoved, handleMemberChanged);
-    connection.on(REALTIME_SERVER_EVENTS.memberRoleUpdated, handleMemberRoleUpdated);
     connection.on(REALTIME_SERVER_EVENTS.userPresenceChanged, handleUserPresenceChanged);
     connection.on(REALTIME_SERVER_EVENTS.userProfileUpdated, handleUserProfileUpdated);
 
     return () => {
-      connection.off(REALTIME_SERVER_EVENTS.guildDeleted, handleGuildDeleted);
-      connection.off(REALTIME_SERVER_EVENTS.youWereBanned, handleYouWereRemoved);
-      connection.off(REALTIME_SERVER_EVENTS.youWereKicked, handleYouWereRemoved);
-      connection.off(REALTIME_SERVER_EVENTS.guildUpdated, handleGuildUpdated);
-      connection.off(
-        REALTIME_SERVER_EVENTS.guildOwnershipTransferred,
-        handleGuildOwnershipTransferred
-      );
-      connection.off(REALTIME_SERVER_EVENTS.memberJoined, handleMemberChanged);
-      connection.off(REALTIME_SERVER_EVENTS.memberLeft, handleMemberChanged);
-      connection.off(REALTIME_SERVER_EVENTS.memberBanned, handleMemberChanged);
-      connection.off(REALTIME_SERVER_EVENTS.memberRemoved, handleMemberChanged);
-      connection.off(REALTIME_SERVER_EVENTS.memberRoleUpdated, handleMemberRoleUpdated);
       connection.off(REALTIME_SERVER_EVENTS.userPresenceChanged, handleUserPresenceChanged);
       connection.off(REALTIME_SERVER_EVENTS.userProfileUpdated, handleUserProfileUpdated);
     };
-  }, [activeGuildId, connection, fetchGuildMembers, fetchGuilds, navigate, user?.userId]);
+  }, [connection]);
 
   return (
     <GuildContext.Provider
@@ -239,19 +328,19 @@ export const GuildProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useGuilds = () => useContext(GuildContext);
+export const useGuilds = () => use(GuildContext);
 
 export const useCurrentGuild = () => {
   const { guildId } = useParams<{ guildId: string }>();
-  const { guilds, guildsLoading } = useContext(GuildContext);
+  const { guilds, guildsLoading } = use(GuildContext);
   const guild = guilds.find((g) => g.guildId === guildId) ?? null;
   return { guild, guildsLoading };
 };
 
 export const useGuildMembers = (guildId: string | undefined) => {
-  const { membersByGuild, fetchGuildMembers } = useContext(GuildContext);
+  const { membersByGuild, fetchGuildMembers } = use(GuildContext);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (guildId) fetchGuildMembers(guildId);
   }, [guildId, fetchGuildMembers]);
 

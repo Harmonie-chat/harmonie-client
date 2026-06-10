@@ -6,7 +6,7 @@ import type { Message } from '@/types/channel';
 import type { UserProfile } from '@/types/user';
 import { useFileBlobUrl } from '@/shared/hooks/useFileBlobUrl';
 import { formatContextualDateTime } from '@/shared/utils/date';
-import type { MessageAuthor } from '@/shared/message/types';
+import type { MessageAuthor } from '@/shared/message/messageAuthor';
 import { MessageAttachments } from '@/shared/message/attachments/MessageAttachments';
 import { MessageReactions } from '@/shared/message/reactions/MessageReactions';
 import { MessageActions } from './MessageActions';
@@ -19,12 +19,14 @@ import { MessageReplyPreview } from './MessageReplyPreview';
 interface MessageListItemProps<TAuthor extends MessageAuthor = MessageAuthor> {
   message: Message;
   member?: TAuthor;
-  grouped?: boolean;
-  isOwn?: boolean;
-  isEditing?: boolean;
-  isMenuOpen?: boolean;
-  isMentioned?: boolean;
-  isSelected?: boolean;
+  rowState?: {
+    grouped?: boolean;
+    isOwn?: boolean;
+    isEditing?: boolean;
+    isMenuOpen?: boolean;
+    isMentioned?: boolean;
+    isSelected?: boolean;
+  };
   onAvatarClick?: (member: TAuthor, rect: DOMRect) => void;
   onEdit?: (messageId: string) => void;
   onCancelEdit?: () => void;
@@ -57,12 +59,7 @@ interface MessageListItemProps<TAuthor extends MessageAuthor = MessageAuthor> {
 export const MessageListItem = <TAuthor extends MessageAuthor = MessageAuthor>({
   message,
   member,
-  grouped = false,
-  isOwn = false,
-  isEditing = false,
-  isMenuOpen = false,
-  isMentioned = false,
-  isSelected = false,
+  rowState,
   onAvatarClick,
   onEdit,
   onCancelEdit,
@@ -81,6 +78,12 @@ export const MessageListItem = <TAuthor extends MessageAuthor = MessageAuthor>({
   onOpenMenuAt,
 }: MessageListItemProps<TAuthor>) => {
   const { t, i18n } = useTranslation();
+  const grouped = rowState?.grouped ?? false;
+  const isOwn = rowState?.isOwn ?? false;
+  const isEditing = rowState?.isEditing ?? false;
+  const isMenuOpen = rowState?.isMenuOpen ?? false;
+  const isMentioned = rowState?.isMentioned ?? false;
+  const isSelected = rowState?.isSelected ?? false;
   const [pickerAnchorRect, setPickerAnchorRect] = useState<DOMRect | null>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const longPressTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -95,7 +98,7 @@ export const MessageListItem = <TAuthor extends MessageAuthor = MessageAuthor>({
     member?.avatar?.color ?? (member ? 'var(--color-cat-1-fg)' : 'var(--color-text-3)');
   const avatarBg = member?.avatar?.bg ?? (member ? 'var(--color-cat-1)' : 'var(--color-surface-3)');
 
-  const handleAvatarClick = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleAvatarClick = (event: React.MouseEvent<HTMLElement>) => {
     if (!member || !onAvatarClick) return;
     onAvatarClick(member, event.currentTarget.getBoundingClientRect());
   };
@@ -188,11 +191,24 @@ export const MessageListItem = <TAuthor extends MessageAuthor = MessageAuthor>({
     >
       {grouped ? (
         <div className="w-8 shrink-0" />
-      ) : (
-        <div
+      ) : member && onAvatarClick ? (
+        <button
+          type="button"
           onClick={handleAvatarClick}
-          className={member && onAvatarClick ? 'cursor-pointer shrink-0' : 'shrink-0'}
+          aria-label={t('channel.messages.openMemberProfile', { name: label })}
+          className="shrink-0 cursor-pointer appearance-none rounded-full p-0 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
+          <Avatar
+            alt={label}
+            avatarUrl={avatarUrl}
+            icon={avatarIcon}
+            color={avatarColor}
+            bg={avatarBg}
+            size={32}
+          />
+        </button>
+      ) : (
+        <div className="shrink-0">
           <div className={member ? '' : 'opacity-60'}>
             <Avatar
               alt={label}
@@ -279,18 +295,22 @@ export const MessageListItem = <TAuthor extends MessageAuthor = MessageAuthor>({
 
       {!isEditing && (
         <MessageActions
-          canEdit={isOwn && Boolean(onEdit)}
-          canDelete={isOwn && Boolean(onDelete)}
-          canPin={Boolean(onPinToggle)}
-          isPinned={message.isPinned}
-          canReact={Boolean(onReact)}
-          canReply={Boolean(onReply)}
-          editLabel={t('channel.messages.edit')}
-          deleteLabel={t('channel.messages.delete')}
-          pinLabel={t('channel.messages.pin')}
-          unpinLabel={t('channel.messages.unpin')}
-          reactLabel={t('channel.messages.react')}
-          replyLabel={t('channel.messages.reply')}
+          availability={{
+            canEdit: isOwn && Boolean(onEdit),
+            canDelete: isOwn && Boolean(onDelete),
+            canPin: Boolean(onPinToggle),
+            canReact: Boolean(onReact),
+            canReply: Boolean(onReply),
+          }}
+          state={{ isPinned: message.isPinned }}
+          labels={{
+            edit: t('channel.messages.edit'),
+            delete: t('channel.messages.delete'),
+            pin: t('channel.messages.pin'),
+            unpin: t('channel.messages.unpin'),
+            react: t('channel.messages.react'),
+            reply: t('channel.messages.reply'),
+          }}
           onEdit={() => onEdit?.(message.messageId)}
           onDelete={() => onDelete?.(message.messageId)}
           onPinToggle={() => onPinToggle?.(message.messageId, !message.isPinned)}

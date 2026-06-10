@@ -4,7 +4,7 @@ import { Pin, X } from 'lucide-react';
 import type { PinnedMessage } from '@/types/channel';
 import { useFileBlobUrl } from '@/shared/hooks/useFileBlobUrl';
 import { formatContextualDateTime } from '@/shared/utils/date';
-import type { MessageAuthor } from '@/shared/message/types';
+import type { MessageAuthor } from '@/shared/message/messageAuthor';
 import { MessageAttachments } from './attachments/MessageAttachments';
 import { MessageContent } from './MessageListItem/MessageContent';
 

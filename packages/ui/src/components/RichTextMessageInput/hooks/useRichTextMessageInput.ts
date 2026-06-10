@@ -1,5 +1,7 @@
 import {
   useEffect,
+  useLayoutEffect,
+  useReducer,
   useRef,
   useState,
   type ClipboardEvent,
@@ -25,6 +27,37 @@ import { useRichTextMentions } from './useRichTextMentions';
 
 const INLINE_FORMATS_TO_CARRY = ['bold', 'italic', 'underline', 'strike', 'code'] as const;
 const EMPTY_MENTION_OPTIONS: RichTextMentionOption[] = [];
+
+interface EditorUiState {
+  activeFormats: ActiveFormats;
+  selectedRange: QuillRange;
+  selectionToolbarDismissed: boolean;
+}
+
+type EditorUiAction =
+  | { type: 'sync'; activeFormats: ActiveFormats; selectedRange: QuillRange }
+  | { type: 'dismissSelectionToolbar' }
+  | { type: 'setActiveFormats'; activeFormats: ActiveFormats }
+  | { type: 'setSelectedRange'; selectedRange: QuillRange };
+
+const editorUiReducer = (state: EditorUiState, action: EditorUiAction): EditorUiState => {
+  switch (action.type) {
+    case 'sync':
+      return {
+        activeFormats: action.activeFormats,
+        selectedRange: action.selectedRange,
+        selectionToolbarDismissed: false,
+      };
+    case 'dismissSelectionToolbar':
+      return { ...state, selectionToolbarDismissed: true };
+    case 'setActiveFormats':
+      return { ...state, activeFormats: action.activeFormats };
+    case 'setSelectedRange':
+      return { ...state, selectedRange: action.selectedRange };
+    default:
+      return state;
+  }
+};
 
 const isMobileInteractionDevice = () =>
   typeof window !== 'undefined' &&
@@ -62,9 +95,16 @@ export const useRichTextMessageInput = ({
   onMentionSelected,
 }: UseRichTextMessageInputParams) => {
   const [emojiAnchorRect, setEmojiAnchorRect] = useState<DOMRect | null>(null);
-  const [activeFormats, setActiveFormats] = useState<ActiveFormats>({});
-  const [selectedRange, setSelectedRange] = useState<QuillRange>(null);
-  const [selectionToolbarDismissed, setSelectionToolbarDismissed] = useState(false);
+  const [editorUiState, dispatchEditorUiState] = useReducer(editorUiReducer, {
+    activeFormats: {},
+    selectedRange: null,
+    selectionToolbarDismissed: false,
+  });
+  const { activeFormats, selectedRange, selectionToolbarDismissed } = editorUiState;
+  const setActiveFormats = (formats: ActiveFormats) =>
+    dispatchEditorUiState({ type: 'setActiveFormats', activeFormats: formats });
+  const setSelectedRange = (range: QuillRange) =>
+    dispatchEditorUiState({ type: 'setSelectedRange', selectedRange: range });
   const wrapperRef = useRef<HTMLDivElement>(null);
   const editorHostRef = useRef<HTMLDivElement>(null);
   const quillRef = useRef<Quill | null>(null);
@@ -180,6 +220,23 @@ export const useRichTextMessageInput = ({
       }, 0);
     }
 
+    const syncEditorUiState = (range: QuillRange) => {
+      dispatchEditorUiState({
+        type: 'sync',
+        selectedRange: range,
+        activeFormats: range ? quill.getFormat(range) : {},
+      });
+      updateAutocomplete(quill, range);
+      updateMentions(quill, range);
+      clearLinkBubble();
+    };
+
+    const syncInitialEditorValue = () => {
+      const nextValue = getEditorHtml(quill);
+      lastKnownValueRef.current = nextValue;
+      onChangeRef.current(nextValue);
+    };
+
     const handleTextChange = (_delta: unknown, _oldDelta: unknown, source: string) => {
       const currentRange = quill.getSelection();
       if (source === 'user' && currentRange) {
@@ -193,22 +250,12 @@ export const useRichTextMessageInput = ({
       }
 
       const nextRange = quill.getSelection();
-      setSelectionToolbarDismissed(false);
-      setSelectedRange(nextRange);
-      setActiveFormats(nextRange ? quill.getFormat(nextRange) : {});
-      updateAutocomplete(quill, nextRange);
-      updateMentions(quill, nextRange);
-      clearLinkBubble();
-      syncFromEditor(quill);
+      syncEditorUiState(nextRange);
+      syncInitialEditorValue();
     };
 
     const handleSelectionChange = (range: QuillRange) => {
-      setSelectionToolbarDismissed(false);
-      setSelectedRange(range);
-      setActiveFormats(range ? quill.getFormat(range) : {});
-      updateAutocomplete(quill, range);
-      updateMentions(quill, range);
-      clearLinkBubble();
+      syncEditorUiState(range);
     };
 
     quill.on('text-change', handleTextChange);
@@ -221,7 +268,7 @@ export const useRichTextMessageInput = ({
     };
   }, [clearLinkBubble, updateAutocomplete, updateMentions]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const quill = quillRef.current;
     if (!quill) return;
     quill.enable(!disabled);
@@ -253,9 +300,6 @@ export const useRichTextMessageInput = ({
       quill.setSelection(Math.max(nextIndex, 0), selection.length, 'silent');
     }
     lastKnownValueRef.current = value;
-    const nextRange = quill.getSelection();
-    setSelectedRange(nextRange);
-    setActiveFormats(nextRange ? quill.getFormat(nextRange) : {});
     clearLinkBubble();
   }, [value, clearLinkBubble]);
 
@@ -398,7 +442,7 @@ export const useRichTextMessageInput = ({
     const currentRange = quill.getSelection();
     if (event.key === 'Escape' && currentRange && currentRange.length > 0) {
       event.preventDefault();
-      setSelectionToolbarDismissed(true);
+      dispatchEditorUiState({ type: 'dismissSelectionToolbar' });
       return;
     }
 
@@ -477,7 +521,7 @@ export const useRichTextMessageInput = ({
     const formats = quill.getFormat(range.index, 1);
     if (typeof formats.link !== 'string') return;
 
-    setSelectionToolbarDismissed(true);
+    dispatchEditorUiState({ type: 'dismissSelectionToolbar' });
     showLinkBubble(quill, range, true);
 
     const nextRange = quill.getSelection();

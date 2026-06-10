@@ -2,7 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { ColorSwatches, IconButton } from '@harmonie/ui';
 import { useTranslation } from 'react-i18next';
-import { AVATAR_ICONS } from '@/shared/consts/constants';
+import { AVATAR_ICONS } from '@/shared/components/iconAppearanceOptions';
 import { useIconAppearancePalette } from '@/shared/hooks/useIconAppearancePalette';
 
 interface IconAppearanceEditorProps {

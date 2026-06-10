@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Users } from 'lucide-react';
@@ -36,22 +36,14 @@ export const TextChannelView = () => {
     setSearchChannelId,
   } = useGuildWorkspace();
   const [selected, setSelected] = useState<SelectedMember | null>(null);
-  const threadRefs = useMessageThreadRefs();
 
   const members = useGuildMembers(guildId);
-  const membersMap = useMemo(
-    () => new Map((members ?? []).map((member) => [member.userId, member])),
-    [members]
-  );
-  const mentionOptions = useMemo(
-    () =>
-      (members ?? []).map((member) => ({
-        userId: member.userId,
-        username: member.username,
-        displayName: member.displayName,
-      })),
-    [members]
-  );
+  const membersMap = new Map((members ?? []).map((member) => [member.userId, member]));
+  const mentionOptions = (members ?? []).map((member) => ({
+    userId: member.userId,
+    username: member.username,
+    displayName: member.displayName,
+  }));
   const { channels } = useChannels();
   const { guildsLoading, guild } = useCurrentGuild();
   const { user } = useUser();
@@ -84,18 +76,67 @@ export const TextChannelView = () => {
     connection,
     currentUserId: user?.userId,
   });
+  const threadRefs = useMessageThreadRefs();
 
-  const { activeSearchTarget, selectedMessageId, seekingTargetRef } = useTextChannelSearchTarget({
+  const { activeSearchTarget, setHandledSearchTargetNonce, selectedMessageId, seekingTargetRef } =
+    useTextChannelSearchTarget({
+      channelId,
+      guildId,
+      messages,
+      scrollRef: threadRefs.scrollRef,
+      previousMessageCountRef: threadRefs.previousMessageCountRef,
+      suppressNextScrollEffectsRef: threadRefs.suppressNextScrollEffectsRef,
+    });
+
+  useEffect(() => {
+    const targetMessageId = activeSearchTarget?.messageId;
+    if (!targetMessageId) {
+      seekingTargetRef.current = false;
+      return;
+    }
+
+    if (messages.some((message) => message.messageId === targetMessageId)) {
+      seekingTargetRef.current = false;
+      return;
+    }
+
+    if (loading || error || seekingTargetRef.current) return;
+
+    let cancelled = false;
+    seekingTargetRef.current = true;
+
+    const ensureMessageVisible = async () => {
+      const found = await loadUntilMessage(targetMessageId);
+      if (cancelled) return;
+
+      seekingTargetRef.current = false;
+      if (!found) {
+        setHandledSearchTargetNonce(activeSearchTarget?.nonce ?? null);
+        if (guildId && channelId) {
+          navigate(`/guilds/${guildId}/channels/${channelId}`, { replace: true, state: null });
+        }
+      }
+    };
+
+    ensureMessageVisible().catch(() => {
+      seekingTargetRef.current = false;
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    activeSearchTarget,
+    error,
     channelId,
     guildId,
-    messages,
-    loading,
-    error,
-    scrollRef: threadRefs.scrollRef,
-    previousMessageCountRef: threadRefs.previousMessageCountRef,
-    suppressNextScrollEffectsRef: threadRefs.suppressNextScrollEffectsRef,
     loadUntilMessage,
-  });
+    loading,
+    messages,
+    navigate,
+    seekingTargetRef,
+    setHandledSearchTargetNonce,
+  ]);
 
   const handleAvatarClick = (member: GuildMember, rect: DOMRect) => {
     setSelected((prev) => (prev?.member.userId === member.userId ? null : { member, rect }));

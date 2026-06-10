@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Select } from './Select';
 
 const COUNTRY_OPTIONS = [
@@ -67,7 +67,6 @@ export const Disabled: Story = {
 
 export const Interactive: Story = {
   render: () => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const [value, setValue] = useState('Admin');
     return (
       <div className="flex flex-col gap-6 p-6 max-w-xs">
@@ -82,9 +81,7 @@ export const Interactive: Story = {
 
 export const AllSizes: Story = {
   render: () => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const [defaultVal, setDefaultVal] = useState('fr');
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const [smVal, setSmVal] = useState('Admin');
     return (
       <div className="flex flex-col gap-6 p-6 max-w-xs">

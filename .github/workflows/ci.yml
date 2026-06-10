@@ -6,22 +6,32 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  statuses: write
+
 jobs:
-  ci:
-    name: ✅ Checks & Build
+  checks-and-build:
     runs-on: ubuntu-latest
+    name: ✅ Checks & Build
 
     steps:
       - name: 📦 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 🥡 Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
-          version: 10.16.0
+          version: 10.34.1
 
       - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
@@ -37,3 +47,15 @@ jobs:
 
       - name: 🏗️ Build
         run: pnpm build
+
+  react-doctor:
+    runs-on: ubuntu-latest
+    name: 💉 React Doctor
+    needs: checks-and-build
+
+    steps:
+      - name: 📦 Checkout
+        uses: actions/checkout@v5
+
+      - name: 🩻 React Doctor
+        uses: millionco/react-doctor@v2

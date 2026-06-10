@@ -26,12 +26,10 @@ export const GuildAvatar = ({
       <img
         src={iconUrl}
         alt={alt}
+        className="shrink-0 object-cover rounded-[var(--radius-xl)]"
         style={{
           width: dimension,
           height: dimension,
-          borderRadius: 'var(--radius-xl)',
-          objectFit: 'cover',
-          flexShrink: 0,
         }}
       />
     );
@@ -43,19 +41,13 @@ export const GuildAvatar = ({
 
   return (
     <div
+      className="flex shrink-0 items-center justify-center rounded-[var(--radius-xl)] font-semibold leading-none"
       style={{
         width: dimension,
         height: dimension,
-        borderRadius: 'var(--radius-xl)',
         backgroundColor: bg,
         color,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-        fontWeight: 600,
         fontSize: `${Math.max(10, Math.round(size * 0.34))}px`,
-        lineHeight: 1,
       }}
     >
       <Icon size={iconSize} color={color} />

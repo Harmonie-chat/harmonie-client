@@ -9,15 +9,23 @@ import type { GuildMember, GuildMemberRole } from '@/types/guild';
 
 type ConfirmMode = 'kick' | 'ban' | 'transfer' | null;
 
-export interface MemberRowProps {
-  member: GuildMember;
-  guildId: string;
+interface MemberRowPermissions {
   isOwner: boolean;
   canRemove: boolean;
   canBan: boolean;
   canEditRole: boolean;
   canTransferOwnership: boolean;
+}
+
+interface MemberRowRoleState {
   isChangingRole: boolean;
+}
+
+export interface MemberRowProps {
+  member: GuildMember;
+  guildId: string;
+  permissions: MemberRowPermissions;
+  roleState: MemberRowRoleState;
   onRemoved: (userId: string) => void;
   onBanned: (userId: string) => void;
   onRoleChange: (userId: string, role: GuildMemberRole) => void;
@@ -27,12 +35,8 @@ export interface MemberRowProps {
 export const MemberRow = ({
   member,
   guildId,
-  isOwner,
-  canRemove,
-  canBan,
-  canEditRole,
-  canTransferOwnership,
-  isChangingRole,
+  permissions,
+  roleState,
   onRemoved,
   onBanned,
   onRoleChange,
@@ -40,6 +44,7 @@ export const MemberRow = ({
 }: MemberRowProps) => {
   const { t } = useTranslation();
   const label = member.displayName ?? member.username;
+  const { isOwner, canRemove, canBan, canEditRole, canTransferOwnership } = permissions;
 
   const [confirmMode, setConfirmMode] = useState<ConfirmMode>(null);
   const [banReason, setBanReason] = useState('');
@@ -56,11 +61,9 @@ export const MemberRow = ({
       await removeMember(guildId, member.userId);
       onRemoved(member.userId);
     } catch {
-      setIsActing(false);
       setConfirmMode(null);
-    } finally {
-      setIsActing(false);
     }
+    setIsActing(false);
   };
 
   const handleTransferConfirm = async () => {
@@ -69,11 +72,9 @@ export const MemberRow = ({
       await transferOwnership(guildId, member.userId);
       onOwnershipTransferred();
     } catch {
-      setIsActing(false);
       setConfirmMode(null);
-    } finally {
-      setIsActing(false);
     }
+    setIsActing(false);
   };
 
   const handleBanConfirm = async () => {
@@ -86,12 +87,10 @@ export const MemberRow = ({
       });
       onBanned(member.userId);
     } catch {
-      setIsActing(false);
       setConfirmMode(null);
       setBanReason('');
-    } finally {
-      setIsActing(false);
     }
+    setIsActing(false);
   };
 
   const roleOptions = [
@@ -147,7 +146,7 @@ export const MemberRow = ({
                 className="w-28"
                 options={roleOptions}
                 value={member.role}
-                disabled={isChangingRole}
+                disabled={roleState.isChangingRole}
                 aria-label={t('guild.members.admin.roleLabel')}
                 onChange={(value) => onRoleChange(member.userId, value as GuildMemberRole)}
               />

@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, Modal } from '@harmonie/ui';
 import type { PinnedMessage, PinnedMessageList } from '@/types/channel';
-import type { MessageAuthor } from '@/shared/message/types';
+import type { MessageAuthor } from '@/shared/message/messageAuthor';
 import { PinnedMessageRow } from './PinnedMessageRow';
 
 interface PinnedMessagesModalProps {
@@ -19,6 +19,15 @@ interface PinnedMessagesModalProps {
   onClose: () => void;
 }
 
+interface PinnedMessagesState {
+  entityId: string;
+  items: PinnedMessage[];
+  nextCursor: string | null;
+  error: boolean;
+}
+
+const EMPTY_PINNED_MESSAGES: PinnedMessage[] = [];
+
 export const PinnedMessagesModal = ({
   entityId,
   title,
@@ -33,43 +42,67 @@ export const PinnedMessagesModal = ({
   onMessageUnpinned,
   onClose,
 }: PinnedMessagesModalProps) => {
-  const [items, setItems] = useState<PinnedMessage[]>([]);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [state, setState] = useState<PinnedMessagesState>({
+    entityId: '',
+    items: EMPTY_PINNED_MESSAGES,
+    nextCursor: null,
+    error: false,
+  });
   const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState(false);
+  const isCurrent = state.entityId === entityId;
+  const items = isCurrent ? state.items : EMPTY_PINNED_MESSAGES;
+  const nextCursor = isCurrent ? state.nextCursor : null;
+  const error = isCurrent ? state.error : false;
+  const loading = !isCurrent;
 
-  const loadPage = useCallback(
-    async (cursor?: string | null) => {
-      if (cursor) setLoadingMore(true);
-      else setLoading(true);
-      setError(false);
-      try {
-        const data = await fetchPinnedMessages(entityId, cursor);
-        setItems((prev) => (cursor ? [...prev, ...data.items] : data.items));
-        setNextCursor(data.nextCursor);
-      } catch {
-        setError(true);
-      } finally {
-        setLoading(false);
-        setLoadingMore(false);
-      }
-    },
-    [entityId, fetchPinnedMessages]
-  );
+  const loadPage = async (cursor?: string | null) => {
+    if (cursor) setLoadingMore(true);
+    try {
+      const data = await fetchPinnedMessages(entityId, cursor);
+      setState((prev) => ({
+        entityId,
+        items: cursor && prev.entityId === entityId ? [...prev.items, ...data.items] : data.items,
+        nextCursor: data.nextCursor,
+        error: false,
+      }));
+    } catch {
+      setState((prev) => ({
+        entityId,
+        items: cursor && prev.entityId === entityId ? prev.items : [],
+        nextCursor: cursor && prev.entityId === entityId ? prev.nextCursor : null,
+        error: true,
+      }));
+    }
+    setLoadingMore(false);
+  };
 
   useEffect(() => {
-    void loadPage();
-  }, [loadPage]);
+    let active = true;
+    fetchPinnedMessages(entityId)
+      .then((data) => {
+        if (!active) return;
+        setState({
+          entityId,
+          items: data.items,
+          nextCursor: data.nextCursor,
+          error: false,
+        });
+      })
+      .catch(() => {
+        if (!active) return;
+        setState({ entityId, items: [], nextCursor: null, error: true });
+      });
+    return () => {
+      active = false;
+    };
+  }, [entityId, fetchPinnedMessages]);
 
-  const dedupedItems = useMemo(() => {
-    const seen = new Set<string>();
-    return items.filter((item) => {
-      if (seen.has(item.messageId)) return false;
-      seen.add(item.messageId);
-      return true;
-    });
-  }, [items]);
+  const seen = new Set<string>();
+  const dedupedItems = items.filter((item) => {
+    if (seen.has(item.messageId)) return false;
+    seen.add(item.messageId);
+    return true;
+  });
 
   const handleSelect = async (messageId: string) => {
     await onMessageSelected(messageId);
@@ -78,7 +111,10 @@ export const PinnedMessagesModal = ({
 
   const handleUnpin = async (messageId: string) => {
     await onMessageUnpinned(messageId);
-    setItems((prev) => prev.filter((item) => item.messageId !== messageId));
+    setState((prev) => ({
+      ...prev,
+      items: prev.items.filter((item) => item.messageId !== messageId),
+    }));
   };
 
   return (
