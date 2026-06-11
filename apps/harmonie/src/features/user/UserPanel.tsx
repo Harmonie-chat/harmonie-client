@@ -8,6 +8,7 @@ import { AudioInputPopover } from './audio/AudioInputPopover';
 import { useAudioInput } from './audio/AudioInputContext';
 import { AudioOutputPopover } from './audio/AudioOutputPopover';
 import { useAudioOutput } from './audio/AudioOutputContext';
+import { AppUpdateButton } from '@/shared/desktop/AppUpdateButton';
 
 export const UserPanel = () => {
   const { user } = useUser();
@@ -97,6 +98,8 @@ export const UserPanel = () => {
             onPrimaryClick={handleAudioMuteToggle}
             onSecondaryClick={handleAudioOutputPopoverToggle}
           />
+
+          <AppUpdateButton />
 
           <IconButton size="small" onClick={() => setSettingsOpen(true)}>
             <Settings size={16} />
