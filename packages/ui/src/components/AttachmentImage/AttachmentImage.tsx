@@ -6,6 +6,7 @@ export interface AttachmentImageProps {
   onOpen?: () => void;
   openLabel?: string;
   topRightAction?: ReactNode;
+  imageDataAttributes?: Record<`data-${string}`, string>;
 }
 
 export const AttachmentImage = ({
@@ -14,6 +15,7 @@ export const AttachmentImage = ({
   onOpen,
   openLabel = 'Open image',
   topRightAction,
+  imageDataAttributes,
 }: AttachmentImageProps) => {
   if (!src) {
     return (
@@ -29,7 +31,12 @@ export const AttachmentImage = ({
         className="w-full rounded-md overflow-hidden border border-border-2 hover:opacity-90 transition-opacity cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-primary block"
         aria-label={openLabel}
       >
-        <img src={src} alt={alt} className="w-full max-h-[60vh] object-contain block" />
+        <img
+          src={src}
+          alt={alt}
+          className="w-full max-h-[60vh] object-contain block"
+          {...imageDataAttributes}
+        />
       </button>
       {topRightAction && (
         <div className="absolute top-1 right-1 opacity-0 group-hover/img:opacity-100 transition-opacity">

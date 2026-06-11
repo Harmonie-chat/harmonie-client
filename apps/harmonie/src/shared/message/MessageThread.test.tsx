@@ -111,7 +111,8 @@ vi.mock('./MessageListItem/MessageListItem', () => ({
     onOpenMenu?: (
       event: React.MouseEvent<HTMLElement>,
       messageId: string,
-      horizontalAnchor?: 'left' | 'right'
+      horizontalAnchor?: 'left' | 'right',
+      imageAttachment?: { fileId: string; fileName: string }
     ) => void;
     onOpenMenuAt?: (
       messageId: string,
@@ -178,6 +179,22 @@ vi.mock('./MessageListItem/MessageListItem', () => ({
       <button onClick={(event) => onOpenMenu?.(event, message.messageId, 'right')} type="button">
         menu {message.messageId}
       </button>
+      {message.attachments
+        .filter((attachment) => attachment.contentType.startsWith('image/'))
+        .map((attachment) => (
+          <button
+            key={attachment.fileId}
+            onClick={(event) =>
+              onOpenMenu?.(event, message.messageId, 'right', {
+                fileId: attachment.fileId,
+                fileName: attachment.fileName,
+              })
+            }
+            type="button"
+          >
+            image menu {message.messageId}
+          </button>
+        ))}
       <button
         onClick={() => onOpenMenuAt?.(message.messageId, { x: 10, y: 20 }, 'left')}
         type="button"
@@ -262,6 +279,7 @@ vi.mock('./MessageListItem/MessageContextMenu', () => ({
       canReact: boolean;
       canReply: boolean;
       isPinned: boolean;
+      imageAttachment?: { fileId: string; fileName: string };
       messageId: string;
       position: { x: number; y: number };
     } | null;
@@ -300,6 +318,7 @@ vi.mock('./MessageListItem/MessageContextMenu', () => ({
             menu edit
           </button>
         )}
+        {menu.imageAttachment && <button type="button">menu download image</button>}
         <button onClick={() => onPinToggle(menu.messageId, !menu.isPinned)} type="button">
           menu pin
         </button>
@@ -403,6 +422,12 @@ const makeMessage = (
 const messages = [
   makeMessage('message-1', 'user-1', {
     attachments: [
+      {
+        contentType: 'image/png',
+        fileId: 'image-1',
+        fileName: 'image.png',
+        sizeBytes: 10,
+      },
       {
         contentType: 'text/plain',
         fileId: 'file-1',
@@ -658,9 +683,14 @@ describe('MessageThread', () => {
     await user.click(screen.getByRole('button', { name: 'menu message-1' }));
 
     expect(screen.getByLabelText('message menu')).toHaveTextContent('menu:message-1');
+    expect(screen.queryByRole('button', { name: 'menu download image' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'menu close' }));
     expect(screen.queryByLabelText('message menu')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'image menu message-1' }));
+    expect(screen.getByRole('button', { name: 'menu download image' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'menu close' }));
 
     await user.click(screen.getByRole('button', { name: 'menu message-1' }));
     await user.click(screen.getByRole('button', { name: 'menu reply' }));

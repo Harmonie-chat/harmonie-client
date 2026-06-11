@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { sortMessagesAsc } from '@/shared/utils/message';
 import { REALTIME_SERVER_EVENTS } from '@/features/realtime/constants';
 import type { Message, MessageList, MessagePreviewUpdatedEvent } from '@/types/channel';
@@ -184,6 +184,20 @@ export const useMessages = ({
 
   const finishMessagesLoad = () => setLoading(false);
 
+  const addMessage = useCallback(
+    (message: Message) => {
+      if (!entityId) return;
+      setLoadedEntityId(entityId);
+      setError(false);
+      setMessages((prev) => {
+        if (prev.some((item) => item.messageId === message.messageId)) return prev;
+        return sortMessagesAsc([...prev, message]);
+      });
+      markAsReadRef.current(message.messageId).catch(() => {});
+    },
+    [entityId]
+  );
+
   useEffect(() => {
     markAsReadRef.current = markAsRead;
     applyFetchedMessagesRef.current = applyFetchedMessages;
@@ -223,23 +237,19 @@ export const useMessages = ({
 
     const handleCreated = (event: WsMessageCreatedEvent) => {
       if (getEntityId(event as Record<string, string>) !== entityId) return;
-      setMessages((prev) => [
-        ...prev,
-        {
-          messageId: event.messageId,
-          authorUserId: event.authorUserId,
-          content: event.content,
-          mentionedUserIds: event.mentionedUserIds ?? [],
-          attachments: event.attachments ?? [],
-          reactions: [],
-          replyTo: event.replyTo ?? null,
-          linkPreviews: event.linkPreviews ?? null,
-          isPinned: event.isPinned ?? false,
-          createdAtUtc: event.createdAtUtc,
-          updatedAtUtc: null,
-        },
-      ]);
-      markAsReadRef.current(event.messageId).catch(() => {});
+      addMessage({
+        messageId: event.messageId,
+        authorUserId: event.authorUserId,
+        content: event.content,
+        mentionedUserIds: event.mentionedUserIds ?? [],
+        attachments: event.attachments ?? [],
+        reactions: [],
+        replyTo: event.replyTo ?? null,
+        linkPreviews: event.linkPreviews ?? null,
+        isPinned: event.isPinned ?? false,
+        createdAtUtc: event.createdAtUtc,
+        updatedAtUtc: null,
+      });
     };
 
     const { created } = wsRef.current;
@@ -248,7 +258,7 @@ export const useMessages = ({
     return () => {
       connection.off(created, handleCreated);
     };
-  }, [connection, entityId, ready]);
+  }, [addMessage, connection, entityId, ready]);
 
   useEffect(() => {
     if (!connection || !entityId || !ready) return;
@@ -594,6 +604,7 @@ export const useMessages = ({
     lastReadMessageId: visibleLastReadMessageId,
     latestOwnMessage,
     typingUserIds,
+    addMessage,
     loadMore,
     loadUntilMessage,
     startEditing,

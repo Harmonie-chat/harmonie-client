@@ -246,6 +246,7 @@ export const en = {
       reactionUsersError: 'Unable to load reactions. Please try again.',
       reactionUsersLoadMore: 'Load more',
       download: 'Download',
+      downloadImage: 'Download image',
       openLinkPreview: 'Open link preview {{title}}',
       linkPreviewImageAlt: 'Link preview image for {{title}}',
       openImage: 'View image',

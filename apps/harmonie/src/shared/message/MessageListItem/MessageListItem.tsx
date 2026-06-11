@@ -16,6 +16,11 @@ import { MessageInlineEditor } from './MessageInlineEditor';
 import { MessageLinkPreviews } from './MessageLinkPreviews';
 import { MessageReplyPreview } from './MessageReplyPreview';
 
+interface MessageMenuImageAttachment {
+  fileId: string;
+  fileName: string;
+}
+
 interface MessageListItemProps<TAuthor extends MessageAuthor = MessageAuthor> {
   message: Message;
   member?: TAuthor;
@@ -47,7 +52,8 @@ interface MessageListItemProps<TAuthor extends MessageAuthor = MessageAuthor> {
   onOpenMenu?: (
     event: React.MouseEvent<HTMLElement>,
     messageId: string,
-    horizontalAnchor?: 'left' | 'right'
+    horizontalAnchor?: 'left' | 'right',
+    imageAttachment?: MessageMenuImageAttachment
   ) => void;
   onOpenMenuAt?: (
     messageId: string,
@@ -107,7 +113,24 @@ export const MessageListItem = <TAuthor extends MessageAuthor = MessageAuthor>({
     if (!(onReply || onPinToggle || (isOwn && (onEdit || onDelete)))) return;
     event.preventDefault();
     if (Date.now() < ignoreContextMenuUntilRef.current) return;
-    onOpenMenu?.(event, message.messageId, 'right');
+    const eventTarget = event.target;
+    const attachmentElement =
+      eventTarget instanceof HTMLElement
+        ? eventTarget.closest<HTMLElement>('[data-message-attachment-file-id]')
+        : null;
+    const attachmentFileId = attachmentElement?.dataset.messageAttachmentFileId;
+    const imageAttachment = message.attachments.find(
+      (attachment) =>
+        attachment.fileId === attachmentFileId && attachment.contentType.startsWith('image/')
+    );
+    onOpenMenu?.(
+      event,
+      message.messageId,
+      'left',
+      imageAttachment
+        ? { fileId: imageAttachment.fileId, fileName: imageAttachment.fileName }
+        : undefined
+    );
   };
 
   const clearLongPress = () => {

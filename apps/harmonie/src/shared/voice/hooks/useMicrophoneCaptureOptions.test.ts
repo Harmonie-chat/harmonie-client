@@ -33,4 +33,26 @@ describe('useMicrophoneCaptureOptions', () => {
     expect(result.current.voiceIsolation).toBe(true);
     expect(result.current.deviceId).toEqual({ ideal: 'default' });
   });
+
+  it('keeps the same options object while inputs are unchanged', () => {
+    const { result, rerender } = renderHook(
+      ({ selectedInputDeviceId, noiseReductionLevel }) =>
+        useMicrophoneCaptureOptions(selectedInputDeviceId, noiseReductionLevel),
+      {
+        initialProps: {
+          selectedInputDeviceId: 'default',
+          noiseReductionLevel: 'standard' as const,
+        },
+      }
+    );
+
+    const initialOptions = result.current;
+
+    rerender({
+      selectedInputDeviceId: 'default',
+      noiseReductionLevel: 'standard',
+    });
+
+    expect(result.current).toBe(initialOptions);
+  });
 });

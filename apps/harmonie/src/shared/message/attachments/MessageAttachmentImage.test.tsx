@@ -27,15 +27,17 @@ vi.mock('@harmonie/ui', async () => {
       onOpen,
       openLabel,
       topRightAction,
+      imageDataAttributes,
     }: {
       src?: string;
       alt: string;
       onOpen: () => void;
       openLabel: string;
       topRightAction?: ReactNode;
+      imageDataAttributes?: Record<`data-${string}`, string>;
     }) => (
       <div>
-        <img alt={alt} src={src || undefined} />
+        <img alt={alt} src={src || undefined} {...imageDataAttributes} />
         <button type="button" onClick={onOpen}>
           {openLabel}
         </button>
@@ -68,6 +70,10 @@ describe('MessageAttachmentImage', () => {
     );
 
     expect(screen.getByRole('img', { name: 'image.png' })).toHaveAttribute('src', 'blob:image');
+    expect(screen.getByRole('img', { name: 'image.png' })).toHaveAttribute(
+      'data-message-attachment-file-id',
+      'file-1'
+    );
 
     await userEvent.click(
       screen.getByRole('button', { name: 'translated:channel.messages.openImage' })

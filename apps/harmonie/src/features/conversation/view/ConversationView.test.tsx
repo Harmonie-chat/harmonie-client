@@ -41,6 +41,7 @@ type MessageThreadProps = {
 };
 
 const mocks = vi.hoisted(() => ({
+  addMessage: vi.fn(),
   cancelEditing: vi.fn(),
   connection: {
     send: vi.fn(),
@@ -274,6 +275,7 @@ vi.mock('./ConversationCallStage', () => ({
 
 vi.mock('./useConversationMessages', () => ({
   useConversationMessages: () => ({
+    addMessage: mocks.addMessage,
     cancelEditing: mocks.cancelEditing,
     dismissNewMessagesSeparator: mocks.cancelEditing,
     editingMessageId: null,
@@ -360,6 +362,7 @@ const currentUser: UserProfile = {
 
 describe('ConversationView', () => {
   beforeEach(() => {
+    mocks.addMessage.mockReset();
     mocks.cancelEditing.mockReset();
     mocks.connection.send.mockResolvedValue(undefined);
     mocks.fetchPinnedMessages.mockResolvedValue([]);
@@ -433,6 +436,7 @@ describe('ConversationView', () => {
       'reply-1',
       ['user-2']
     );
+    await waitFor(() => expect(mocks.addMessage).toHaveBeenCalledWith({ messageId: 'message-1' }));
 
     await user.click(screen.getByRole('button', { name: 'load more' }));
     await user.click(screen.getByRole('button', { name: 'load until' }));

@@ -87,6 +87,7 @@ const contextMocks = vi.hoisted(() => ({
 }));
 
 const messageMocks = vi.hoisted(() => ({
+  addMessage: vi.fn(),
   cancelEditing: vi.fn(),
   dismissNewMessagesSeparator: vi.fn(),
   editingMessageId: null as string | null,
@@ -391,6 +392,7 @@ describe('TextChannelView', () => {
     contextMocks.guildsLoading = false;
     contextMocks.members = [member];
     contextMocks.user = user;
+    messageMocks.addMessage.mockReset();
     messageMocks.cancelEditing.mockReset();
     messageMocks.dismissNewMessagesSeparator.mockReset();
     messageMocks.editingMessageId = null;
@@ -496,7 +498,9 @@ describe('TextChannelView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'banned' }));
     expect(screen.queryByRole('dialog', { name: 'member popover' })).not.toBeInTheDocument();
 
-    await waitFor(() => expect(apiMocks.sendMessage).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(messageMocks.addMessage).toHaveBeenCalledWith({ messageId: 'message-new' })
+    );
   });
 
   it('does not fail typing notifications when the realtime connection is missing', () => {
