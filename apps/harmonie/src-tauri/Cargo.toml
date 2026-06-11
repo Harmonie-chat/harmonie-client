@@ -1,0 +1,20 @@
+[package]
+name = "harmonie"
+version = "0.0.1"
+description = "Harmonie desktop app"
+authors = ["Harmonie"]
+edition = "2021"
+
+[lib]
+name = "harmonie_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-process = "2"
+tauri-plugin-updater = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
