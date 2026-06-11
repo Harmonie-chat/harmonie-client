@@ -45,6 +45,12 @@ jobs:
       - name: 🔍 Lint
         run: pnpm lint
 
+      - name: 🧪 Test typecheck
+        run: pnpm test:typecheck
+
+      - name: 📊 Unit tests & coverage
+        run: pnpm test:coverage
+
       - name: 🏗️ Build
         run: pnpm build
 

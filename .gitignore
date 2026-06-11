@@ -43,6 +43,7 @@ test-results/
 .cache/
 .temp/
 tmp/
+.pnpm-store/
 
 # Turborepo
 .turbo/
