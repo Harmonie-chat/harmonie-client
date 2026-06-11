@@ -16,7 +16,9 @@ describe('files api', () => {
     apiFetchMock.mockResolvedValueOnce(new Response(blob));
     const { downloadFileBlob } = await import('./files');
 
-    await expect(downloadFileBlob('file / 1')).resolves.toBeInstanceOf(Blob);
+    await expect(
+      downloadFileBlob('file / 1').then((fileBlob) => fileBlob.size)
+    ).resolves.toBeGreaterThan(0);
     expect(apiFetchMock).toHaveBeenCalledWith(
       'https://harmonie-api.arastorn.ovh/api/files/file%20%2F%201'
     );
