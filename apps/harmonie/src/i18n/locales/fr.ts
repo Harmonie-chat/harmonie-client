@@ -15,6 +15,15 @@ export const fr = {
       dismiss: 'Masquer',
     },
   },
+  desktop: {
+    update: {
+      action: 'Mettre à jour Harmonie',
+      checking: 'Recherche de mise à jour…',
+      installing: 'Installation de la mise à jour…',
+      none: 'Harmonie est déjà à jour.',
+      error: 'Impossible de mettre à jour Harmonie. Réessaie plus tard.',
+    },
+  },
   dateTime: {
     dateAt: '{{date}} à {{time}}',
   },

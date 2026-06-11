@@ -14,6 +14,15 @@ export const en = {
       dismiss: 'Hide',
     },
   },
+  desktop: {
+    update: {
+      action: 'Update Harmonie',
+      checking: 'Checking for updates…',
+      installing: 'Installing update…',
+      none: 'Harmonie is already up to date.',
+      error: 'Unable to update Harmonie. Please try again later.',
+    },
+  },
   dateTime: {
     dateAt: '{{date}} at {{time}}',
   },
