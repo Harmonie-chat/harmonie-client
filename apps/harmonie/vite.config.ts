@@ -24,6 +24,10 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    env: {
+      VITE_API_BASE_URL: 'https://harmonie-api.arastorn.ovh/api',
+      VITE_WS_BASE_URL: 'https://harmonie-api.arastorn.ovh/hubs/realtime',
+    },
     setupFiles: ['./src/test/setup.ts'],
     coverage: {
       provider: 'v8',
