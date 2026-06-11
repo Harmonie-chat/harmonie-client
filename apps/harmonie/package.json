@@ -5,8 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 5173",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b tsconfig.app.json tsconfig.node.json && vite build",
     "lint": "eslint src",
+    "test": "vitest run --config vite.config.ts",
+    "test:typecheck": "tsc -p tsconfig.test.json --noEmit",
+    "test:watch": "vitest --config vite.config.ts",
+    "test:coverage": "vitest run --coverage --config vite.config.ts",
     "preview": "vite preview"
   },
   "dependencies": {
