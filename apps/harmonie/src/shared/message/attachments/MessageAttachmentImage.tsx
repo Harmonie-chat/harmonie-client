@@ -38,6 +38,10 @@ export const MessageAttachmentImage = ({
           createdAtUtc,
         })
       }
+      imageDataAttributes={{
+        'data-message-attachment-file-id': attachment.fileId,
+        'data-message-attachment-file-name': attachment.fileName,
+      }}
       openLabel={t('channel.messages.openImage')}
       topRightAction={
         isOwn && onDeleteRequest ? (

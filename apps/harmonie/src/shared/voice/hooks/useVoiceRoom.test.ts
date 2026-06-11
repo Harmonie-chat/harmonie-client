@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 interface FakeParticipant {
+  getTrackPublication: ReturnType<typeof vi.fn>;
   identity: string;
   isLocal?: boolean;
   isMicrophoneEnabled: boolean;
@@ -128,6 +129,7 @@ vi.mock('livekit-client', () => ({
     Reconnecting: 'Reconnecting',
     SignalReconnecting: 'SignalReconnecting',
     TrackMuted: 'TrackMuted',
+    TrackPublished: 'TrackPublished',
     TrackSubscribed: 'TrackSubscribed',
     TrackSubscriptionFailed: 'TrackSubscriptionFailed',
     TrackUnmuted: 'TrackUnmuted',
@@ -276,5 +278,41 @@ describe('useVoiceRoom', () => {
     expect(result.current.joinError).toBe('voice.joinErrorMic');
     expect(result.current.isJoining).toBe(false);
     expect(result.current.activeConversationId).toBeNull();
+  });
+
+  it('does not mark remote participants as muted before their microphone publication is known', async () => {
+    const { result } = renderVoiceRoom();
+    mocks.joinVoiceChannel.mockResolvedValueOnce({
+      token: 'token',
+      url: 'wss://voice.example.test',
+      roomName: 'channel:channel-1',
+    });
+
+    await act(async () => {
+      await result.current.joinChannel('channel-1', 'General', 'guild-1', 'Harmonie');
+    });
+
+    const room = mocks.rooms[0];
+    room.remoteParticipants.set('remote-user', {
+      getTrackPublication: vi.fn(() => null),
+      identity: 'remote-user',
+      isMicrophoneEnabled: false,
+    });
+
+    act(() => {
+      room.emit('Connected');
+    });
+
+    expect(result.current.mutedUserIds.has('remote-user')).toBe(false);
+
+    act(() => {
+      room.emit(
+        'TrackPublished',
+        { isMuted: true, source: 'microphone' },
+        { identity: 'remote-user' }
+      );
+    });
+
+    expect(result.current.mutedUserIds.has('remote-user')).toBe(true);
   });
 });

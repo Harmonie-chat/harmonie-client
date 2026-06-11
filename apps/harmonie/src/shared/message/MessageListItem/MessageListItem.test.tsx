@@ -12,6 +12,10 @@ import { MessageLinkPreviews } from './MessageLinkPreviews';
 import { MessageListItem } from './MessageListItem';
 import { MessageReplyPreview } from './MessageReplyPreview';
 
+const downloadState = vi.hoisted(() => ({
+  download: vi.fn(),
+}));
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: 'en' },
@@ -24,28 +28,40 @@ vi.mock('@/shared/hooks/useFileBlobUrl', () => ({
   useFileBlobUrl: (fileId?: string | null) => (fileId ? `blob:${fileId}` : null),
 }));
 
+vi.mock('@/shared/hooks/useFileDownload', () => ({
+  useFileDownload: () => downloadState,
+}));
+
 vi.mock('@/shared/message/attachments/MessageAttachments', () => ({
   MessageAttachments: ({
     attachments,
     onDelete,
     onDeleteDirect,
   }: {
-    attachments: Array<{ fileId: string; fileName: string }>;
+    attachments: Array<{ contentType?: string; fileId: string; fileName: string }>;
     onDelete?: (fileId: string) => void;
     onDeleteDirect?: () => void;
   }) => (
     <div aria-label="attachments">
       {attachments.map((attachment) => (
-        <button
-          key={attachment.fileId}
-          onClick={() => {
-            onDelete?.(attachment.fileId);
-            onDeleteDirect?.();
-          }}
-          type="button"
-        >
-          {attachment.fileName}
-        </button>
+        <div key={attachment.fileId}>
+          {attachment.contentType?.startsWith('image/') && (
+            <img
+              alt={attachment.fileName}
+              data-message-attachment-file-id={attachment.fileId}
+              src={`blob:${attachment.fileId}`}
+            />
+          )}
+          <button
+            onClick={() => {
+              onDelete?.(attachment.fileId);
+              onDeleteDirect?.();
+            }}
+            type="button"
+          >
+            {attachment.fileName}
+          </button>
+        </div>
       ))}
     </div>
   ),
@@ -291,6 +307,7 @@ const baseMessage: Message = {
 describe('MessageListItem', () => {
   beforeEach(() => {
     installBrowserMocks();
+    downloadState.download.mockClear();
   });
 
   afterEach(() => {
@@ -376,7 +393,38 @@ describe('MessageListItem', () => {
     expect(onEdit).toHaveBeenCalledWith('message-1');
     expect(onReact).toHaveBeenCalledWith('message-1', '👍');
     expect(onReact).toHaveBeenCalledWith('message-1', '😀');
-    expect(onOpenMenu).toHaveBeenCalledWith(expect.any(Object), 'message-1', 'right');
+    expect(onOpenMenu).toHaveBeenCalledWith(expect.any(Object), 'message-1', 'left', undefined);
+  });
+
+  it('passes the targeted image attachment to the context menu', () => {
+    const onOpenMenu = vi.fn();
+
+    render(
+      <MessageListItem
+        member={member}
+        message={{
+          ...baseMessage,
+          attachments: [
+            {
+              contentType: 'image/png',
+              fileId: 'image-1',
+              fileName: 'image.png',
+              sizeBytes: 42,
+            },
+          ],
+        }}
+        onOpenMenu={onOpenMenu}
+        onReply={vi.fn()}
+        rowState={{ isOwn: false }}
+      />
+    );
+
+    fireEvent.contextMenu(screen.getByRole('img', { name: 'image.png' }));
+
+    expect(onOpenMenu).toHaveBeenCalledWith(expect.any(Object), 'message-1', 'left', {
+      fileId: 'image-1',
+      fileName: 'image.png',
+    });
   });
 
   it('saves and cancels inline edits with filtered mentions and mapped API errors', async () => {
@@ -583,6 +631,7 @@ describe('MessageListItem subcomponents', () => {
       isPinned: false,
       messageId: 'message-1',
       position: { x: 12, y: 34 },
+      imageAttachment: { fileId: 'image-1', fileName: 'image.png' },
     };
     const { container, rerender } = render(
       <MessageContextMenu
@@ -615,12 +664,14 @@ describe('MessageListItem subcomponents', () => {
     await user.click(screen.getByRole('button', { name: '👍' }));
     await user.click(screen.getByRole('button', { name: 'channel.messages.reply' }));
     await user.click(screen.getAllByRole('button', { name: 'channel.messages.react' })[1]);
+    await user.click(screen.getByRole('button', { name: 'channel.messages.downloadImage' }));
     await user.click(screen.getByRole('button', { name: 'channel.messages.edit' }));
     await user.click(screen.getByRole('button', { name: 'channel.messages.pin' }));
     await user.click(screen.getByRole('button', { name: 'channel.messages.delete' }));
 
     expect(onReact).toHaveBeenCalledWith('message-1', '👍');
     expect(onReact).toHaveBeenCalledWith('message-1', { x: 12, y: 34 });
+    expect(downloadState.download).toHaveBeenCalledWith('image-1', 'image.png');
     expect(onReply).toHaveBeenCalledWith('message-1');
     expect(onEdit).toHaveBeenCalledWith('message-1');
     expect(onPinToggle).toHaveBeenCalledWith('message-1', true);

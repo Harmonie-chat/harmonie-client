@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Avatar, Button, Modal } from '@harmonie/ui';
+import { Avatar, Button, EmojiInput, Modal } from '@harmonie/ui';
 import { Check } from 'lucide-react';
 import { createGroupConversation, openDirectConversation, searchUsers } from '@/api/conversations';
 import type { Conversation, SearchUser } from '@/types/conversation';
@@ -264,12 +264,16 @@ export const NewConversationModal = ({ onClose }: NewConversationModalProps) => 
       {/* Group name section (2+ users selected) */}
       {isGroup && (
         <div className="border-t border-border-2 pt-2 -mt-2">
-          <input
+          <EmojiInput
             value={groupName}
             aria-label={t('conversation.groupName')}
-            onChange={(e) => dispatch({ type: 'patch', patch: { groupName: e.target.value } })}
+            onChange={(nextGroupName) =>
+              dispatch({ type: 'patch', patch: { groupName: nextGroupName } })
+            }
             placeholder={groupPlaceholder}
-            className="w-full border-b border-border-2 pb-1 bg-transparent outline-none text-sm text-text-1 placeholder:text-text-3 focus:border-primary transition-colors"
+            emojiButtonLabel={t('message.input.openEmoji')}
+            pickerPlacement="top"
+            maxLength={100}
           />
         </div>
       )}

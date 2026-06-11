@@ -154,6 +154,7 @@ export const ConversationView = () => {
     setMessagePinned,
     toggleReaction,
     typingUserIds,
+    addMessage,
   } = useConversationMessages({
     conversationId,
     connection,
@@ -354,14 +355,16 @@ export const ConversationView = () => {
               reactionSource={{ type: 'conversation', entityId: conversationId }}
               composer={{
                 draftKey: `conversation:${conversationId}`,
-                sendFn: (content, fileIds, replyToMessageId, mentionedUserIds) =>
-                  sendConversationMessage(
+                sendFn: async (content, fileIds, replyToMessageId, mentionedUserIds) => {
+                  const message = await sendConversationMessage(
                     conversationId,
                     content,
                     fileIds,
                     replyToMessageId,
                     mentionedUserIds
-                  ),
+                  );
+                  addMessage(message);
+                },
                 onTypingStart: () =>
                   connection
                     ?.send(REALTIME_CLIENT_METHODS.startTypingConversation, conversationId)

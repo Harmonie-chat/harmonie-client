@@ -390,10 +390,28 @@ const useMessageThreadContent = <TAuthor extends MessageAuthor = MessageAuthor>(
   const handleOpenMessageMenu = (
     event: React.MouseEvent<HTMLElement>,
     messageId: string,
-    horizontalAnchor: 'left' | 'right' = 'left'
+    horizontalAnchor: 'left' | 'right' = 'left',
+    imageAttachment?: MessageMenuState['imageAttachment']
   ) => {
     event.preventDefault();
-    openMessageMenuAt(messageId, { x: event.clientX, y: event.clientY }, horizontalAnchor);
+    const message = messages.find((item) => item.messageId === messageId);
+    const isOwnMessage = message?.authorUserId === currentUser?.userId;
+    dispatchUi({
+      type: 'patch',
+      patch: {
+        messageMenu: {
+          messageId,
+          position: { x: event.clientX, y: event.clientY },
+          horizontalAnchor,
+          imageAttachment,
+          isPinned: message?.isPinned ?? false,
+          canReply: Boolean(message),
+          canReact: Boolean(message),
+          canEdit: isOwnMessage,
+          canDelete: isOwnMessage,
+        },
+      },
+    });
   };
 
   const handleStartEditing = (messageId: string) => {

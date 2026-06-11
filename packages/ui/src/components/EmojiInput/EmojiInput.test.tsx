@@ -46,4 +46,24 @@ describe('EmojiInput', () => {
     fireEvent.mouseDown(document.body);
     expect(screen.queryByRole('button', { name: 'Pick sparkle' })).not.toBeInTheDocument();
   });
+
+  it('renders the picker in the closest dialog portal', () => {
+    render(
+      <dialog open>
+        <EmojiInput
+          value=""
+          onChange={vi.fn()}
+          aria-label="Channel name"
+          emojiButtonLabel="Emoji"
+          pickerPlacement="top"
+        />
+      </dialog>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Emoji' }));
+
+    const picker = screen.getByRole('button', { name: 'Pick sparkle' }).parentElement;
+    expect(picker).toHaveClass('fixed');
+    expect(picker?.parentElement?.tagName).toBe('DIALOG');
+  });
 });

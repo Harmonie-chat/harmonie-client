@@ -29,4 +29,19 @@ describe('AttachmentImage', () => {
     expect(onOpen).toHaveBeenCalledOnce();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
   });
+
+  it('passes image data attributes to the rendered image', () => {
+    render(
+      <AttachmentImage
+        src="blob:image"
+        alt="Preview"
+        imageDataAttributes={{ 'data-message-attachment-file-id': 'file-1' }}
+      />
+    );
+
+    expect(screen.getByRole('img', { name: 'Preview' })).toHaveAttribute(
+      'data-message-attachment-file-id',
+      'file-1'
+    );
+  });
 });
