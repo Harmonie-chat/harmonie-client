@@ -41,6 +41,31 @@ vi.mock('@harmonie/ui', () => ({
       {children}
     </button>
   ),
+  EmojiInput: ({
+    ariaLabel,
+    maxLength,
+    onChange,
+    placeholder,
+    value,
+    ...props
+  }: {
+    'aria-label'?: string;
+    ariaLabel?: string;
+    emojiButtonLabel?: string;
+    maxLength?: number;
+    onChange: (value: string) => void;
+    pickerPlacement?: string;
+    placeholder: string;
+    value: string;
+  }) => (
+    <input
+      aria-label={ariaLabel ?? props['aria-label']}
+      maxLength={maxLength}
+      onChange={(event) => onChange(event.target.value)}
+      placeholder={placeholder}
+      value={value}
+    />
+  ),
   Modal: ({
     children,
     onClose,

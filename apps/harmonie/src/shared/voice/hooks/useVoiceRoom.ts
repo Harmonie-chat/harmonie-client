@@ -142,16 +142,26 @@ export const useVoiceRoom = ({
     });
   };
 
+  const getMicrophoneMutedState = (participant: Participant) => {
+    const microphonePublication = participant.getTrackPublication(Track.Source.Microphone);
+    return microphonePublication ? microphonePublication.isMuted : null;
+  };
+
   const syncMutedParticipantsFromRoom = (room: Room) => {
     const nextMutedUserIds = new Set<string>();
-    if (!room.localParticipant.isMicrophoneEnabled) {
+
+    const localMicrophoneMuted = getMicrophoneMutedState(room.localParticipant);
+    if (localMicrophoneMuted === true) {
       nextMutedUserIds.add(room.localParticipant.identity);
     }
+
     room.remoteParticipants.forEach((participant) => {
-      if (!participant.isMicrophoneEnabled) {
+      const remoteMicrophoneMuted = getMicrophoneMutedState(participant);
+      if (remoteMicrophoneMuted === true) {
         nextMutedUserIds.add(participant.identity);
       }
     });
+
     setMutedUserIds(nextMutedUserIds);
   };
 
@@ -299,6 +309,12 @@ export const useVoiceRoom = ({
           trackSid,
           error,
         });
+      });
+
+      room.on(RoomEvent.TrackPublished, (publication, participant) => {
+        if (publication.source === Track.Source.Microphone) {
+          setParticipantMuted(participant.identity, publication.isMuted);
+        }
       });
 
       room.on(RoomEvent.TrackUnpublished, (publication) => {

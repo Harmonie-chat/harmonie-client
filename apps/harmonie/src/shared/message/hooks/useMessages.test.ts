@@ -198,6 +198,21 @@ describe('useMessages', () => {
     ]);
 
     act(() => {
+      handlers.get('MessageCreated')?.({
+        channelId: 'channel-1',
+        messageId: 'message-2',
+        authorUserId: 'user-1',
+        content: 'New',
+        attachments: [],
+        createdAtUtc: '2024-01-02T00:00:00.000Z',
+      });
+    });
+    expect(result.current.messages.map((item) => item.messageId)).toEqual([
+      'message-1',
+      'message-2',
+    ]);
+
+    act(() => {
       handlers.get('MessageUpdated')?.({
         channelId: 'channel-1',
         messageId: 'message-1',
@@ -253,6 +268,42 @@ describe('useMessages', () => {
 
     expect(result.current.messages.map((item) => item.messageId)).toEqual(['message-2']);
     expect(result.current.editingMessageId).toBeNull();
+  });
+
+  it('adds a sent message from the API response and deduplicates the realtime echo', async () => {
+    const api = createApi();
+    const { connection, handlers } = createConnection();
+    vi.mocked(api.fetchMessages).mockResolvedValueOnce(messageList({ items: [message()] }));
+    const { result } = renderUseMessages({ api, connection });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      result.current.addMessage(
+        message({
+          messageId: 'message-2',
+          authorUserId: 'user-1',
+          content: 'Sent',
+          createdAtUtc: '2024-01-02T00:00:00.000Z',
+        })
+      );
+    });
+
+    act(() => {
+      handlers.get('MessageCreated')?.({
+        channelId: 'channel-1',
+        messageId: 'message-2',
+        authorUserId: 'user-1',
+        content: 'Sent',
+        attachments: [],
+        createdAtUtc: '2024-01-02T00:00:00.000Z',
+      });
+    });
+
+    expect(result.current.messages.map((item) => item.messageId)).toEqual([
+      'message-1',
+      'message-2',
+    ]);
+    expect(api.ackMessage).toHaveBeenCalledWith('channel-1', 'message-2');
   });
 
   it('performs edit, delete, attachment, pin, and reaction actions optimistically', async () => {

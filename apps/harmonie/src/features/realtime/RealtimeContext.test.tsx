@@ -4,6 +4,7 @@ import { RealtimeProvider, useRealtime } from './RealtimeContext';
 import { REALTIME_SERVER_EVENTS } from './constants';
 
 type Handler = () => void;
+type TokenChangeListener = (accessToken: string | null) => void;
 
 const mocks = vi.hoisted(() => {
   const hub = {
@@ -31,6 +32,8 @@ const mocks = vi.hoisted(() => {
     hub,
     handlers: new Map<string, Handler>(),
     isAuthenticated: false,
+    subscribeToTokenChanges: vi.fn(),
+    tokenListeners: new Set<TokenChangeListener>(),
   };
 });
 
@@ -46,6 +49,7 @@ vi.mock('@microsoft/signalr', () => ({
 
 vi.mock('@/api/authStorage', () => ({
   getAccessToken: mocks.getAccessToken,
+  subscribeToTokenChanges: mocks.subscribeToTokenChanges,
 }));
 
 vi.mock('@/features/auth/AuthContext', () => ({
@@ -67,12 +71,14 @@ describe('RealtimeProvider', () => {
   beforeEach(() => {
     mocks.isAuthenticated = false;
     mocks.getAccessToken.mockReset();
+    mocks.subscribeToTokenChanges.mockReset();
     mocks.hub.on.mockReset();
     mocks.hub.off.mockReset();
     mocks.hub.start.mockReset();
     mocks.hub.stop.mockReset();
     mocks.hub.state = 'Connected';
     mocks.handlers.clear();
+    mocks.tokenListeners.clear();
     mocks.builder.withUrl.mockClear();
     mocks.builder.withAutomaticReconnect.mockClear();
     mocks.builder.configureLogging.mockClear();
@@ -87,6 +93,12 @@ describe('RealtimeProvider', () => {
     mocks.builder.withAutomaticReconnect.mockReturnValue(mocks.builder);
     mocks.builder.configureLogging.mockReturnValue(mocks.builder);
     mocks.builder.build.mockReturnValue(mocks.hub);
+    mocks.subscribeToTokenChanges.mockImplementation((listener: TokenChangeListener) => {
+      mocks.tokenListeners.add(listener);
+      return () => {
+        mocks.tokenListeners.delete(listener);
+      };
+    });
   });
 
   it('keeps the default disconnected state while unauthenticated', () => {
@@ -144,6 +156,30 @@ describe('RealtimeProvider', () => {
 
     expect(mocks.hub.off).toHaveBeenCalledWith(REALTIME_SERVER_EVENTS.ready, expect.any(Function));
     expect(mocks.hub.stop).toHaveBeenCalledTimes(1);
+  });
+
+  it('restarts the hub when the stored access token changes', async () => {
+    mocks.isAuthenticated = true;
+    mocks.getAccessToken.mockReturnValue('old-access-token');
+    mocks.hub.start.mockResolvedValue(undefined);
+
+    render(
+      <RealtimeProvider>
+        <RealtimeConsumer />
+      </RealtimeProvider>
+    );
+
+    await waitFor(() => expect(mocks.hub.start).toHaveBeenCalledTimes(1));
+    expect(mocks.builder.withUrl.mock.calls[0][1].accessTokenFactory()).toBe('old-access-token');
+
+    act(() => {
+      mocks.getAccessToken.mockReturnValue('new-access-token');
+      mocks.tokenListeners.forEach((listener) => listener('new-access-token'));
+    });
+
+    await waitFor(() => expect(mocks.hub.stop).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mocks.hub.start).toHaveBeenCalledTimes(2));
+    expect(mocks.builder.withUrl.mock.calls[1][1].accessTokenFactory()).toBe('new-access-token');
   });
 
   it('does not stop a hub that is already disconnected', async () => {

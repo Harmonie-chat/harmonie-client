@@ -1,8 +1,19 @@
 import { useState } from 'react';
 import type { EmojiClickData } from 'emoji-picker-react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Pencil, Pin, PinOff, Plus, Reply, SmilePlus, Trash2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Download,
+  Pencil,
+  Pin,
+  PinOff,
+  Plus,
+  Reply,
+  SmilePlus,
+  Trash2,
+} from 'lucide-react';
 import { ContextMenu, EmojiPickerBase } from '@harmonie/ui';
+import { useFileDownload } from '@/shared/hooks/useFileDownload';
 
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
@@ -10,6 +21,10 @@ export interface MessageMenuState {
   messageId: string;
   position: { x: number; y: number };
   horizontalAnchor?: 'left' | 'right';
+  imageAttachment?: {
+    fileId: string;
+    fileName: string;
+  };
   isPinned: boolean;
   canReply: boolean;
   canReact: boolean;
@@ -37,10 +52,13 @@ export const MessageContextMenu = ({
   onPinToggle,
 }: MessageContextMenuProps) => {
   const { t } = useTranslation();
+  const { download } = useFileDownload();
   const [emojiPickerMessageId, setEmojiPickerMessageId] = useState<string | null>(null);
   const showEmojiPicker = menu !== null && emojiPickerMessageId === menu.messageId;
 
   if (!menu) return null;
+
+  const imageAttachment = menu.imageAttachment;
 
   const handleEmojiClick = (data: EmojiClickData) => {
     onReact(menu.messageId, data.emoji);
@@ -132,6 +150,15 @@ export const MessageContextMenu = ({
                 icon: <SmilePlus size={14} />,
                 hideOnTouch: true,
                 onClick: () => onReact(menu.messageId, menu.position),
+              },
+            ]
+          : []),
+        ...(imageAttachment
+          ? [
+              {
+                label: t('channel.messages.downloadImage'),
+                icon: <Download size={14} />,
+                onClick: () => void download(imageAttachment.fileId, imageAttachment.fileName),
               },
             ]
           : []),

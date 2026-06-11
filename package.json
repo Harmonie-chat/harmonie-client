@@ -12,7 +12,8 @@
     "storybook": "turbo run storybook",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "doctor": "npx react-doctor@latest"
+    "doctor": "npx react-doctor@latest",
+    "prepare": "git config core.hooksPath .githooks"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",

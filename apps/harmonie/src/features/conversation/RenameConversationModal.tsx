@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Input, Modal } from '@harmonie/ui';
+import { Button, EmojiInput, Modal } from '@harmonie/ui';
 import type { Conversation } from '@/types/conversation';
 
 interface RenameConversationModalProps {
@@ -26,26 +26,26 @@ export const RenameConversationModal = ({
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const formData = new FormData(event.currentTarget);
-    const rawName = formData.get('conversationName');
-    const trimmedName = typeof rawName === 'string' ? rawName.trim() : '';
+    const trimmedName = name.trim();
     onSave(trimmedName === '' ? null : trimmedName);
   };
 
   return (
     <Modal title={t('conversation.renameTitle')} onClose={onClose}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <Input
+        <EmojiInput
           key={conversation.conversationId}
           name="conversationName"
           label={t('conversation.nameLabel')}
           value={name}
-          onChange={(event) => {
-            setName(event.target.value);
+          onChange={(nextName) => {
+            setName(nextName);
             onChange();
           }}
           error={error ? t('conversation.renameError') : undefined}
           placeholder={t('conversation.namePlaceholder')}
+          emojiButtonLabel={t('message.input.openEmoji')}
+          pickerPlacement="top"
           autoFocus
           maxLength={100}
         />

@@ -70,6 +70,7 @@ export const TextChannelView = () => {
     removeAttachment,
     setMessagePinned,
     toggleReaction,
+    addMessage,
   } = useChannelMessages({
     channelId,
     channelReady,
@@ -212,8 +213,16 @@ export const TextChannelView = () => {
         reactionSource={{ type: 'channel', entityId: channelId }}
         composer={{
           draftKey: `channel:${channelId}`,
-          sendFn: (content, fileIds, replyToMessageId, mentionedUserIds) =>
-            sendMessage(channelId, content, fileIds, replyToMessageId, mentionedUserIds),
+          sendFn: async (content, fileIds, replyToMessageId, mentionedUserIds) => {
+            const message = await sendMessage(
+              channelId,
+              content,
+              fileIds,
+              replyToMessageId,
+              mentionedUserIds
+            );
+            addMessage(message);
+          },
           onTypingStart: () =>
             connection?.send(REALTIME_CLIENT_METHODS.startTypingChannel, channelId).catch(() => {}),
           mentionOptions,

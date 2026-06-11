@@ -5,7 +5,7 @@ import {
   LogLevel,
   type HubConnection,
 } from '@microsoft/signalr';
-import { getAccessToken } from '@/api/authStorage';
+import { getAccessToken, subscribeToTokenChanges } from '@/api/authStorage';
 import { useAuth } from '@/features/auth/AuthContext';
 import { REALTIME_SERVER_EVENTS } from './constants';
 
@@ -26,7 +26,8 @@ const RealtimeContext = createContext<RealtimeContextValue>({ connection: null, 
 
 export const RealtimeProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated } = useAuth();
-  const authKey = isAuthenticated ? getAccessToken() : null;
+  const [accessToken, setAccessToken] = useState(() => getAccessToken());
+  const authKey = isAuthenticated ? accessToken : null;
   const [state, setState] = useState<RealtimeState>({
     authKey: null,
     connection: null,
@@ -34,6 +35,8 @@ export const RealtimeProvider = ({ children }: { children: ReactNode }) => {
   });
   const connection = authKey !== null && state.authKey === authKey ? state.connection : null;
   const isReady = authKey !== null && state.authKey === authKey ? state.isReady : false;
+
+  useEffect(() => subscribeToTokenChanges(setAccessToken), []);
 
   useEffect(() => {
     if (authKey === null) return;
