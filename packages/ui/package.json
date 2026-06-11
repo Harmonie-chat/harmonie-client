@@ -17,6 +17,10 @@
   "scripts": {
     "build": "vite build",
     "lint": "eslint src",
+    "test": "vitest run --config vite.config.ts",
+    "test:typecheck": "tsc -p tsconfig.test.json --noEmit",
+    "test:watch": "vitest --config vite.config.ts",
+    "test:coverage": "vitest run --coverage --config vite.config.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
