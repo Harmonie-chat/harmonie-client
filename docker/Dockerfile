@@ -6,7 +6,7 @@ WORKDIR /app
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/harmonie/package.json ./apps/harmonie/
 COPY packages/ui/package.json ./packages/ui/
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Build
 COPY . .

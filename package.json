@@ -17,7 +17,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "doctor": "npx react-doctor@latest",
-    "prepare": "git config core.hooksPath .githooks"
+    "prepare": "node scripts/setup-git-hooks.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
