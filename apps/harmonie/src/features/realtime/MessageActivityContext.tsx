@@ -7,10 +7,7 @@ import { useRealtime } from '@/features/realtime/RealtimeContext';
 import { useUser } from '@/features/user/UserContext';
 import type { MessageCreatedEvent } from '@/types/channel';
 import type { ConversationMessageCreatedEvent } from '@/types/conversation';
-import {
-  requestBrowserNotificationPermission,
-  showBrowserNotification,
-} from '@/shared/notifications/browserNotification';
+import { showBrowserNotification } from '@/shared/notifications/browserNotification';
 import { REALTIME_SERVER_EVENTS } from './constants';
 
 interface MessageActivityContextValue {
@@ -227,20 +224,6 @@ export const MessageActivityProvider = ({ children }: { children: ReactNode }) =
       channelIds: channels.map((channel) => channel.channelId),
     });
   }, [channels, currentRouteGuildId]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const handleUserInteraction = () => requestBrowserNotificationPermission();
-
-    window.addEventListener('pointerdown', handleUserInteraction, { passive: true });
-    window.addEventListener('keydown', handleUserInteraction);
-
-    return () => {
-      window.removeEventListener('pointerdown', handleUserInteraction);
-      window.removeEventListener('keydown', handleUserInteraction);
-    };
-  }, []);
 
   // Clear current-route unread when the tab regains focus
   useEffect(() => {

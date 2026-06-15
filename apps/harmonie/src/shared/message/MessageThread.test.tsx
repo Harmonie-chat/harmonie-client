@@ -665,6 +665,7 @@ describe('MessageThread', () => {
       scrollTop: 20,
     });
 
+    fireEvent.wheel(scrollElement);
     fireEvent.scroll(scrollElement);
 
     await waitFor(() => expect(props.loadMore).toHaveBeenCalledTimes(1));
@@ -740,6 +741,7 @@ describe('MessageThread', () => {
       scrollTop: 120,
     });
 
+    fireEvent.wheel(scrollElement);
     fireEvent.scroll(scrollElement);
 
     expect(props.loadMore).not.toHaveBeenCalled();

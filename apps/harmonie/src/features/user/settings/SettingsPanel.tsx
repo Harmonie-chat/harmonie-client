@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, Globe, LogOut, Palette, UserRound } from 'lucide-react';
+import { Bell, FileText, Globe, LogOut, Palette, UserRound } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { ModalPanel, NavList, NavListItem, Separator } from '@harmonie/ui';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useUser } from '@/features/user/UserContext';
 import { AvatarSection } from './AvatarSection';
 import { LanguageSection } from './LanguageSection';
+import { NotificationsSection } from './NotificationsSection';
 import { ProfileSection } from './ProfileSection';
 import { ThemeSection } from './ThemeSection';
 
-type Section = 'profile' | 'language' | 'avatar' | 'theme';
+type Section = 'profile' | 'language' | 'avatar' | 'theme' | 'notifications';
 
 interface SettingsPanelProps {
   onClose: () => void;
@@ -21,6 +22,7 @@ const NAV_ITEMS: { id: Section; icon: LucideIcon }[] = [
   { id: 'language', icon: Globe },
   { id: 'avatar', icon: UserRound },
   { id: 'theme', icon: Palette },
+  { id: 'notifications', icon: Bell },
 ];
 
 export const SettingsPanel = ({ onClose }: SettingsPanelProps) => {
@@ -66,6 +68,7 @@ export const SettingsPanel = ({ onClose }: SettingsPanelProps) => {
       {section === 'language' && <LanguageSection updateUser={updateUser} />}
       {section === 'avatar' && <AvatarSection user={user} updateUser={updateUser} />}
       {section === 'theme' && <ThemeSection />}
+      {section === 'notifications' && <NotificationsSection />}
     </ModalPanel>
   );
 };

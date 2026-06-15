@@ -151,6 +151,12 @@ describe('MessageReactions', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it('renders nothing when reactions are missing from a partial message payload', () => {
+    const { container } = render(<MessageReactions messageId="message-1" onToggle={vi.fn()} />);
+
+    expect(container).toBeEmptyDOMElement();
+  });
+
   it('toggles reactions, shows tooltip, opens channel users, loads more, and closes', async () => {
     const onToggle = vi.fn();
 

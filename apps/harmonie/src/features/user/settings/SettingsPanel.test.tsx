@@ -79,6 +79,10 @@ vi.mock('./ThemeSection', () => ({
   ThemeSection: () => <div>theme section</div>,
 }));
 
+vi.mock('./NotificationsSection', () => ({
+  NotificationsSection: () => <div>notifications section</div>,
+}));
+
 describe('SettingsPanel', () => {
   it('switches sections, closes, and logs out', () => {
     const onClose = vi.fn();
@@ -103,6 +107,9 @@ describe('SettingsPanel', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'settings.nav.theme' }));
     expect(screen.getByText('theme section')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'settings.nav.notifications' }));
+    expect(screen.getByText('notifications section')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'user.logout' }));
     fireEvent.click(screen.getByRole('button', { name: 'close settings' }));

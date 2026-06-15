@@ -14,7 +14,7 @@ import { MessageReactionUsersModal } from './MessageReactionUsersModal';
 
 interface MessageReactionsProps {
   messageId: string;
-  reactions: MessageReaction[];
+  reactions?: MessageReaction[];
   onToggle: (emoji: string) => void;
   reactionSource?: {
     type: 'channel' | 'conversation';
@@ -62,9 +62,10 @@ export const MessageReactions = ({
     (reactionUsersState.emoji !== selectedEmoji || loadingMoreReactionUsers);
   const reactionUsersError =
     reactionUsersState.emoji === selectedEmoji ? reactionUsersState.error : false;
+  const visibleReactions = reactions ?? [];
 
   const selectedReaction = selectedEmoji
-    ? reactions.find((reaction) => reaction.emoji === selectedEmoji)
+    ? visibleReactions.find((reaction) => reaction.emoji === selectedEmoji)
     : null;
 
   const hoveredUsers = hoveredReaction
@@ -181,12 +182,12 @@ export const MessageReactions = ({
     []
   );
 
-  if (reactions.length === 0) return null;
+  if (visibleReactions.length === 0) return null;
 
   return (
     <>
       <div className="flex flex-wrap gap-1 mt-1">
-        {reactions.map((reaction) => {
+        {visibleReactions.map((reaction) => {
           const reactionTooltipId = `${tooltipId}-${reaction.emoji}`;
 
           return (
@@ -234,7 +235,7 @@ export const MessageReactions = ({
 
       {selectedReaction && reactionSource && (
         <MessageReactionUsersModal
-          reactions={reactions}
+          reactions={visibleReactions}
           selectedReaction={selectedReaction}
           users={reactionUsers}
           reactionUserMap={reactionUserMap}

@@ -121,6 +121,31 @@ describe('useMessages', () => {
     expect(result.current.lastReadMessageId).toBeNull();
   });
 
+  it('normalizes messages with missing optional collections from API responses', async () => {
+    const api = createApi();
+    vi.mocked(api.fetchMessages).mockResolvedValueOnce(
+      messageList({
+        items: [
+          message({
+            attachments: undefined as never,
+            mentionedUserIds: undefined,
+            reactions: undefined as never,
+          }),
+        ],
+      })
+    );
+
+    const { result } = renderUseMessages({ api });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.messages[0]).toMatchObject({
+      attachments: [],
+      mentionedUserIds: [],
+      reactions: [],
+    });
+  });
+
   it('loads more messages and deduplicates existing ids', async () => {
     const api = createApi();
     vi.mocked(api.fetchMessages)
@@ -304,6 +329,29 @@ describe('useMessages', () => {
       'message-2',
     ]);
     expect(api.ackMessage).toHaveBeenCalledWith('channel-1', 'message-2');
+  });
+
+  it('normalizes sent messages from partial API responses', async () => {
+    const api = createApi();
+    vi.mocked(api.fetchMessages).mockResolvedValueOnce(messageList({ items: [] }));
+    const { result } = renderUseMessages({ api });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      result.current.addMessage(
+        message({
+          messageId: 'message-2',
+          attachments: undefined as never,
+          reactions: undefined as never,
+        })
+      );
+    });
+
+    expect(result.current.messages[0]).toMatchObject({
+      messageId: 'message-2',
+      attachments: [],
+      reactions: [],
+    });
   });
 
   it('performs edit, delete, attachment, pin, and reaction actions optimistically', async () => {

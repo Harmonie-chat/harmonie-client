@@ -29,13 +29,6 @@ const buildNotificationTitle = (payload: BrowserNotificationPayload): string => 
   });
 };
 
-export const requestBrowserNotificationPermission = () => {
-  if (typeof window === 'undefined' || !('Notification' in window)) return;
-  if (Notification.permission !== 'default') return;
-
-  void Notification.requestPermission().catch(() => {});
-};
-
 export const showBrowserNotification = (payload: BrowserNotificationPayload) => {
   if (typeof window === 'undefined' || !('Notification' in window)) return;
   if (Notification.permission !== 'granted') return;
