@@ -89,14 +89,11 @@ describe('guilds api', () => {
     await updateMemberRole('guild-1', 'user-1', { role: 'admin' } as never);
     await transferOwnership('guild-1', 'user-2');
 
-    expect(apiFetchMock).toHaveBeenCalledWith(
-      'https://localhost:5000/api/guilds/guild-1/members'
-    );
+    expect(apiFetchMock).toHaveBeenCalledWith('https://localhost:5000/api/guilds/guild-1/members');
     expect(apiFetchMock).toHaveBeenCalledWith('https://localhost:5000/api/invites/abc');
-    expect(apiFetchMock).toHaveBeenCalledWith(
-      'https://localhost:5000/api/invites/abc/accept',
-      { method: 'POST' }
-    );
+    expect(apiFetchMock).toHaveBeenCalledWith('https://localhost:5000/api/invites/abc/accept', {
+      method: 'POST',
+    });
     expect(apiFetchMock).toHaveBeenCalledWith(
       'https://localhost:5000/api/guilds/guild-1/owner/transfer',
       {

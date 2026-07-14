@@ -44,9 +44,7 @@ describe('users api', () => {
     await expect(removeAvatarImage()).resolves.toBeUndefined();
 
     const uploadInit = apiFetchMock.mock.calls[0][1] as RequestInit;
-    expect(apiFetchMock.mock.calls[0][0]).toBe(
-      'https://localhost:5000/api/users/me/avatar'
-    );
+    expect(apiFetchMock.mock.calls[0][0]).toBe('https://localhost:5000/api/users/me/avatar');
     expect(uploadInit.method).toBe('PUT');
     expect(uploadInit.body).toBeInstanceOf(FormData);
     expect(apiFetchMock.mock.calls[1][1]).toMatchObject({

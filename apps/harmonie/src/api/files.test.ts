@@ -19,9 +19,7 @@ describe('files api', () => {
     await expect(
       downloadFileBlob('file / 1').then((fileBlob) => fileBlob.size)
     ).resolves.toBeGreaterThan(0);
-    expect(apiFetchMock).toHaveBeenCalledWith(
-      'https://localhost:5000/api/files/file%20%2F%201'
-    );
+    expect(apiFetchMock).toHaveBeenCalledWith('https://localhost:5000/api/files/file%20%2F%201');
   });
 
   it('throws download errors with the response status', async () => {
@@ -37,12 +35,9 @@ describe('files api', () => {
 
     await deleteFile('file / 1');
 
-    expect(apiFetchMock).toHaveBeenCalledWith(
-      'https://localhost:5000/api/files/file%20%2F%201',
-      {
-        method: 'DELETE',
-      }
-    );
+    expect(apiFetchMock).toHaveBeenCalledWith('https://localhost:5000/api/files/file%20%2F%201', {
+      method: 'DELETE',
+    });
   });
 
   it('uploads files as form data and parses the response', async () => {
@@ -54,9 +49,7 @@ describe('files api', () => {
     });
 
     const init = apiFetchMock.mock.calls[0][1] as RequestInit;
-    expect(apiFetchMock.mock.calls[0][0]).toBe(
-      'https://localhost:5000/api/files/uploads'
-    );
+    expect(apiFetchMock.mock.calls[0][0]).toBe('https://localhost:5000/api/files/uploads');
     expect(init.method).toBe('POST');
     expect(init.body).toBeInstanceOf(FormData);
   });
