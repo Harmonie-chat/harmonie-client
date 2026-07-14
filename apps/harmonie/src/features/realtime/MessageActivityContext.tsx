@@ -8,6 +8,7 @@ import { useUser } from '@/features/user/UserContext';
 import type { MessageCreatedEvent } from '@/types/channel';
 import type { ConversationMessageCreatedEvent } from '@/types/conversation';
 import { showBrowserNotification } from '@/shared/notifications/browserNotification';
+import { usePushNotifications } from '@/shared/notifications/PushNotificationContext';
 import { REALTIME_SERVER_EVENTS } from './constants';
 
 interface MessageActivityContextValue {
@@ -171,6 +172,7 @@ const clearedActivityReducer = (
 
 export const MessageActivityProvider = ({ children }: { children: ReactNode }) => {
   const { connection } = useRealtime();
+  const { status: pushNotificationStatus } = usePushNotifications();
   const { user } = useUser();
   const { guilds } = useGuilds();
   const { channels } = useChannels();
@@ -249,7 +251,9 @@ export const MessageActivityProvider = ({ children }: { children: ReactNode }) =
         event.channelId
       )} | ${senderName}`;
 
-      const notify = () =>
+      const notify = () => {
+        if (pushNotificationStatus === 'enabled') return;
+
         showBrowserNotification({
           messageId: event.messageId,
           content: event.content,
@@ -257,6 +261,7 @@ export const MessageActivityProvider = ({ children }: { children: ReactNode }) =
           targetUrl,
           title,
         });
+      };
 
       if (event.guildId !== currentRouteGuildId) {
         dispatchClearedActivity({
@@ -285,7 +290,7 @@ export const MessageActivityProvider = ({ children }: { children: ReactNode }) =
 
     connection.on(REALTIME_SERVER_EVENTS.messageCreated, handleMessageCreated);
     return () => connection.off(REALTIME_SERVER_EVENTS.messageCreated, handleMessageCreated);
-  }, [connection, currentRouteGuildId, activeTextChannelId, user?.userId]);
+  }, [connection, currentRouteGuildId, activeTextChannelId, user?.userId, pushNotificationStatus]);
 
   // Conversation messages
   useEffect(() => {
@@ -304,7 +309,9 @@ export const MessageActivityProvider = ({ children }: { children: ReactNode }) =
           ? senderName
           : `${conversationName} | ${senderName}`;
 
-      const notify = () =>
+      const notify = () => {
+        if (pushNotificationStatus === 'enabled') return;
+
         showBrowserNotification({
           messageId: event.messageId,
           content: event.content,
@@ -312,6 +319,7 @@ export const MessageActivityProvider = ({ children }: { children: ReactNode }) =
           targetUrl,
           title,
         });
+      };
 
       if (event.conversationId !== activeConversationId) {
         dispatchClearedActivity({
@@ -336,7 +344,7 @@ export const MessageActivityProvider = ({ children }: { children: ReactNode }) =
         REALTIME_SERVER_EVENTS.conversationMessageCreated,
         handleConversationMessageCreated
       );
-  }, [connection, activeConversationId, user?.userId]);
+  }, [connection, activeConversationId, user?.userId, pushNotificationStatus]);
 
   useEffect(() => {
     if (!activeTextChannelId) return;
