@@ -5,7 +5,7 @@ import {
   LogLevel,
   type HubConnection,
 } from '@microsoft/signalr';
-import { getAccessToken, subscribeToTokenChanges } from '@/api/authStorage';
+import { getFreshAccessToken } from '@/api/client';
 import { useAuth } from '@/features/auth/AuthContext';
 import { REALTIME_SERVER_EVENTS } from './constants';
 
@@ -17,7 +17,6 @@ interface RealtimeContextValue {
 }
 
 interface RealtimeState {
-  authKey: string | null;
   connection: HubConnection | null;
   isReady: boolean;
 }
@@ -26,47 +25,59 @@ const RealtimeContext = createContext<RealtimeContextValue>({ connection: null, 
 
 export const RealtimeProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated } = useAuth();
-  const [accessToken, setAccessToken] = useState(() => getAccessToken());
-  const authKey = isAuthenticated ? accessToken : null;
-  const [state, setState] = useState<RealtimeState>({
-    authKey: null,
-    connection: null,
-    isReady: false,
-  });
-  const connection = authKey !== null && state.authKey === authKey ? state.connection : null;
-  const isReady = authKey !== null && state.authKey === authKey ? state.isReady : false;
-
-  useEffect(() => subscribeToTokenChanges(setAccessToken), []);
+  const [restartVersion, setRestartVersion] = useState(0);
+  const [state, setState] = useState<RealtimeState>({ connection: null, isReady: false });
+  const connection = isAuthenticated ? state.connection : null;
+  const isReady = isAuthenticated ? state.isReady : false;
 
   useEffect(() => {
-    if (authKey === null) return;
+    if (!isAuthenticated) return;
 
     const hub = new HubConnectionBuilder()
       .withUrl(HUB_URL, {
-        accessTokenFactory: () => getAccessToken() ?? '',
+        accessTokenFactory: getFreshAccessToken,
       })
       .withAutomaticReconnect([2000, 5000, 10000, 30000])
       .configureLogging(LogLevel.Warning)
       .build();
 
     let cancelled = false;
+    let receivedReady = false;
     const handleReady = () => {
+      receivedReady = true;
       if (!cancelled) {
         setState((current) =>
           current.connection === hub ? { ...current, isReady: true } : current
         );
       }
     };
+    const handleReconnecting = () => {
+      if (!cancelled) {
+        setState((current) =>
+          current.connection === hub ? { ...current, isReady: false } : current
+        );
+      }
+    };
+    const handleClose = () => {
+      if (cancelled) return;
+
+      setState((current) =>
+        current.connection === hub ? { connection: null, isReady: false } : current
+      );
+      setRestartVersion((current) => current + 1);
+    };
 
     hub.on(REALTIME_SERVER_EVENTS.ready, handleReady);
+    hub.onreconnecting(handleReconnecting);
+    hub.onclose(handleClose);
 
     hub
       .start()
       .then(() => {
-        if (!cancelled) setState({ authKey, connection: hub, isReady: false });
+        if (!cancelled) setState({ connection: hub, isReady: receivedReady });
       })
       .catch((err) => {
-        console.error('[Realtime] hub.start() failed:', err);
+        if (!cancelled) console.error('[Realtime] hub.start() failed:', err);
       });
 
     return () => {
@@ -76,7 +87,7 @@ export const RealtimeProvider = ({ children }: { children: ReactNode }) => {
         hub.stop();
       }
     };
-  }, [authKey]);
+  }, [isAuthenticated, restartVersion]);
 
   return (
     <RealtimeContext.Provider value={{ connection, isReady }}>{children}</RealtimeContext.Provider>

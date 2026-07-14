@@ -55,6 +55,52 @@ describe('apiFetch', () => {
     expect(getRefreshToken()).toBe('new-refresh-token');
   });
 
+  it('returns the cached access token while it is still valid', async () => {
+    const validToken = `header.${btoa(JSON.stringify({ exp: 4_102_444_800 }))}.signature`;
+    storeTokens({ accessToken: validToken, refreshToken: 'refresh-token' });
+    const { getFreshAccessToken } = await import('./client');
+
+    await expect(getFreshAccessToken()).resolves.toBe(validToken);
+    expect(refreshTokensMock).not.toHaveBeenCalled();
+  });
+
+  it('refreshes an expired access token before returning it to SignalR', async () => {
+    const expiredToken = `header.${btoa(JSON.stringify({ exp: 1 }))}.signature`;
+    refreshTokensMock.mockResolvedValueOnce({
+      accessToken: 'fresh-access-token',
+      refreshToken: 'fresh-refresh-token',
+    });
+    storeTokens({ accessToken: expiredToken, refreshToken: 'refresh-token' });
+    const { getFreshAccessToken } = await import('./client');
+
+    await expect(getFreshAccessToken()).resolves.toBe('fresh-access-token');
+    expect(refreshTokensMock).toHaveBeenCalledOnce();
+  });
+
+  it('deduplicates concurrent refreshes across consumers', async () => {
+    let resolveRefresh:
+      | ((tokens: { accessToken: string; refreshToken: string }) => void)
+      | undefined;
+    refreshTokensMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveRefresh = resolve;
+      })
+    );
+    const expiredToken = `header.${btoa(JSON.stringify({ exp: 1 }))}.signature`;
+    storeTokens({ accessToken: expiredToken, refreshToken: 'refresh-token' });
+    const { getFreshAccessToken, refreshAccessToken } = await import('./client');
+
+    const fromSignalR = getFreshAccessToken();
+    const fromHttp = refreshAccessToken();
+    resolveRefresh?.({ accessToken: 'fresh-access-token', refreshToken: 'new-refresh-token' });
+
+    await expect(Promise.all([fromSignalR, fromHttp])).resolves.toEqual([
+      'fresh-access-token',
+      'fresh-access-token',
+    ]);
+    expect(refreshTokensMock).toHaveBeenCalledOnce();
+  });
+
   it('does not refresh refresh-token requests', async () => {
     const fetchMock = vi.mocked(fetch);
     fetchMock.mockResolvedValueOnce(new Response('{}', { status: 401 }));

@@ -4,12 +4,13 @@ import { RealtimeProvider, useRealtime } from './RealtimeContext';
 import { REALTIME_SERVER_EVENTS } from './constants';
 
 type Handler = () => void;
-type TokenChangeListener = (accessToken: string | null) => void;
 
 const mocks = vi.hoisted(() => {
   const hub = {
     on: vi.fn(),
     off: vi.fn(),
+    onclose: vi.fn(),
+    onreconnecting: vi.fn(),
     start: vi.fn(),
     stop: vi.fn(),
     state: 'Connected',
@@ -28,12 +29,12 @@ const mocks = vi.hoisted(() => {
 
   return {
     builder,
-    getAccessToken: vi.fn(),
+    closeHandler: null as Handler | null,
+    getFreshAccessToken: vi.fn(),
     hub,
     handlers: new Map<string, Handler>(),
     isAuthenticated: false,
-    subscribeToTokenChanges: vi.fn(),
-    tokenListeners: new Set<TokenChangeListener>(),
+    reconnectingHandler: null as Handler | null,
   };
 });
 
@@ -47,9 +48,8 @@ vi.mock('@microsoft/signalr', () => ({
   },
 }));
 
-vi.mock('@/api/authStorage', () => ({
-  getAccessToken: mocks.getAccessToken,
-  subscribeToTokenChanges: mocks.subscribeToTokenChanges,
+vi.mock('@/api/client', () => ({
+  getFreshAccessToken: mocks.getFreshAccessToken,
 }));
 
 vi.mock('@/features/auth/AuthContext', () => ({
@@ -70,15 +70,17 @@ const RealtimeConsumer = () => {
 describe('RealtimeProvider', () => {
   beforeEach(() => {
     mocks.isAuthenticated = false;
-    mocks.getAccessToken.mockReset();
-    mocks.subscribeToTokenChanges.mockReset();
+    mocks.getFreshAccessToken.mockReset();
     mocks.hub.on.mockReset();
     mocks.hub.off.mockReset();
+    mocks.hub.onclose.mockReset();
+    mocks.hub.onreconnecting.mockReset();
     mocks.hub.start.mockReset();
     mocks.hub.stop.mockReset();
     mocks.hub.state = 'Connected';
     mocks.handlers.clear();
-    mocks.tokenListeners.clear();
+    mocks.closeHandler = null;
+    mocks.reconnectingHandler = null;
     mocks.builder.withUrl.mockClear();
     mocks.builder.withAutomaticReconnect.mockClear();
     mocks.builder.configureLogging.mockClear();
@@ -89,16 +91,16 @@ describe('RealtimeProvider', () => {
     mocks.hub.off.mockImplementation((eventName: string, handler: Handler) => {
       if (mocks.handlers.get(eventName) === handler) mocks.handlers.delete(eventName);
     });
+    mocks.hub.onclose.mockImplementation((handler: Handler) => {
+      mocks.closeHandler = handler;
+    });
+    mocks.hub.onreconnecting.mockImplementation((handler: Handler) => {
+      mocks.reconnectingHandler = handler;
+    });
     mocks.builder.withUrl.mockReturnValue(mocks.builder);
     mocks.builder.withAutomaticReconnect.mockReturnValue(mocks.builder);
     mocks.builder.configureLogging.mockReturnValue(mocks.builder);
     mocks.builder.build.mockReturnValue(mocks.hub);
-    mocks.subscribeToTokenChanges.mockImplementation((listener: TokenChangeListener) => {
-      mocks.tokenListeners.add(listener);
-      return () => {
-        mocks.tokenListeners.delete(listener);
-      };
-    });
   });
 
   it('keeps the default disconnected state while unauthenticated', () => {
@@ -113,9 +115,9 @@ describe('RealtimeProvider', () => {
     expect(mocks.builder.build).not.toHaveBeenCalled();
   });
 
-  it('starts a SignalR hub for authenticated users and marks it ready on the ready event', async () => {
+  it('starts SignalR with the shared fresh-token factory and handles ready events', async () => {
     mocks.isAuthenticated = true;
-    mocks.getAccessToken.mockReturnValue('access-token');
+    mocks.getFreshAccessToken.mockResolvedValue('access-token');
     mocks.hub.start.mockResolvedValueOnce(undefined);
 
     render(
@@ -125,13 +127,10 @@ describe('RealtimeProvider', () => {
     );
 
     await waitFor(() => expect(screen.getByTestId('connection')).toHaveTextContent('connected'));
-    expect(screen.getByTestId('ready')).toHaveTextContent('false');
     expect(mocks.builder.withUrl).toHaveBeenCalledWith(expect.any(String), {
-      accessTokenFactory: expect.any(Function),
+      accessTokenFactory: mocks.getFreshAccessToken,
     });
     expect(mocks.builder.withAutomaticReconnect).toHaveBeenCalledWith([2000, 5000, 10000, 30000]);
-    expect(mocks.builder.configureLogging).toHaveBeenCalledWith('Warning');
-    expect(mocks.builder.withUrl.mock.calls[0][1].accessTokenFactory()).toBe('access-token');
 
     act(() => {
       mocks.handlers.get(REALTIME_SERVER_EVENTS.ready)?.();
@@ -140,9 +139,46 @@ describe('RealtimeProvider', () => {
     expect(screen.getByTestId('ready')).toHaveTextContent('true');
   });
 
+  it('marks the connection unready while SignalR reconnects', async () => {
+    mocks.isAuthenticated = true;
+    mocks.hub.start.mockResolvedValueOnce(undefined);
+
+    render(
+      <RealtimeProvider>
+        <RealtimeConsumer />
+      </RealtimeProvider>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('connection')).toHaveTextContent('connected'));
+    act(() => mocks.handlers.get(REALTIME_SERVER_EVENTS.ready)?.());
+    expect(screen.getByTestId('ready')).toHaveTextContent('true');
+
+    act(() => mocks.reconnectingHandler?.());
+
+    expect(screen.getByTestId('connection')).toHaveTextContent('connected');
+    expect(screen.getByTestId('ready')).toHaveTextContent('false');
+  });
+
+  it('recreates a terminally closed connection after automatic reconnect is exhausted', async () => {
+    mocks.isAuthenticated = true;
+    mocks.hub.start.mockResolvedValue(undefined);
+
+    render(
+      <RealtimeProvider>
+        <RealtimeConsumer />
+      </RealtimeProvider>
+    );
+
+    await waitFor(() => expect(mocks.hub.start).toHaveBeenCalledTimes(1));
+
+    act(() => mocks.closeHandler?.());
+
+    await waitFor(() => expect(mocks.hub.start).toHaveBeenCalledTimes(2));
+    expect(mocks.builder.build).toHaveBeenCalledTimes(2);
+  });
+
   it('removes handlers and stops an active hub on unmount', async () => {
     mocks.isAuthenticated = true;
-    mocks.getAccessToken.mockReturnValue('access-token');
     mocks.hub.start.mockResolvedValueOnce(undefined);
 
     const { unmount } = render(
@@ -158,33 +194,8 @@ describe('RealtimeProvider', () => {
     expect(mocks.hub.stop).toHaveBeenCalledTimes(1);
   });
 
-  it('restarts the hub when the stored access token changes', async () => {
-    mocks.isAuthenticated = true;
-    mocks.getAccessToken.mockReturnValue('old-access-token');
-    mocks.hub.start.mockResolvedValue(undefined);
-
-    render(
-      <RealtimeProvider>
-        <RealtimeConsumer />
-      </RealtimeProvider>
-    );
-
-    await waitFor(() => expect(mocks.hub.start).toHaveBeenCalledTimes(1));
-    expect(mocks.builder.withUrl.mock.calls[0][1].accessTokenFactory()).toBe('old-access-token');
-
-    act(() => {
-      mocks.getAccessToken.mockReturnValue('new-access-token');
-      mocks.tokenListeners.forEach((listener) => listener('new-access-token'));
-    });
-
-    await waitFor(() => expect(mocks.hub.stop).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(mocks.hub.start).toHaveBeenCalledTimes(2));
-    expect(mocks.builder.withUrl.mock.calls[1][1].accessTokenFactory()).toBe('new-access-token');
-  });
-
   it('does not stop a hub that is already disconnected', async () => {
     mocks.isAuthenticated = true;
-    mocks.getAccessToken.mockReturnValue('access-token');
     mocks.hub.state = 'Disconnected';
     mocks.hub.start.mockResolvedValueOnce(undefined);
 
@@ -204,7 +215,6 @@ describe('RealtimeProvider', () => {
     const error = new Error('boom');
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     mocks.isAuthenticated = true;
-    mocks.getAccessToken.mockReturnValue('access-token');
     mocks.hub.start.mockRejectedValueOnce(error);
 
     render(

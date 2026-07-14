@@ -3,6 +3,7 @@ import {
   clearTokens,
   getAccessToken,
   getRefreshToken,
+  isAccessTokenExpiring,
   storeTokens,
   subscribeToTokenChanges,
 } from './authStorage';
@@ -27,6 +28,18 @@ describe('authStorage', () => {
 
     expect(getAccessToken()).toBeNull();
     expect(getRefreshToken()).toBeNull();
+  });
+
+  it('detects access tokens that are expired or close to expiry', () => {
+    const accessToken = `header.${btoa(JSON.stringify({ exp: 130 }))}.signature`;
+
+    expect(isAccessTokenExpiring(accessToken, 30_000, 100_000)).toBe(true);
+    expect(isAccessTokenExpiring(accessToken, 29_000, 100_000)).toBe(false);
+  });
+
+  it('treats opaque or malformed access tokens as unusable', () => {
+    expect(isAccessTokenExpiring('opaque-token')).toBe(true);
+    expect(isAccessTokenExpiring('header.not-json.signature')).toBe(true);
   });
 
   it('notifies subscribers when tokens change', () => {

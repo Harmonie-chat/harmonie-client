@@ -17,6 +17,23 @@ export const storeTokens = (response: TokensPayload) => {
 
 export const getAccessToken = () => _accessToken;
 
+export const isAccessTokenExpiring = (
+  accessToken: string,
+  expirationBufferMs = 30_000,
+  now = Date.now()
+) => {
+  try {
+    const payload = accessToken.split('.')[1];
+    if (!payload) return true;
+
+    const normalizedPayload = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const { exp } = JSON.parse(atob(normalizedPayload)) as { exp?: number };
+    return typeof exp !== 'number' || exp * 1000 <= now + expirationBufferMs;
+  } catch {
+    return true;
+  }
+};
+
 export const getRefreshToken = () => localStorage.getItem(REFRESH_TOKEN_KEY);
 
 export const subscribeToTokenChanges = (listener: (accessToken: string | null) => void) => {
