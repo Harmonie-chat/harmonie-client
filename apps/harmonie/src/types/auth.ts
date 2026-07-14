@@ -50,4 +50,5 @@ export interface LogoutRequest {
 export interface TokensPayload {
   accessToken: string;
   refreshToken: string;
+  expiresAt: string;
 }

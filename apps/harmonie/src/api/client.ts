@@ -1,8 +1,14 @@
-import { clearTokens, getAccessToken, getRefreshToken, storeTokens } from './authStorage';
+import {
+  clearTokens,
+  getAccessToken,
+  getRefreshToken,
+  isAccessTokenExpiring,
+  storeTokens,
+} from './authStorage';
 import { refreshTokens } from './auth';
 
 let onLogout: (() => void) | null = null;
-let refreshPromise: Promise<void> | null = null;
+let refreshPromise: Promise<string> | null = null;
 
 export const setLogoutHandler = (fn: () => void) => {
   onLogout = fn;
@@ -16,19 +22,40 @@ const withBearer = (init?: RequestInit): RequestInit => ({
   },
 });
 
-const doRefresh = async (): Promise<void> => {
+const doRefresh = async (): Promise<string> => {
   const refreshToken = getRefreshToken();
   if (!refreshToken) {
+    clearTokens();
     onLogout?.();
-    return;
+    throw new Error('No refresh token is available');
   }
+
   try {
     const response = await refreshTokens({ refreshToken });
     storeTokens(response);
-  } catch {
+    return response.accessToken;
+  } catch (error) {
     clearTokens();
     onLogout?.();
+    throw error;
   }
+};
+
+export const refreshAccessToken = (): Promise<string> => {
+  if (!refreshPromise) {
+    refreshPromise = doRefresh().finally(() => {
+      refreshPromise = null;
+    });
+  }
+
+  return refreshPromise;
+};
+
+export const getFreshAccessToken = async (): Promise<string> => {
+  const accessToken = getAccessToken();
+  if (accessToken && !isAccessTokenExpiring()) return accessToken;
+
+  return refreshAccessToken();
 };
 
 export const apiFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
@@ -38,12 +65,11 @@ export const apiFetch = async (input: RequestInfo | URL, init?: RequestInit): Pr
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
   if (url.includes('/auth/refresh')) return res;
 
-  if (!refreshPromise) {
-    refreshPromise = doRefresh().finally(() => {
-      refreshPromise = null;
-    });
+  try {
+    await refreshAccessToken();
+  } catch {
+    return res;
   }
-  await refreshPromise;
 
   return fetch(input, withBearer(init));
 };
