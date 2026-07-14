@@ -47,6 +47,7 @@ interface FakeRoom {
     setMicrophoneEnabled: ReturnType<typeof vi.fn>;
     setScreenShareEnabled: ReturnType<typeof vi.fn>;
   };
+  off: ReturnType<typeof vi.fn>;
   on: ReturnType<typeof vi.fn>;
   remoteParticipants: Map<string, FakeParticipant>;
   switchActiveDevice: ReturnType<typeof vi.fn>;
@@ -100,6 +101,13 @@ const createFakeRoom = (): FakeRoom => {
         return Promise.resolve();
       }),
     },
+    off: vi.fn((eventName: string, handler: (...args: unknown[]) => void) => {
+      handlers.set(
+        eventName,
+        (handlers.get(eventName) ?? []).filter((registeredHandler) => registeredHandler !== handler)
+      );
+      return room;
+    }),
     on: vi.fn((eventName: string, handler: (...args: unknown[]) => void) => {
       handlers.set(eventName, [...(handlers.get(eventName) ?? []), handler]);
       return room;
@@ -278,6 +286,27 @@ describe('useVoiceRoom', () => {
     expect(result.current.joinError).toBe('voice.joinErrorMic');
     expect(result.current.isJoining).toBe(false);
     expect(result.current.activeConversationId).toBeNull();
+  });
+
+  it('removes room event listeners on unmount', async () => {
+    const { result, unmount } = renderVoiceRoom();
+    mocks.joinVoiceChannel.mockResolvedValueOnce({
+      token: 'token',
+      url: 'wss://voice.example.test',
+      roomName: 'channel:channel-1',
+    });
+
+    await act(async () => {
+      await result.current.joinChannel('channel-1', 'General', 'guild-1', 'Harmonie');
+    });
+
+    const room = mocks.rooms[0];
+    expect(room.on).toHaveBeenCalled();
+
+    unmount();
+
+    expect(room.off).toHaveBeenCalledTimes(room.on.mock.calls.length);
+    expect([...room.handlers.values()].every((handlers) => handlers.length === 0)).toBe(true);
   });
 
   it('does not mark remote participants as muted before their microphone publication is known', async () => {

@@ -258,6 +258,12 @@ export const GuildSearchBar = ({
 
   const hasActiveSearch = query.trim() !== '' || Boolean(selectedAuthor || selectedChannel);
 
+  const handleMobileToggle = () => {
+    const nextOpen = !mobileOpen;
+    setMobileOpen(nextOpen);
+    setDropdown(nextOpen ? 'filters' : null);
+  };
+
   const searchControlProps = {
     channelItems,
     dropdown,
@@ -295,13 +301,7 @@ export const GuildSearchBar = ({
           aria-label={t('guild.search.title')}
           title={t('guild.search.title')}
           tooltipSide="bottom"
-          onClick={() => {
-            setMobileOpen((open) => {
-              const nextOpen = !open;
-              setDropdown(nextOpen ? 'filters' : null);
-              return nextOpen;
-            });
-          }}
+          onClick={handleMobileToggle}
         >
           <Search size={16} />
         </IconButton>

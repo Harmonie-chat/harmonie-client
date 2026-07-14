@@ -16,7 +16,7 @@
     "storybook": "turbo run storybook",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "doctor": "npx react-doctor@latest",
+    "doctor": "npx react-doctor@latest . --verbose",
     "prepare": "node scripts/setup-git-hooks.mjs"
   },
   "devDependencies": {
