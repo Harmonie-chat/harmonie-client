@@ -24,6 +24,9 @@ import { scheduleCenterMessageIfOutsideView } from './utils/scrollMessageIntoVie
 
 const PINNED_MESSAGE_HIGHLIGHT_MS = 1200;
 
+const isUserMentioned = (message: Message, userId?: string) =>
+  Boolean(userId && message.mentionedUserIds?.includes(userId));
+
 interface MessageThreadUiState {
   messageMenu: MessageMenuState | null;
   reactionPicker: {
@@ -656,9 +659,7 @@ const useMessageThreadContent = <TAuthor extends MessageAuthor = MessageAuthor>(
                     : areMessagesGrouped(previousMessage, message);
                   const isFirstUnread =
                     lastReadMessageId !== null && previousMessage?.messageId === lastReadMessageId;
-                  const isMentioned =
-                    Boolean(currentUser?.userId) &&
-                    (message.mentionedUserIds ?? []).includes(currentUser?.userId ?? '');
+                  const isMentioned = isUserMentioned(message, currentUser?.userId);
 
                   return (
                     <div key={message.messageId}>

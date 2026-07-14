@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { sortMessagesAsc } from '@/shared/utils/message';
 import { REALTIME_SERVER_EVENTS } from '@/features/realtime/constants';
 import type { Message, MessageList, MessagePreviewUpdatedEvent } from '@/types/channel';
@@ -138,6 +138,7 @@ export const useMessages = ({
   );
   const applyMessagesFetchErrorRef = useRef<(requestedEntityId: string) => void>(() => {});
   const finishMessagesLoadRef = useRef<() => void>(() => {});
+  const addMessageRef = useRef<(message: Message) => void>(() => {});
 
   const apiRef = useRef(api);
   const wsRef = useRef(ws);
@@ -194,26 +195,24 @@ export const useMessages = ({
 
   const finishMessagesLoad = () => setLoading(false);
 
-  const addMessage = useCallback(
-    (message: Message) => {
-      if (!entityId) return;
-      const normalizedMessage = normalizeMessage(message);
-      setLoadedEntityId(entityId);
-      setError(false);
-      setMessages((prev) => {
-        if (prev.some((item) => item.messageId === normalizedMessage.messageId)) return prev;
-        return sortMessagesAsc([...prev, normalizedMessage]);
-      });
-      markAsReadRef.current(normalizedMessage.messageId).catch(() => {});
-    },
-    [entityId]
-  );
+  const addMessage = (message: Message) => {
+    if (!entityId) return;
+    const normalizedMessage = normalizeMessage(message);
+    setLoadedEntityId(entityId);
+    setError(false);
+    setMessages((prev) => {
+      if (prev.some((item) => item.messageId === normalizedMessage.messageId)) return prev;
+      return sortMessagesAsc([...prev, normalizedMessage]);
+    });
+    markAsReadRef.current(normalizedMessage.messageId).catch(() => {});
+  };
 
   useEffect(() => {
     markAsReadRef.current = markAsRead;
     applyFetchedMessagesRef.current = applyFetchedMessages;
     applyMessagesFetchErrorRef.current = applyMessagesFetchError;
     finishMessagesLoadRef.current = finishMessagesLoad;
+    addMessageRef.current = addMessage;
   });
 
   useEffect(() => {
@@ -248,7 +247,7 @@ export const useMessages = ({
 
     const handleCreated = (event: WsMessageCreatedEvent) => {
       if (getEntityId(event as Record<string, string>) !== entityId) return;
-      addMessage({
+      addMessageRef.current({
         messageId: event.messageId,
         authorUserId: event.authorUserId,
         content: event.content,
@@ -269,7 +268,7 @@ export const useMessages = ({
     return () => {
       connection.off(created, handleCreated);
     };
-  }, [addMessage, connection, entityId, ready]);
+  }, [connection, entityId, ready]);
 
   useEffect(() => {
     if (!connection || !entityId || !ready) return;

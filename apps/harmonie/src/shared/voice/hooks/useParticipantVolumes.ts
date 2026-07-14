@@ -54,11 +54,12 @@ export const useParticipantVolumes = (
     if (nextVolume > 0) {
       previousNonZeroParticipantVolumesRef.current[participantId] = nextVolume;
     }
-    setParticipantVolumes((prev) => {
-      const next = { ...prev, [participantId]: nextVolume };
-      participantVolumesRef.current = next;
-      return next;
-    });
+    const nextParticipantVolumes = {
+      ...participantVolumesRef.current,
+      [participantId]: nextVolume,
+    };
+    participantVolumesRef.current = nextParticipantVolumes;
+    setParticipantVolumes(nextParticipantVolumes);
     applyParticipantVolume(participantId, nextVolume);
   };
 
