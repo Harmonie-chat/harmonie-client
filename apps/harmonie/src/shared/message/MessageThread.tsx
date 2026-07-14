@@ -278,6 +278,17 @@ const useMessageThreadContent = <TAuthor extends MessageAuthor = MessageAuthor>(
       clearTimeout(userScrollIntentTimeoutRef.current);
       userScrollIntentTimeoutRef.current = null;
     }
+
+    return () => {
+      if (pinnedHighlightTimeoutRef.current) {
+        clearTimeout(pinnedHighlightTimeoutRef.current);
+        pinnedHighlightTimeoutRef.current = null;
+      }
+      if (userScrollIntentTimeoutRef.current) {
+        clearTimeout(userScrollIntentTimeoutRef.current);
+        userScrollIntentTimeoutRef.current = null;
+      }
+    };
   }, [
     previousMessageCountRef,
     scrollAnchorRef,
