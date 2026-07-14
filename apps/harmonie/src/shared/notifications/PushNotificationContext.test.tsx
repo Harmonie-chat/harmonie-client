@@ -84,4 +84,19 @@ describe('PushNotificationProvider', () => {
       expect(screen.queryByText('notifications.push.promptTitle')).not.toBeInTheDocument()
     );
   });
+
+  it('keeps the soft prompt open with feedback when setup fails', async () => {
+    mocks.enable.mockRejectedValueOnce(new Error('setup failed'));
+
+    render(
+      <PushNotificationProvider>
+        <div>app</div>
+      </PushNotificationProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'notifications.push.enable' }));
+
+    expect(await screen.findByText('notifications.push.error')).toBeInTheDocument();
+    expect(screen.getByText('notifications.push.promptTitle')).toBeInTheDocument();
+  });
 });

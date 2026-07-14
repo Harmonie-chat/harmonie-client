@@ -79,7 +79,7 @@ export const PushNotificationProvider = ({ children }: { children: ReactNode }) 
 
   const showPrompt =
     isAuthenticated &&
-    (status === 'prompt' || status === 'syncing') &&
+    (status === 'prompt' || status === 'syncing' || status === 'error') &&
     !promptDismissed &&
     typeof window !== 'undefined';
 
