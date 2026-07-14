@@ -25,7 +25,6 @@ const RealtimeContext = createContext<RealtimeContextValue>({ connection: null, 
 
 export const RealtimeProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated } = useAuth();
-  const [restartVersion, setRestartVersion] = useState(0);
   const [state, setState] = useState<RealtimeState>({ connection: null, isReady: false });
   const connection = isAuthenticated ? state.connection : null;
   const isReady = isAuthenticated ? state.isReady : false;
@@ -42,39 +41,28 @@ export const RealtimeProvider = ({ children }: { children: ReactNode }) => {
       .build();
 
     let cancelled = false;
-    let receivedReady = false;
     const handleReady = () => {
-      receivedReady = true;
       if (!cancelled) {
         setState((current) =>
           current.connection === hub ? { ...current, isReady: true } : current
         );
       }
     };
-    const handleReconnecting = () => {
+    const handleClose = () => {
       if (!cancelled) {
         setState((current) =>
-          current.connection === hub ? { ...current, isReady: false } : current
+          current.connection === hub ? { connection: null, isReady: false } : current
         );
       }
     };
-    const handleClose = () => {
-      if (cancelled) return;
-
-      setState((current) =>
-        current.connection === hub ? { connection: null, isReady: false } : current
-      );
-      setRestartVersion((current) => current + 1);
-    };
 
     hub.on(REALTIME_SERVER_EVENTS.ready, handleReady);
-    hub.onreconnecting(handleReconnecting);
     hub.onclose(handleClose);
 
     hub
       .start()
       .then(() => {
-        if (!cancelled) setState({ connection: hub, isReady: receivedReady });
+        if (!cancelled) setState({ connection: hub, isReady: false });
       })
       .catch((err) => {
         if (!cancelled) console.error('[Realtime] hub.start() failed:', err);
@@ -87,7 +75,7 @@ export const RealtimeProvider = ({ children }: { children: ReactNode }) => {
         hub.stop();
       }
     };
-  }, [isAuthenticated, restartVersion]);
+  }, [isAuthenticated]);
 
   return (
     <RealtimeContext.Provider value={{ connection, isReady }}>{children}</RealtimeContext.Provider>

@@ -10,7 +10,6 @@ const mocks = vi.hoisted(() => {
     on: vi.fn(),
     off: vi.fn(),
     onclose: vi.fn(),
-    onreconnecting: vi.fn(),
     start: vi.fn(),
     stop: vi.fn(),
     state: 'Connected',
@@ -34,7 +33,6 @@ const mocks = vi.hoisted(() => {
     hub,
     handlers: new Map<string, Handler>(),
     isAuthenticated: false,
-    reconnectingHandler: null as Handler | null,
   };
 });
 
@@ -74,13 +72,11 @@ describe('RealtimeProvider', () => {
     mocks.hub.on.mockReset();
     mocks.hub.off.mockReset();
     mocks.hub.onclose.mockReset();
-    mocks.hub.onreconnecting.mockReset();
     mocks.hub.start.mockReset();
     mocks.hub.stop.mockReset();
     mocks.hub.state = 'Connected';
     mocks.handlers.clear();
     mocks.closeHandler = null;
-    mocks.reconnectingHandler = null;
     mocks.builder.withUrl.mockClear();
     mocks.builder.withAutomaticReconnect.mockClear();
     mocks.builder.configureLogging.mockClear();
@@ -93,9 +89,6 @@ describe('RealtimeProvider', () => {
     });
     mocks.hub.onclose.mockImplementation((handler: Handler) => {
       mocks.closeHandler = handler;
-    });
-    mocks.hub.onreconnecting.mockImplementation((handler: Handler) => {
-      mocks.reconnectingHandler = handler;
     });
     mocks.builder.withUrl.mockReturnValue(mocks.builder);
     mocks.builder.withAutomaticReconnect.mockReturnValue(mocks.builder);
@@ -139,27 +132,7 @@ describe('RealtimeProvider', () => {
     expect(screen.getByTestId('ready')).toHaveTextContent('true');
   });
 
-  it('marks the connection unready while SignalR reconnects', async () => {
-    mocks.isAuthenticated = true;
-    mocks.hub.start.mockResolvedValueOnce(undefined);
-
-    render(
-      <RealtimeProvider>
-        <RealtimeConsumer />
-      </RealtimeProvider>
-    );
-
-    await waitFor(() => expect(screen.getByTestId('connection')).toHaveTextContent('connected'));
-    act(() => mocks.handlers.get(REALTIME_SERVER_EVENTS.ready)?.());
-    expect(screen.getByTestId('ready')).toHaveTextContent('true');
-
-    act(() => mocks.reconnectingHandler?.());
-
-    expect(screen.getByTestId('connection')).toHaveTextContent('connected');
-    expect(screen.getByTestId('ready')).toHaveTextContent('false');
-  });
-
-  it('recreates a terminally closed connection after automatic reconnect is exhausted', async () => {
+  it('hides a terminally closed connection without starting a competing reconnect loop', async () => {
     mocks.isAuthenticated = true;
     mocks.hub.start.mockResolvedValue(undefined);
 
@@ -169,12 +142,14 @@ describe('RealtimeProvider', () => {
       </RealtimeProvider>
     );
 
-    await waitFor(() => expect(mocks.hub.start).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByTestId('connection')).toHaveTextContent('connected'));
 
     act(() => mocks.closeHandler?.());
 
-    await waitFor(() => expect(mocks.hub.start).toHaveBeenCalledTimes(2));
-    expect(mocks.builder.build).toHaveBeenCalledTimes(2);
+    expect(screen.getByTestId('connection')).toHaveTextContent('none');
+    expect(screen.getByTestId('ready')).toHaveTextContent('false');
+    expect(mocks.hub.start).toHaveBeenCalledOnce();
+    expect(mocks.builder.build).toHaveBeenCalledOnce();
   });
 
   it('removes handlers and stops an active hub on unmount', async () => {
