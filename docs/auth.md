@@ -5,7 +5,7 @@
 The authentication system handles user registration, login, and session persistence across page refreshes. It is built around three concerns:
 
 1. **API layer** — pure fetch functions, no side effects
-2. **Token storage** — secure split storage strategy
+2. **Token storage** — access token in memory and refresh token in an HttpOnly cookie
 3. **Auth state** — React context consumed by route guards and pages
 
 ---
@@ -16,7 +16,7 @@ The authentication system handles user registration, login, and session persiste
 apps/harmonie/src/
 ├── api/
 │   ├── auth.ts          # API functions: login, register, refreshTokens
-│   ├── authStorage.ts   # Token read/write (memory + localStorage)
+│   ├── authStorage.ts   # In-memory access token lifecycle
 │   └── errors.ts        # Shared ApiError interface
 ├── features/auth/
 │   ├── AuthContext.tsx  # AuthProvider + useAuth hook
@@ -34,26 +34,26 @@ apps/harmonie/src/
 
 Access tokens are short-lived JWTs. Refresh tokens are long-lived and used to obtain new access tokens silently.
 
-| Token          | Storage            | Rationale                                                                      |
-| -------------- | ------------------ | ------------------------------------------------------------------------------ |
-| `accessToken`  | JS module variable | Never persisted — wiped on page reload; not accessible via XSS from other tabs |
-| `refreshToken` | `localStorage`     | Persisted across page reloads; used on app init to restore the session         |
+| Token          | Storage                          | Rationale                                                                     |
+| -------------- | -------------------------------- | ----------------------------------------------------------------------------- |
+| `accessToken`  | JS module variable               | Never persisted and wiped on page reload                                      |
+| `refreshToken` | Server-managed `HttpOnly` cookie | Persists the session without exposing the long-lived credential to JavaScript |
 
 ### `src/api/authStorage.ts`
 
 ```ts
 let _accessToken: string | null = null;
+let _accessTokenExpiresAt: number | null = null;
 
-export const storeTokens = ({ accessToken, refreshToken }: TokensPayload) => {
+export const storeTokens = ({ accessToken, expiresAt }: TokensPayload) => {
   _accessToken = accessToken;
-  localStorage.setItem('refreshToken', refreshToken);
+  _accessTokenExpiresAt = Date.parse(expiresAt);
 };
 
 export const getAccessToken = () => _accessToken;
-export const getRefreshToken = () => localStorage.getItem('refreshToken');
 export const clearTokens = () => {
   _accessToken = null;
-  localStorage.removeItem('refreshToken');
+  _accessTokenExpiresAt = null;
 };
 ```
 
@@ -77,7 +77,7 @@ VITE_API_BASE_URL=http://localhost:5001/api   # .env
 | `register()`      | POST   | `/auth/register` |
 | `refreshTokens()` | POST   | `/auth/refresh`  |
 
-All functions throw the raw JSON body on non-2xx responses (cast to `ApiError` at the call site).
+All authentication requests use `credentials: 'include'` so the browser can receive and send the refresh cookie. The refresh and logout request bodies contain no credential; an empty `refreshToken` field is temporarily sent for compatibility with the rollout endpoint contract. Functions throw the raw JSON body on non-2xx responses (cast to `ApiError` at the call site).
 
 ### `src/api/errors.ts`
 
@@ -109,7 +109,7 @@ interface AuthContextValue {
 
 #### Session restoration on mount
 
-On first render, `AuthProvider` reads the `refreshToken` from localStorage and silently calls `POST /auth/refresh`. If successful, the new tokens are stored and `isAuthenticated` is set to `true`.
+On first render, `AuthProvider` silently calls `POST /auth/refresh`. The browser attaches the HttpOnly refresh cookie automatically. If successful, the returned access token is stored in memory and `isAuthenticated` is set to `true`.
 
 `isInitializing` stays `true` until this check completes — route guards render nothing while waiting, preventing a flash of the login page for authenticated users.
 
@@ -131,7 +131,7 @@ useEffect(() => {
 
 #### Fatal vs non-fatal refresh errors
 
-Tokens are only cleared when the backend signals an unrecoverable state. Network errors and server errors (5xx) are ignored — the user is simply left unauthenticated without wiping their stored refresh token.
+The in-memory access token is cleared when the backend signals an unrecoverable state. The refresh cookie is rotated or deleted by the backend and cannot be accessed by the client. Network errors and server errors (5xx) leave the user unauthenticated without modifying the cookie.
 
 ```ts
 const FATAL_REFRESH_CODES = new Set([

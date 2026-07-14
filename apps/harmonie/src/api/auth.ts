@@ -1,18 +1,19 @@
+import { getAccessToken } from './authStorage';
 import type {
   LoginRequest,
   LoginResponse,
-  LogoutRequest,
-  RefreshRequest,
   RefreshResponse,
   RegisterRequest,
   RegisterResponse,
 } from '@/types/auth';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
+const EMPTY_REFRESH_TOKEN_BODY = JSON.stringify({ refreshToken: '' });
 
 export const login = async (body: LoginRequest): Promise<LoginResponse> => {
   const response = await fetch(`${API_BASE}/auth/login`, {
     method: 'POST',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
@@ -27,6 +28,7 @@ export const login = async (body: LoginRequest): Promise<LoginResponse> => {
 export const register = async (body: RegisterRequest): Promise<RegisterResponse> => {
   const response = await fetch(`${API_BASE}/auth/register`, {
     method: 'POST',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
@@ -38,11 +40,12 @@ export const register = async (body: RegisterRequest): Promise<RegisterResponse>
   return response.json();
 };
 
-export const refreshTokens = async (body: RefreshRequest): Promise<RefreshResponse> => {
+export const refreshTokens = async (): Promise<RefreshResponse> => {
   const response = await fetch(`${API_BASE}/auth/refresh`, {
     method: 'POST',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    body: EMPTY_REFRESH_TOKEN_BODY,
   });
 
   if (!response.ok) {
@@ -52,10 +55,15 @@ export const refreshTokens = async (body: RefreshRequest): Promise<RefreshRespon
   return response.json();
 };
 
-export const logout = async (body: LogoutRequest): Promise<void> => {
+export const logout = async (): Promise<void> => {
+  const accessToken = getAccessToken();
   await fetch(`${API_BASE}/auth/logout`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
+    body: EMPTY_REFRESH_TOKEN_BODY,
   });
 };

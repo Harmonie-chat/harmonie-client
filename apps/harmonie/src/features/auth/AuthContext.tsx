@@ -1,7 +1,7 @@
 import { createContext, use, useEffect, useRef, useState, type ReactNode } from 'react';
 import { logout as logoutApi, refreshTokens } from '@/api/auth';
-import { clearTokens, getRefreshToken, storeTokens } from '@/api/authStorage';
-import { setLogoutHandler } from '@/api/client';
+import { clearTokens, discardLegacyRefreshToken, storeTokens } from '@/api/authStorage';
+import { getFreshAccessToken, setLogoutHandler } from '@/api/client';
 import type { ApiError } from '@/types/error';
 import { disableWebPushNotificationsLocally } from '@/shared/notifications/webPush';
 
@@ -44,29 +44,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     initialized.current = true;
 
     (async () => {
-      const refreshToken = getRefreshToken();
-      if (refreshToken) {
-        try {
-          const response = await refreshTokens({ refreshToken });
-          storeTokens(response);
-          setIsAuthenticated(true);
-        } catch (err) {
-          const apiError = err as ApiError;
-          if (FATAL_REFRESH_CODES.has(apiError?.code)) clearTokens();
-        }
+      discardLegacyRefreshToken();
+      try {
+        const response = await refreshTokens();
+        storeTokens(response);
+        setIsAuthenticated(true);
+      } catch (err) {
+        const apiError = err as ApiError;
+        if (FATAL_REFRESH_CODES.has(apiError?.code)) clearTokens();
       }
       setIsInitializing(false);
     })();
   }, []);
 
   const logout = async () => {
-    const refreshToken = getRefreshToken();
-    if (refreshToken) {
-      try {
-        await logoutApi({ refreshToken });
-      } catch (error) {
-        void error;
-      }
+    try {
+      await getFreshAccessToken();
+      await logoutApi();
+    } catch (error) {
+      void error;
     }
     await disableWebPushNotificationsLocally().catch(() => {});
     clearTokens();

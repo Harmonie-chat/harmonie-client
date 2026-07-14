@@ -6,8 +6,9 @@ const mocks = vi.hoisted(() => ({
   logoutApi: vi.fn(),
   refreshTokens: vi.fn(),
   clearTokens: vi.fn(),
-  getRefreshToken: vi.fn(),
+  discardLegacyRefreshToken: vi.fn(),
   storeTokens: vi.fn(),
+  getFreshAccessToken: vi.fn(),
   setLogoutHandler: vi.fn(),
 }));
 
@@ -18,11 +19,12 @@ vi.mock('@/api/auth', () => ({
 
 vi.mock('@/api/authStorage', () => ({
   clearTokens: mocks.clearTokens,
-  getRefreshToken: mocks.getRefreshToken,
+  discardLegacyRefreshToken: mocks.discardLegacyRefreshToken,
   storeTokens: mocks.storeTokens,
 }));
 
 vi.mock('@/api/client', () => ({
+  getFreshAccessToken: mocks.getFreshAccessToken,
   setLogoutHandler: mocks.setLogoutHandler,
 }));
 
@@ -74,14 +76,15 @@ describe('AuthProvider', () => {
     });
   });
 
-  it('finishes initialization without a refresh token', async () => {
-    mocks.getRefreshToken.mockReturnValue(null);
+  it('finishes initialization without a refresh cookie', async () => {
+    mocks.refreshTokens.mockRejectedValueOnce({ code: 'VALIDATION_FAILED' });
 
     renderAuth();
 
     await waitFor(() => expect(screen.getByTestId('initializing')).toHaveTextContent('false'));
     expect(screen.getByTestId('authenticated')).toHaveTextContent('false');
-    expect(mocks.refreshTokens).not.toHaveBeenCalled();
+    expect(mocks.discardLegacyRefreshToken).toHaveBeenCalledOnce();
+    expect(mocks.refreshTokens).toHaveBeenCalledWith();
   });
 
   it('exposes inert defaults when used without a provider', async () => {
@@ -101,25 +104,23 @@ describe('AuthProvider', () => {
     expect(mocks.clearTokens).not.toHaveBeenCalled();
   });
 
-  it('refreshes tokens and authenticates when a refresh token exists', async () => {
-    mocks.getRefreshToken.mockReturnValue('refresh-token');
+  it('refreshes tokens and authenticates when a refresh cookie exists', async () => {
     mocks.refreshTokens.mockResolvedValueOnce({
       accessToken: 'access-token',
-      refreshToken: 'next-refresh-token',
+      expiresAt: '2100-01-01T00:00:00.000Z',
     });
 
     renderAuth();
 
     await waitFor(() => expect(screen.getByTestId('authenticated')).toHaveTextContent('true'));
-    expect(mocks.refreshTokens).toHaveBeenCalledWith({ refreshToken: 'refresh-token' });
+    expect(mocks.refreshTokens).toHaveBeenCalledWith();
     expect(mocks.storeTokens).toHaveBeenCalledWith({
       accessToken: 'access-token',
-      refreshToken: 'next-refresh-token',
+      expiresAt: '2100-01-01T00:00:00.000Z',
     });
   });
 
-  it('clears stored tokens for fatal refresh failures', async () => {
-    mocks.getRefreshToken.mockReturnValue('refresh-token');
+  it('clears access tokens for fatal refresh failures', async () => {
     mocks.refreshTokens.mockRejectedValueOnce({ code: 'AUTH_INVALID_REFRESH_TOKEN' });
 
     renderAuth();
@@ -130,7 +131,8 @@ describe('AuthProvider', () => {
   });
 
   it('exposes manual authentication and logout actions', async () => {
-    mocks.getRefreshToken.mockReturnValue('refresh-token');
+    mocks.refreshTokens.mockRejectedValueOnce({ code: 'VALIDATION_FAILED' });
+    mocks.getFreshAccessToken.mockResolvedValueOnce('access-token');
     mocks.logoutApi.mockRejectedValueOnce(new Error('already gone'));
 
     renderAuth();
@@ -145,13 +147,14 @@ describe('AuthProvider', () => {
       screen.getByRole('button', { name: 'Logout' }).click();
     });
 
-    expect(mocks.logoutApi).toHaveBeenCalledWith({ refreshToken: 'refresh-token' });
+    expect(mocks.getFreshAccessToken).toHaveBeenCalledOnce();
+    expect(mocks.logoutApi).toHaveBeenCalledWith();
     expect(mocks.clearTokens).toHaveBeenCalled();
     await waitFor(() => expect(screen.getByTestId('authenticated')).toHaveTextContent('false'));
   });
 
   it('registers a logout handler that clears local authentication state', async () => {
-    mocks.getRefreshToken.mockReturnValue(null);
+    mocks.refreshTokens.mockRejectedValueOnce({ code: 'VALIDATION_FAILED' });
 
     renderAuth();
     await waitFor(() => expect(mocks.setLogoutHandler).toHaveBeenCalledOnce());

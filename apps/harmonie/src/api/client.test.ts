@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { clearTokens, getAccessToken, getRefreshToken, storeTokens } from './authStorage';
+import { clearTokens, getAccessToken, storeTokens } from './authStorage';
 
 const refreshTokensMock = vi.fn();
 const FUTURE_EXPIRATION = '2100-01-01T00:00:00.000Z';
@@ -21,7 +21,6 @@ describe('apiFetch', () => {
     fetchMock.mockResolvedValueOnce(new Response('{}', { status: 200 }));
     storeTokens({
       accessToken: 'access-token',
-      refreshToken: 'refresh-token',
       expiresAt: FUTURE_EXPIRATION,
     });
     const { apiFetch } = await import('./client');
@@ -43,12 +42,10 @@ describe('apiFetch', () => {
       .mockResolvedValueOnce(new Response('{"ok":true}', { status: 200 }));
     refreshTokensMock.mockResolvedValueOnce({
       accessToken: 'new-access-token',
-      refreshToken: 'new-refresh-token',
       expiresAt: FUTURE_EXPIRATION,
     });
     storeTokens({
       accessToken: 'old-access-token',
-      refreshToken: 'refresh-token',
       expiresAt: FUTURE_EXPIRATION,
     });
     const { apiFetch } = await import('./client');
@@ -56,20 +53,18 @@ describe('apiFetch', () => {
     const response = await apiFetch('/channels');
 
     expect(response.status).toBe(200);
-    expect(refreshTokensMock).toHaveBeenCalledWith({ refreshToken: 'refresh-token' });
+    expect(refreshTokensMock).toHaveBeenCalledWith();
     expect(fetchMock).toHaveBeenNthCalledWith(2, '/channels', {
       headers: {
         Authorization: 'Bearer new-access-token',
       },
     });
     expect(getAccessToken()).toBe('new-access-token');
-    expect(getRefreshToken()).toBe('new-refresh-token');
   });
 
   it('returns the cached access token while it is still valid', async () => {
     storeTokens({
       accessToken: 'access-token',
-      refreshToken: 'refresh-token',
       expiresAt: FUTURE_EXPIRATION,
     });
     const { getFreshAccessToken } = await import('./client');
@@ -81,12 +76,10 @@ describe('apiFetch', () => {
   it('refreshes an expired access token before returning it to SignalR', async () => {
     refreshTokensMock.mockResolvedValueOnce({
       accessToken: 'fresh-access-token',
-      refreshToken: 'fresh-refresh-token',
       expiresAt: FUTURE_EXPIRATION,
     });
     storeTokens({
       accessToken: 'expired-access-token',
-      refreshToken: 'refresh-token',
       expiresAt: PAST_EXPIRATION,
     });
     const { getFreshAccessToken } = await import('./client');
@@ -96,9 +89,7 @@ describe('apiFetch', () => {
   });
 
   it('deduplicates concurrent refreshes across consumers', async () => {
-    let resolveRefresh:
-      | ((tokens: { accessToken: string; refreshToken: string; expiresAt: string }) => void)
-      | undefined;
+    let resolveRefresh: ((tokens: { accessToken: string; expiresAt: string }) => void) | undefined;
     refreshTokensMock.mockReturnValueOnce(
       new Promise((resolve) => {
         resolveRefresh = resolve;
@@ -106,7 +97,6 @@ describe('apiFetch', () => {
     );
     storeTokens({
       accessToken: 'expired-access-token',
-      refreshToken: 'refresh-token',
       expiresAt: PAST_EXPIRATION,
     });
     const { getFreshAccessToken, refreshAccessToken } = await import('./client');
@@ -115,7 +105,6 @@ describe('apiFetch', () => {
     const fromHttp = refreshAccessToken();
     resolveRefresh?.({
       accessToken: 'fresh-access-token',
-      refreshToken: 'new-refresh-token',
       expiresAt: FUTURE_EXPIRATION,
     });
 
@@ -131,7 +120,6 @@ describe('apiFetch', () => {
     fetchMock.mockResolvedValueOnce(new Response('{}', { status: 401 }));
     storeTokens({
       accessToken: 'access-token',
-      refreshToken: 'refresh-token',
       expiresAt: FUTURE_EXPIRATION,
     });
     const { apiFetch } = await import('./client');
@@ -152,7 +140,6 @@ describe('apiFetch', () => {
     refreshTokensMock.mockRejectedValueOnce(new Error('expired'));
     storeTokens({
       accessToken: 'access-token',
-      refreshToken: 'refresh-token',
       expiresAt: FUTURE_EXPIRATION,
     });
     const { apiFetch, setLogoutHandler } = await import('./client');
@@ -162,7 +149,6 @@ describe('apiFetch', () => {
 
     expect(onLogout).toHaveBeenCalledOnce();
     expect(getAccessToken()).toBeNull();
-    expect(getRefreshToken()).toBeNull();
   });
 });
 

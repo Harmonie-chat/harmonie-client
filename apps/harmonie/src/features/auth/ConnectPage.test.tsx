@@ -92,7 +92,7 @@ describe('ConnectPage', () => {
   it('logs in with username, stores tokens, authenticates, and navigates home', async () => {
     mocks.login.mockResolvedValueOnce({
       accessToken: 'access-token',
-      refreshToken: 'refresh-token',
+      expiresAt: '2100-01-01T00:00:00.000Z',
     });
     renderPage();
 
@@ -108,7 +108,7 @@ describe('ConnectPage', () => {
     );
     expect(mocks.storeTokens).toHaveBeenCalledWith({
       accessToken: 'access-token',
-      refreshToken: 'refresh-token',
+      expiresAt: '2100-01-01T00:00:00.000Z',
     });
     expect(mocks.setIsAuthenticated).toHaveBeenCalledWith(true);
     expect(mocks.navigate).toHaveBeenCalledWith('/');
@@ -117,7 +117,7 @@ describe('ConnectPage', () => {
   it('logs in with email when username is empty and toggles password visibility', async () => {
     mocks.login.mockResolvedValueOnce({
       accessToken: 'access-token',
-      refreshToken: 'refresh-token',
+      expiresAt: '2100-01-01T00:00:00.000Z',
     });
     renderPage();
 

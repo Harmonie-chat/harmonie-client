@@ -15,17 +15,11 @@ export interface RegisterResponse {
   email: string;
   username: string;
   accessToken: string;
-  refreshToken: string;
   expiresAt: string;
-}
-
-export interface RefreshRequest {
-  refreshToken: string;
 }
 
 export interface RefreshResponse {
   accessToken: string;
-  refreshToken: string;
   expiresAt: string;
 }
 
@@ -39,16 +33,10 @@ export interface LoginResponse {
   email: string;
   username: string;
   accessToken: string;
-  refreshToken: string;
   expiresAt: string;
-}
-
-export interface LogoutRequest {
-  refreshToken: string;
 }
 
 export interface TokensPayload {
   accessToken: string;
-  refreshToken: string;
   expiresAt: string;
 }
