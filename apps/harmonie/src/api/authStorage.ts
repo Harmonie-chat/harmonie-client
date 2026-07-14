@@ -11,6 +11,7 @@ const notifyTokenChange = () => {
   tokenChangeListeners.forEach((listener) => listener(_accessToken));
 };
 
+// TODO(#203): Remove this migration after cookie-based auth has been in production for 30 days.
 export const discardLegacyRefreshToken = () => {
   localStorage.removeItem(LEGACY_REFRESH_TOKEN_KEY);
 };
