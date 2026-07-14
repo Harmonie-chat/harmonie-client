@@ -53,7 +53,7 @@ export const refreshAccessToken = (): Promise<string> => {
 
 export const getFreshAccessToken = async (): Promise<string> => {
   const accessToken = getAccessToken();
-  if (accessToken && !isAccessTokenExpiring(accessToken)) return accessToken;
+  if (accessToken && !isAccessTokenExpiring()) return accessToken;
 
   return refreshAccessToken();
 };

@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearTokens, getAccessToken, getRefreshToken, storeTokens } from './authStorage';
 
 const refreshTokensMock = vi.fn();
+const FUTURE_EXPIRATION = '2100-01-01T00:00:00.000Z';
+const PAST_EXPIRATION = '2000-01-01T00:00:00.000Z';
 
 vi.mock('./auth', () => ({
   refreshTokens: refreshTokensMock,
@@ -17,7 +19,11 @@ describe('apiFetch', () => {
   it('adds the current access token to requests', async () => {
     const fetchMock = vi.mocked(fetch);
     fetchMock.mockResolvedValueOnce(new Response('{}', { status: 200 }));
-    storeTokens({ accessToken: 'access-token', refreshToken: 'refresh-token' });
+    storeTokens({
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: FUTURE_EXPIRATION,
+    });
     const { apiFetch } = await import('./client');
 
     await apiFetch('/guilds', { headers: { 'X-Trace': 'trace-id' } });
@@ -38,8 +44,13 @@ describe('apiFetch', () => {
     refreshTokensMock.mockResolvedValueOnce({
       accessToken: 'new-access-token',
       refreshToken: 'new-refresh-token',
+      expiresAt: FUTURE_EXPIRATION,
     });
-    storeTokens({ accessToken: 'old-access-token', refreshToken: 'refresh-token' });
+    storeTokens({
+      accessToken: 'old-access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: FUTURE_EXPIRATION,
+    });
     const { apiFetch } = await import('./client');
 
     const response = await apiFetch('/channels');
@@ -56,21 +67,28 @@ describe('apiFetch', () => {
   });
 
   it('returns the cached access token while it is still valid', async () => {
-    const validToken = `header.${btoa(JSON.stringify({ exp: 4_102_444_800 }))}.signature`;
-    storeTokens({ accessToken: validToken, refreshToken: 'refresh-token' });
+    storeTokens({
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: FUTURE_EXPIRATION,
+    });
     const { getFreshAccessToken } = await import('./client');
 
-    await expect(getFreshAccessToken()).resolves.toBe(validToken);
+    await expect(getFreshAccessToken()).resolves.toBe('access-token');
     expect(refreshTokensMock).not.toHaveBeenCalled();
   });
 
   it('refreshes an expired access token before returning it to SignalR', async () => {
-    const expiredToken = `header.${btoa(JSON.stringify({ exp: 1 }))}.signature`;
     refreshTokensMock.mockResolvedValueOnce({
       accessToken: 'fresh-access-token',
       refreshToken: 'fresh-refresh-token',
+      expiresAt: FUTURE_EXPIRATION,
     });
-    storeTokens({ accessToken: expiredToken, refreshToken: 'refresh-token' });
+    storeTokens({
+      accessToken: 'expired-access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: PAST_EXPIRATION,
+    });
     const { getFreshAccessToken } = await import('./client');
 
     await expect(getFreshAccessToken()).resolves.toBe('fresh-access-token');
@@ -79,20 +97,27 @@ describe('apiFetch', () => {
 
   it('deduplicates concurrent refreshes across consumers', async () => {
     let resolveRefresh:
-      | ((tokens: { accessToken: string; refreshToken: string }) => void)
+      | ((tokens: { accessToken: string; refreshToken: string; expiresAt: string }) => void)
       | undefined;
     refreshTokensMock.mockReturnValueOnce(
       new Promise((resolve) => {
         resolveRefresh = resolve;
       })
     );
-    const expiredToken = `header.${btoa(JSON.stringify({ exp: 1 }))}.signature`;
-    storeTokens({ accessToken: expiredToken, refreshToken: 'refresh-token' });
+    storeTokens({
+      accessToken: 'expired-access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: PAST_EXPIRATION,
+    });
     const { getFreshAccessToken, refreshAccessToken } = await import('./client');
 
     const fromSignalR = getFreshAccessToken();
     const fromHttp = refreshAccessToken();
-    resolveRefresh?.({ accessToken: 'fresh-access-token', refreshToken: 'new-refresh-token' });
+    resolveRefresh?.({
+      accessToken: 'fresh-access-token',
+      refreshToken: 'new-refresh-token',
+      expiresAt: FUTURE_EXPIRATION,
+    });
 
     await expect(Promise.all([fromSignalR, fromHttp])).resolves.toEqual([
       'fresh-access-token',
@@ -104,7 +129,11 @@ describe('apiFetch', () => {
   it('does not refresh refresh-token requests', async () => {
     const fetchMock = vi.mocked(fetch);
     fetchMock.mockResolvedValueOnce(new Response('{}', { status: 401 }));
-    storeTokens({ accessToken: 'access-token', refreshToken: 'refresh-token' });
+    storeTokens({
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: FUTURE_EXPIRATION,
+    });
     const { apiFetch } = await import('./client');
 
     const response = await apiFetch('/auth/refresh');
@@ -121,7 +150,11 @@ describe('apiFetch', () => {
       .mockResolvedValueOnce(new Response('{}', { status: 401 }))
       .mockResolvedValueOnce(new Response('{}', { status: 401 }));
     refreshTokensMock.mockRejectedValueOnce(new Error('expired'));
-    storeTokens({ accessToken: 'access-token', refreshToken: 'refresh-token' });
+    storeTokens({
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: FUTURE_EXPIRATION,
+    });
     const { apiFetch, setLogoutHandler } = await import('./client');
     setLogoutHandler(onLogout);
 
