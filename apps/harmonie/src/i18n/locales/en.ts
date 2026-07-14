@@ -33,6 +33,19 @@ export const en = {
       attachmentOnly: 'New message with attachment.',
       fallbackBody: 'Harmonie - New message.',
     },
+    push: {
+      title: 'Push notifications',
+      promptTitle: 'Enable notifications?',
+      promptDescription: 'Receive new messages even when Harmonie is not open.',
+      enabledDescription: 'Push notifications are enabled on this device.',
+      disabledDescription: 'Enable notifications to receive new messages.',
+      unsupported: 'Push notifications are not available in this browser.',
+      denied: 'Notifications are blocked. Allow them in your browser settings to enable them.',
+      error: 'Unable to set up notifications. Please try again.',
+      enable: 'Enable',
+      disable: 'Disable',
+      dismiss: 'Hide',
+    },
   },
   guild: {
     createTitle: 'Create a guild',
@@ -322,6 +335,7 @@ export const en = {
       language: 'Language',
       avatar: 'Avatar',
       theme: 'Theme',
+      notifications: 'Notifications',
     },
     profile: {
       title: 'Profile',
@@ -369,6 +383,9 @@ export const en = {
       'crimson-obsidian': 'Crimson Obsidian',
       'amethyst-obsidian': 'Amethyst Obsidian',
       'rose-obsidian': 'Blush Obsidian',
+    },
+    notifications: {
+      title: 'Notifications',
     },
   },
   voice: {

@@ -14,6 +14,7 @@ import { PwaInstallPrompt } from './shared/pwa/PwaInstallPrompt';
 import { registerServiceWorker } from './shared/pwa/registerServiceWorker';
 import { syncKeyboardInset } from './shared/viewport/keyboardInset';
 import { preventAppZoom } from './shared/viewport/preventAppZoom';
+import { PushNotificationProvider } from './shared/notifications/PushNotificationContext';
 
 document.addEventListener('contextmenu', (e) => e.preventDefault());
 registerServiceWorker();
@@ -24,16 +25,18 @@ createRoot(document.getElementById('root')!).render(
   <ThemeProvider>
     <AuthProvider>
       <UserProvider>
-        <AudioInputProvider>
-          <AudioOutputProvider>
-            <VideoInputProvider>
-              <RealtimeProvider>
-                <RouterProvider router={router} />
-                <PwaInstallPrompt />
-              </RealtimeProvider>
-            </VideoInputProvider>
-          </AudioOutputProvider>
-        </AudioInputProvider>
+        <PushNotificationProvider>
+          <AudioInputProvider>
+            <AudioOutputProvider>
+              <VideoInputProvider>
+                <RealtimeProvider>
+                  <RouterProvider router={router} />
+                  <PwaInstallPrompt />
+                </RealtimeProvider>
+              </VideoInputProvider>
+            </AudioOutputProvider>
+          </AudioInputProvider>
+        </PushNotificationProvider>
       </UserProvider>
     </AuthProvider>
   </ThemeProvider>

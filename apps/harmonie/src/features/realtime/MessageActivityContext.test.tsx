@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MessageActivityProvider, useMessageActivity } from './MessageActivityContext';
+import type { PushNotificationStatus } from '@/shared/notifications/webPush';
 import { REALTIME_SERVER_EVENTS } from './constants';
 
 type Handler = (event: Record<string, unknown>) => void;
@@ -17,7 +18,7 @@ const mocks = vi.hoisted(() => ({
   guilds: [] as Array<{ guildId: string; hasUnread?: boolean }>,
   handlers: new Map<string, Handler>(),
   params: {} as { guildId?: string },
-  requestPermission: vi.fn(),
+  pushNotificationStatus: 'prompt' as PushNotificationStatus,
   showNotification: vi.fn(),
   textChannelMatch: null as null | { params: { channelId?: string } },
   conversationMatch: null as null | { params: { conversationId?: string } },
@@ -58,8 +59,11 @@ vi.mock('@/features/user/UserContext', () => ({
 }));
 
 vi.mock('@/shared/notifications/browserNotification', () => ({
-  requestBrowserNotificationPermission: mocks.requestPermission,
   showBrowserNotification: mocks.showNotification,
+}));
+
+vi.mock('@/shared/notifications/PushNotificationContext', () => ({
+  usePushNotifications: () => ({ status: mocks.pushNotificationStatus }),
 }));
 
 const ActivityConsumer = () => {
@@ -136,7 +140,7 @@ describe('MessageActivityProvider', () => {
     mocks.guilds = [];
     mocks.handlers.clear();
     mocks.params = {};
-    mocks.requestPermission.mockReset();
+    mocks.pushNotificationStatus = 'prompt';
     mocks.showNotification.mockReset();
     mocks.textChannelMatch = null;
     mocks.conversationMatch = null;
@@ -185,15 +189,6 @@ describe('MessageActivityProvider', () => {
     expect(screen.getByTestId('guild-1')).toHaveTextContent('false');
     expect(screen.getByTestId('conversation-1')).toHaveTextContent('false');
     expect(screen.getByTestId('any-conversation')).toHaveTextContent('false');
-  });
-
-  it('requests browser notification permission after user interaction', () => {
-    renderProvider();
-
-    fireEvent.pointerDown(window);
-    fireEvent.keyDown(window);
-
-    expect(mocks.requestPermission).toHaveBeenCalledTimes(2);
   });
 
   it('tracks realtime guild channel activity and clears current-route counts on focus', async () => {
@@ -309,6 +304,24 @@ describe('MessageActivityProvider', () => {
 
     expect(screen.getByTestId('total')).toHaveTextContent('2');
     hasFocus.mockRestore();
+  });
+
+  it('does not duplicate browser notifications when web push is enabled', async () => {
+    createConnection();
+    mocks.pushNotificationStatus = 'enabled';
+
+    renderProvider();
+
+    await waitFor(() =>
+      expect(mocks.handlers.has(REALTIME_SERVER_EVENTS.messageCreated)).toBe(true)
+    );
+
+    act(() => {
+      mocks.handlers.get(REALTIME_SERVER_EVENTS.messageCreated)?.(channelMessage());
+    });
+
+    expect(screen.getByTestId('channel-1')).toHaveTextContent('true');
+    expect(mocks.showNotification).not.toHaveBeenCalled();
   });
 
   it('unsubscribes realtime handlers on unmount', async () => {

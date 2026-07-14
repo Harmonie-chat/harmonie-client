@@ -655,7 +655,7 @@ describe('MessageThread', () => {
     expect(screen.queryByLabelText('pinned modal')).not.toBeInTheDocument();
   });
 
-  it('opens context menus, reaction picker and loads more while scrolling', async () => {
+  it('loads more while scrolling near the top', async () => {
     const user = userEvent.setup();
     const { container, props } = renderThread();
     const scrollElement = container.querySelector('.overflow-y-auto')!;
@@ -665,6 +665,7 @@ describe('MessageThread', () => {
       scrollTop: 20,
     });
 
+    fireEvent.wheel(scrollElement);
     fireEvent.scroll(scrollElement);
 
     await waitFor(() => expect(props.loadMore).toHaveBeenCalledTimes(1));
@@ -679,6 +680,11 @@ describe('MessageThread', () => {
     ).not.toBeInTheDocument();
     fireEvent.transitionEnd(screen.getByText('channel.messages.newMessages').parentElement!);
     expect(props.dismissNewMessagesSeparator).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens message context menus and runs their actions', async () => {
+    const user = userEvent.setup();
+    const { props } = renderThread();
 
     await user.click(screen.getByRole('button', { name: 'menu message-1' }));
 
@@ -699,27 +705,10 @@ describe('MessageThread', () => {
 
     await user.click(screen.getByRole('button', { name: 'menu message-1' }));
     await user.click(screen.getByRole('button', { name: 'menu quick react' }));
-
     expect(props.toggleReaction).toHaveBeenCalledWith('message-1', '😀');
-
-    await user.click(screen.getByRole('button', { name: 'menu at message-2' }));
-    await user.click(screen.getByRole('button', { name: 'menu picker' }));
-
-    expect(screen.getByLabelText('reaction picker')).toHaveAttribute('data-left', '10');
-
-    await user.click(screen.getByRole('button', { name: 'picker close' }));
-    expect(screen.queryByLabelText('reaction picker')).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'menu at message-2' }));
-    await user.click(screen.getByRole('button', { name: 'menu picker' }));
-
-    await user.click(screen.getByRole('button', { name: 'picker select' }));
-
-    expect(props.toggleReaction).toHaveBeenCalledWith('message-2', '🔥');
 
     await user.click(screen.getByRole('button', { name: 'menu at message-1' }));
     await user.click(screen.getByRole('button', { name: 'menu edit' }));
-
     expect(props.startEditing).toHaveBeenCalledWith('message-1');
 
     await user.click(screen.getByRole('button', { name: 'menu message-1' }));
@@ -731,6 +720,25 @@ describe('MessageThread', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('opens the reaction picker and selects a reaction', async () => {
+    const user = userEvent.setup();
+    const { props } = renderThread();
+
+    await user.click(screen.getByRole('button', { name: 'menu at message-2' }));
+    await user.click(screen.getByRole('button', { name: 'menu picker' }));
+
+    expect(screen.getByLabelText('reaction picker')).toHaveAttribute('data-left', '10');
+
+    await user.click(screen.getByRole('button', { name: 'picker close' }));
+    expect(screen.queryByLabelText('reaction picker')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'menu at message-2' }));
+    await user.click(screen.getByRole('button', { name: 'menu picker' }));
+    await user.click(screen.getByRole('button', { name: 'picker select' }));
+
+    expect(props.toggleReaction).toHaveBeenCalledWith('message-2', '🔥');
+  });
+
   it('does not load more when already away from the top', async () => {
     const { container, props } = renderThread();
     const scrollElement = container.querySelector('.overflow-y-auto')!;
@@ -740,6 +748,7 @@ describe('MessageThread', () => {
       scrollTop: 120,
     });
 
+    fireEvent.wheel(scrollElement);
     fireEvent.scroll(scrollElement);
 
     expect(props.loadMore).not.toHaveBeenCalled();

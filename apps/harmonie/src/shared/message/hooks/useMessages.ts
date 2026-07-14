@@ -32,6 +32,16 @@ interface WsMessageDeletedEvent {
 
 const EMPTY_MESSAGES: Message[] = [];
 
+const normalizeMessage = (message: Message): Message => ({
+  ...message,
+  mentionedUserIds: message.mentionedUserIds ?? [],
+  attachments: Array.isArray(message.attachments) ? message.attachments : [],
+  reactions: Array.isArray(message.reactions) ? message.reactions : [],
+  linkPreviews: message.linkPreviews ?? null,
+  isPinned: message.isPinned ?? false,
+  replyTo: message.replyTo ?? null,
+});
+
 interface WsReactionEvent {
   messageId: string;
   emoji: string;
@@ -162,7 +172,7 @@ export const useMessages = ({
   const dismissNewMessagesSeparator = () => setLastReadMessageId(null);
 
   const applyFetchedMessages = (requestedEntityId: string, data: MessageList) => {
-    const sorted = sortMessagesAsc(data.items);
+    const sorted = sortMessagesAsc(data.items.map(normalizeMessage));
     setLoadedEntityId(requestedEntityId);
     setMessages(sorted);
     setNextCursor(data.nextCursor);
@@ -187,13 +197,14 @@ export const useMessages = ({
   const addMessage = useCallback(
     (message: Message) => {
       if (!entityId) return;
+      const normalizedMessage = normalizeMessage(message);
       setLoadedEntityId(entityId);
       setError(false);
       setMessages((prev) => {
-        if (prev.some((item) => item.messageId === message.messageId)) return prev;
-        return sortMessagesAsc([...prev, message]);
+        if (prev.some((item) => item.messageId === normalizedMessage.messageId)) return prev;
+        return sortMessagesAsc([...prev, normalizedMessage]);
       });
-      markAsReadRef.current(message.messageId).catch(() => {});
+      markAsReadRef.current(normalizedMessage.messageId).catch(() => {});
     },
     [entityId]
   );
@@ -452,14 +463,15 @@ export const useMessages = ({
     let items: Message[] = [];
     try {
       const data = await apiRef.current.fetchMessages(entityId, cursor);
+      const fetchedItems = data.items.map(normalizeMessage);
       setMessages((prev) => {
         const existingIds = new Set(prev.map((m) => m.messageId));
-        const newItems = sortMessagesAsc(data.items).filter((m) => !existingIds.has(m.messageId));
+        const newItems = sortMessagesAsc(fetchedItems).filter((m) => !existingIds.has(m.messageId));
         return [...newItems, ...prev];
       });
       nextCursorRef.current = data.nextCursor;
       setNextCursor(data.nextCursor);
-      items = data.items;
+      items = fetchedItems;
     } catch {
       items = [];
     }
@@ -502,7 +514,9 @@ export const useMessages = ({
       mentionedUserIds
     );
     setMessages((prev) =>
-      prev.map((m) => (m.messageId === updated.messageId ? { ...m, ...updated } : m))
+      prev.map((m) =>
+        m.messageId === updated.messageId ? normalizeMessage({ ...m, ...updated }) : m
+      )
     );
     setEditingMessageId(null);
   };

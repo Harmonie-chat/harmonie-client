@@ -208,6 +208,8 @@ const useMessageThreadContent = <TAuthor extends MessageAuthor = MessageAuthor>(
     showScrollToBottom,
   } = uiState;
   const pinnedHighlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const userScrollIntentRef = useRef(false);
+  const userScrollIntentTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const {
     scrollRef,
@@ -218,22 +220,46 @@ const useMessageThreadContent = <TAuthor extends MessageAuthor = MessageAuthor>(
     shouldStickToBottomRef,
   } = refs;
 
+  const clearUserScrollIntent = () => {
+    userScrollIntentRef.current = false;
+    if (userScrollIntentTimeoutRef.current) {
+      clearTimeout(userScrollIntentTimeoutRef.current);
+      userScrollIntentTimeoutRef.current = null;
+    }
+  };
+
+  const markUserScrollIntent = () => {
+    userScrollIntentRef.current = true;
+    if (userScrollIntentTimeoutRef.current) {
+      clearTimeout(userScrollIntentTimeoutRef.current);
+    }
+    userScrollIntentTimeoutRef.current = setTimeout(() => {
+      userScrollIntentRef.current = false;
+      userScrollIntentTimeoutRef.current = null;
+    }, 350);
+  };
+
   const scrollToBottom = (behavior: ScrollBehavior = 'auto') => {
     const scrollElement = scrollRef.current;
     if (!scrollElement) return;
 
+    clearUserScrollIntent();
+    shouldStickToBottomRef.current = true;
     dispatchUi({ type: 'patch', patch: { showScrollToBottom: false } });
 
     if (behavior === 'smooth') {
+      suppressNextScrollEffectsRef.current = true;
       scrollElement.scrollTo({ top: scrollElement.scrollHeight, behavior });
       return;
     }
 
+    suppressNextScrollEffectsRef.current = true;
     scrollElement.scrollTop = scrollElement.scrollHeight;
 
     requestAnimationFrame(() => {
       const nextScrollElement = scrollRef.current;
       if (!nextScrollElement) return;
+      suppressNextScrollEffectsRef.current = true;
       nextScrollElement.scrollTop = nextScrollElement.scrollHeight;
     });
   };
@@ -247,6 +273,22 @@ const useMessageThreadContent = <TAuthor extends MessageAuthor = MessageAuthor>(
       clearTimeout(pinnedHighlightTimeoutRef.current);
       pinnedHighlightTimeoutRef.current = null;
     }
+    userScrollIntentRef.current = false;
+    if (userScrollIntentTimeoutRef.current) {
+      clearTimeout(userScrollIntentTimeoutRef.current);
+      userScrollIntentTimeoutRef.current = null;
+    }
+
+    return () => {
+      if (pinnedHighlightTimeoutRef.current) {
+        clearTimeout(pinnedHighlightTimeoutRef.current);
+        pinnedHighlightTimeoutRef.current = null;
+      }
+      if (userScrollIntentTimeoutRef.current) {
+        clearTimeout(userScrollIntentTimeoutRef.current);
+        userScrollIntentTimeoutRef.current = null;
+      }
+    };
   }, [
     previousMessageCountRef,
     scrollAnchorRef,
@@ -307,6 +349,7 @@ const useMessageThreadContent = <TAuthor extends MessageAuthor = MessageAuthor>(
         requestAnimationFrame(() => {
           const nextScrollElement = scrollRef.current;
           if (!nextScrollElement) return;
+          suppressNextScrollEffectsRef.current = true;
           nextScrollElement.scrollTop = nextScrollElement.scrollHeight;
         });
       }
@@ -315,7 +358,13 @@ const useMessageThreadContent = <TAuthor extends MessageAuthor = MessageAuthor>(
     observer.observe(contentEl);
     observer.observe(scrollEl);
     return () => observer.disconnect();
-  }, [messages.length, messagesContentRef, scrollRef, shouldStickToBottomRef]);
+  }, [
+    messages.length,
+    messagesContentRef,
+    scrollRef,
+    shouldStickToBottomRef,
+    suppressNextScrollEffectsRef,
+  ]);
 
   useEffect(() => {
     if (!editingMessageId) return;
@@ -349,10 +398,21 @@ const useMessageThreadContent = <TAuthor extends MessageAuthor = MessageAuthor>(
     const element = scrollRef.current;
     if (!element) return;
 
+    if (suppressNextScrollEffectsRef.current) {
+      suppressNextScrollEffectsRef.current = false;
+      if (!userScrollIntentRef.current) return;
+    }
+
     if (lastReadMessageId !== null && !separatorDismissed) {
       dispatchUi({ type: 'patch', patch: { separatorDismissed: true } });
     }
     const distanceFromBottom = element.scrollHeight - element.scrollTop - element.clientHeight;
+
+    if (!userScrollIntentRef.current && shouldStickToBottomRef.current && distanceFromBottom > 1) {
+      scrollToBottom();
+      return;
+    }
+
     shouldStickToBottomRef.current = distanceFromBottom < 50;
     dispatchUi({ type: 'patch', patch: { showScrollToBottom: distanceFromBottom > 160 } });
     if (element.scrollTop >= 100) return;
@@ -570,7 +630,9 @@ const useMessageThreadContent = <TAuthor extends MessageAuthor = MessageAuthor>(
           <div
             ref={scrollRef}
             className="h-full overflow-y-auto px-2 sm:px-4 py-4 gap-0"
+            onTouchMove={markUserScrollIntent}
             onScroll={handleMessagesScroll}
+            onWheel={markUserScrollIntent}
           >
             {loading ? (
               <div className="flex h-full items-center justify-center text-text-3 text-sm">

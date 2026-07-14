@@ -3,6 +3,7 @@ import { logout as logoutApi, refreshTokens } from '@/api/auth';
 import { clearTokens, getRefreshToken, storeTokens } from '@/api/authStorage';
 import { setLogoutHandler } from '@/api/client';
 import type { ApiError } from '@/types/error';
+import { disableWebPushNotificationsLocally } from '@/shared/notifications/webPush';
 
 interface AuthContextValue {
   isAuthenticated: boolean;
@@ -32,6 +33,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     setLogoutHandler(() => {
+      void disableWebPushNotificationsLocally().catch(() => {});
       clearTokens();
       setIsAuthenticated(false);
     });
@@ -66,6 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         void error;
       }
     }
+    await disableWebPushNotificationsLocally().catch(() => {});
     clearTokens();
     setIsAuthenticated(false);
   };

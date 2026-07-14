@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  NOTIFICATION_NAVIGATE_EVENT,
-  requestBrowserNotificationPermission,
-  showBrowserNotification,
-} from './browserNotification';
+import { NOTIFICATION_NAVIGATE_EVENT, showBrowserNotification } from './browserNotification';
 
 vi.mock('@/i18n', () => ({
   default: {
@@ -31,7 +27,6 @@ interface NotificationOptions {
 
 class MockNotification {
   static permission: NotificationPermission = 'default';
-  static requestPermission = vi.fn();
   static instances: MockNotification[] = [];
 
   onclick: (() => void) | null = null;
@@ -48,17 +43,8 @@ class MockNotification {
 describe('browserNotification', () => {
   beforeEach(() => {
     MockNotification.permission = 'default';
-    MockNotification.requestPermission.mockReset();
     MockNotification.instances = [];
     vi.stubGlobal('Notification', MockNotification);
-  });
-
-  it('requests permission only when notifications are undecided', () => {
-    MockNotification.requestPermission.mockResolvedValueOnce('granted');
-
-    requestBrowserNotificationPermission();
-
-    expect(MockNotification.requestPermission).toHaveBeenCalledOnce();
   });
 
   it('shows a browser notification when permission is granted', () => {
