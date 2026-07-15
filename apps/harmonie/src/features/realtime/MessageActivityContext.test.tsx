@@ -270,7 +270,7 @@ describe('MessageActivityProvider', () => {
       })
     );
     expect(screen.getByTestId('total')).toHaveTextContent('4');
-    expect(mocks.playMessageNotificationSound).toHaveBeenCalledTimes(3);
+    expect(mocks.playMessageNotificationSound).toHaveBeenCalledTimes(2);
     expect(mocks.playMessageNotificationSound).toHaveBeenLastCalledWith(mocks.applySinkId, false);
 
     act(() => {
@@ -322,16 +322,16 @@ describe('MessageActivityProvider', () => {
     });
 
     expect(screen.getByTestId('total')).toHaveTextContent('2');
-    expect(mocks.playMessageNotificationSound).toHaveBeenCalledTimes(2);
+    expect(mocks.playMessageNotificationSound).toHaveBeenCalledTimes(1);
     expect(mocks.playMessageNotificationSound).toHaveBeenLastCalledWith(mocks.applySinkId, false);
     hasFocus.mockRestore();
   });
 
-  it('keeps the sound silent for the active focused channel and conversation', async () => {
+  it('keeps the sound silent for the active channel and conversation', async () => {
     createConnection();
     mocks.textChannelMatch = { params: { channelId: 'channel-1' } };
     mocks.conversationMatch = { params: { conversationId: 'conversation-1' } };
-    const hasFocus = vi.spyOn(document, 'hasFocus').mockReturnValue(true);
+    const hasFocus = vi.spyOn(document, 'hasFocus').mockReturnValue(false);
 
     renderProvider();
 

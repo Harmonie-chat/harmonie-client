@@ -244,7 +244,7 @@ export const MessageActivityProvider = ({ children }: { children: ReactNode }) =
 
     const handleMessageCreated = (event: MessageCreatedEvent) => {
       if (event.authorUserId === user?.userId) return;
-      if (event.channelId !== activeTextChannelId || !document.hasFocus()) {
+      if (event.channelId !== activeTextChannelId) {
         playMessageNotificationSound(applySinkId, outputMuted);
       }
 
@@ -312,7 +312,7 @@ export const MessageActivityProvider = ({ children }: { children: ReactNode }) =
 
     const handleConversationMessageCreated = (event: ConversationMessageCreatedEvent) => {
       if (event.authorUserId === user?.userId) return;
-      if (event.conversationId !== activeConversationId || !document.hasFocus()) {
+      if (event.conversationId !== activeConversationId) {
         playMessageNotificationSound(applySinkId, outputMuted);
       }
 
