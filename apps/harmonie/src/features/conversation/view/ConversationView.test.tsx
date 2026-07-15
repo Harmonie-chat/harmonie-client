@@ -525,6 +525,31 @@ describe('ConversationView', () => {
     expect(screen.getByRole('heading', { name: 'Research' })).toBeInTheDocument();
   });
 
+  it.each(['Direct', 'Group'] as const)(
+    'switches between chat and an active %s conversation call without leaving',
+    async (type) => {
+      const user = userEvent.setup();
+      mocks.conversation = conversation({ type });
+      mocks.voice.activeConversationId = 'conversation-1';
+
+      render(<ConversationView />);
+
+      expect(screen.getByRole('region', { name: 'conversation call stage' })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /conversation.call.showChat/ }));
+
+      expect(
+        screen.queryByRole('region', { name: 'conversation call stage' })
+      ).not.toBeInTheDocument();
+      expect(mocks.voice.leaveCall).not.toHaveBeenCalled();
+
+      await user.click(screen.getByRole('button', { name: /conversation.call.show/ }));
+
+      expect(screen.getByRole('region', { name: 'conversation call stage' })).toBeInTheDocument();
+      expect(mocks.voice.leaveCall).not.toHaveBeenCalled();
+    }
+  );
+
   it('joins an existing remote call and leaves an active call', async () => {
     const user = userEvent.setup();
     mocks.voice.getConversationParticipants.mockReturnValue([{ userId: 'user-2' }]);

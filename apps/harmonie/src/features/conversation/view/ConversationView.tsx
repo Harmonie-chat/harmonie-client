@@ -170,8 +170,6 @@ export const ConversationView = () => {
       : conversationParticipants;
   const callPanelConversationId =
     callPanelState.conversationId === conversationId ? callPanelState.conversationId : null;
-  const storedCallPanelVisible =
-    callPanelState.conversationId === conversationId ? callPanelState.visible : false;
 
   const membersMap = new Map<string, ConversationParticipant>();
   for (const participant of conversationParticipants) {
@@ -201,7 +199,10 @@ export const ConversationView = () => {
     isActiveConversationCall ||
     hasJoinableConversationCall ||
     callPanelConversationId === conversationId;
-  const callPanelVisible = isActiveConversationCall || storedCallPanelVisible;
+  const callPanelVisible =
+    callPanelState.conversationId === conversationId
+      ? callPanelState.visible
+      : isActiveConversationCall;
   const isCallPanelOpen = hasConversationCall && callPanelVisible;
 
   const handleAvatarClick = (participant: ConversationParticipant, rect: DOMRect) => {
