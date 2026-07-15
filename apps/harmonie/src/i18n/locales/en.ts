@@ -27,6 +27,9 @@ export const en = {
     dateAt: '{{date}} at {{time}}',
   },
   notifications: {
+    sound: {
+      preview: 'Test sound',
+    },
     browser: {
       title: 'New message',
       titleFrom: '{{senderName}} - {{title}}',

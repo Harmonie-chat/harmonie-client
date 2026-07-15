@@ -7,6 +7,7 @@ import { REALTIME_SERVER_EVENTS } from './constants';
 type Handler = (event: Record<string, unknown>) => void;
 
 const mocks = vi.hoisted(() => ({
+  applySinkId: vi.fn(),
   channels: undefined as
     | Array<{ channelId: string; type: string; hasUnread?: boolean }>
     | undefined,
@@ -17,7 +18,9 @@ const mocks = vi.hoisted(() => ({
   conversations: undefined as Array<{ conversationId: string; hasUnread?: boolean }> | undefined,
   guilds: [] as Array<{ guildId: string; hasUnread?: boolean }>,
   handlers: new Map<string, Handler>(),
+  outputMuted: false,
   params: {} as { guildId?: string },
+  playMessageNotificationSound: vi.fn(),
   pushNotificationStatus: 'prompt' as PushNotificationStatus,
   showNotification: vi.fn(),
   textChannelMatch: null as null | { params: { channelId?: string } },
@@ -54,12 +57,23 @@ vi.mock('@/features/realtime/RealtimeContext', () => ({
   useRealtime: () => ({ connection: mocks.connection }),
 }));
 
+vi.mock('@/features/user/audio/AudioOutputContext', () => ({
+  useAudioOutput: () => ({
+    applySinkId: mocks.applySinkId,
+    muted: mocks.outputMuted,
+  }),
+}));
+
 vi.mock('@/features/user/UserContext', () => ({
   useUser: () => ({ user: mocks.user }),
 }));
 
 vi.mock('@/shared/notifications/browserNotification', () => ({
   showBrowserNotification: mocks.showNotification,
+}));
+
+vi.mock('@/shared/notifications/messageNotificationSound', () => ({
+  playMessageNotificationSound: mocks.playMessageNotificationSound,
 }));
 
 vi.mock('@/shared/notifications/PushNotificationContext', () => ({
@@ -139,7 +153,10 @@ describe('MessageActivityProvider', () => {
     mocks.conversations = undefined;
     mocks.guilds = [];
     mocks.handlers.clear();
+    mocks.applySinkId.mockReset();
+    mocks.outputMuted = false;
     mocks.params = {};
+    mocks.playMessageNotificationSound.mockReset();
     mocks.pushNotificationStatus = 'prompt';
     mocks.showNotification.mockReset();
     mocks.textChannelMatch = null;
@@ -253,6 +270,8 @@ describe('MessageActivityProvider', () => {
       })
     );
     expect(screen.getByTestId('total')).toHaveTextContent('4');
+    expect(mocks.playMessageNotificationSound).toHaveBeenCalledTimes(3);
+    expect(mocks.playMessageNotificationSound).toHaveBeenLastCalledWith(mocks.applySinkId, false);
 
     act(() => {
       fireEvent.focus(window);
@@ -303,6 +322,8 @@ describe('MessageActivityProvider', () => {
     });
 
     expect(screen.getByTestId('total')).toHaveTextContent('2');
+    expect(mocks.playMessageNotificationSound).toHaveBeenCalledTimes(2);
+    expect(mocks.playMessageNotificationSound).toHaveBeenLastCalledWith(mocks.applySinkId, false);
     hasFocus.mockRestore();
   });
 
