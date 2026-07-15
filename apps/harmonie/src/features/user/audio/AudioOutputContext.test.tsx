@@ -109,6 +109,40 @@ describe('AudioOutputProvider', () => {
     expect(setSinkId).toHaveBeenLastCalledWith('speaker-1');
   });
 
+  it('falls back to the default output when a stored sink is unavailable', async () => {
+    const sinkError = new DOMException('The object can not be found here.', 'NotFoundError');
+    const setSinkId = vi.fn().mockRejectedValueOnce(sinkError).mockResolvedValue(undefined);
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    localStorage.setItem('harmonie:audioOutputDeviceId', 'missing-speaker');
+    mocks.enumerateDevices.mockResolvedValue([
+      mediaDevice({ deviceId: 'default', label: 'Default speaker' }),
+    ]);
+
+    render(
+      <AudioOutputProvider>
+        <audio
+          data-testid="audio"
+          ref={(element) => {
+            if (element) Object.assign(element, { setSinkId });
+          }}
+        />
+        <OutputConsumer />
+      </AudioOutputProvider>
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+
+    await waitFor(() => expect(screen.getByTestId('selected')).toHaveTextContent('default'));
+    expect(localStorage.getItem('harmonie:audioOutputDeviceId')).toBeNull();
+    expect(setSinkId).toHaveBeenNthCalledWith(1, 'missing-speaker');
+    expect(setSinkId).toHaveBeenNthCalledWith(2, 'default');
+    expect(consoleWarn).toHaveBeenCalledWith(
+      '[AudioOutput] Failed to use output device; falling back to default',
+      { deviceId: 'missing-speaker', error: sinkError }
+    );
+    consoleWarn.mockRestore();
+  });
+
   it('requests audio permission, stops tracks, and refreshes outputs', async () => {
     const stop = vi.fn();
     mocks.enumerateDevices
