@@ -21,13 +21,22 @@ const AudioOutputContext = createContext<AudioOutputContextValue | null>(null);
 const STORAGE_KEY = 'harmonie:audioOutputDeviceId';
 const DEFAULT_DEVICE_ID = 'default';
 
-const applyToAllAudioElements = (deviceId: string) => {
-  document.querySelectorAll<HTMLAudioElement>('audio').forEach((el) => {
-    if ('setSinkId' in el) {
-      void (el as HTMLAudioElement & { setSinkId: (id: string) => Promise<void> }).setSinkId(
-        deviceId
-      );
-    }
+type AudioElementWithSinkId = HTMLAudioElement & {
+  setSinkId: (deviceId: string) => Promise<void>;
+};
+
+const setAudioElementSink = (
+  element: HTMLAudioElement,
+  deviceId: string,
+  onError: (error: unknown) => void
+) => {
+  if (!('setSinkId' in element)) return;
+  void (element as AudioElementWithSinkId).setSinkId(deviceId).catch(onError);
+};
+
+const applyToAllAudioElements = (deviceId: string, onError: (error: unknown) => void) => {
+  document.querySelectorAll<HTMLAudioElement>('audio').forEach((element) => {
+    setAudioElementSink(element, deviceId, onError);
   });
 };
 
@@ -91,10 +100,26 @@ export const AudioOutputProvider = ({ children }: { children: ReactNode }) => {
     selectedDeviceIdRef.current = selectedDeviceId;
   }, [selectedDeviceId]);
 
+  const fallbackToDefaultDevice = (failedDeviceId: string, error: unknown) => {
+    console.warn('[AudioOutput] Failed to use output device; falling back to default', {
+      deviceId: failedDeviceId,
+      error,
+    });
+    if (selectedDeviceIdRef.current !== failedDeviceId) return;
+
+    selectedDeviceIdRef.current = DEFAULT_DEVICE_ID;
+    setSelectedDeviceId(DEFAULT_DEVICE_ID);
+    localStorage.removeItem(STORAGE_KEY);
+    applyToAllAudioElements(DEFAULT_DEVICE_ID, (fallbackError) => {
+      console.warn('[AudioOutput] Failed to restore the default output device', fallbackError);
+    });
+  };
+
   const selectDevice = (deviceId: string) => {
+    selectedDeviceIdRef.current = deviceId;
     setSelectedDeviceId(deviceId);
     localStorage.setItem(STORAGE_KEY, deviceId);
-    applyToAllAudioElements(deviceId);
+    applyToAllAudioElements(deviceId, (error) => fallbackToDefaultDevice(deviceId, error));
   };
 
   const requestPermission = async () => {
@@ -117,13 +142,10 @@ export const AudioOutputProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const applySinkId = (el: HTMLAudioElement) => {
+  const applySinkId = (element: HTMLAudioElement) => {
     const deviceId = selectedDeviceIdRef.current;
-    if ('setSinkId' in el && deviceId !== DEFAULT_DEVICE_ID) {
-      void (el as HTMLAudioElement & { setSinkId: (id: string) => Promise<void> }).setSinkId(
-        deviceId
-      );
-    }
+    if (deviceId === DEFAULT_DEVICE_ID) return;
+    setAudioElementSink(element, deviceId, (error) => fallbackToDefaultDevice(deviceId, error));
   };
 
   return (
