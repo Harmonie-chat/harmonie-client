@@ -1,11 +1,14 @@
-import { Bell, BellOff } from 'lucide-react';
+import { Bell, BellOff, Volume2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@harmonie/ui';
+import { useAudioOutput } from '@/features/user/audio/AudioOutputContext';
+import { playMessageNotificationSound } from '@/shared/notifications/messageNotificationSound';
 import { usePushNotifications } from '@/shared/notifications/PushNotificationContext';
 
 export const NotificationsSection = () => {
   const { t } = useTranslation();
   const { disable, enable, status } = usePushNotifications();
+  const { applySinkId, muted: outputMuted } = useAudioOutput();
   const isLoading = status === 'syncing';
   const isEnabled = status === 'enabled';
   const canEnable = status === 'disabled' || status === 'prompt' || status === 'error';
@@ -45,7 +48,14 @@ export const NotificationsSection = () => {
         </div>
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="tertiary"
+          onClick={() => playMessageNotificationSound(applySinkId, outputMuted)}
+        >
+          <Volume2 size={16} />
+          {t('notifications.sound.preview')}
+        </Button>
         <Button
           variant={isEnabled ? 'secondary' : 'primary'}
           onClick={handleToggle}

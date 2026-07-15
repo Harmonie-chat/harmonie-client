@@ -4,10 +4,12 @@ import { useChannels } from '@/features/channel/ChannelContext';
 import { useConversations } from '@/features/conversation/ConversationContext';
 import { useGuilds } from '@/features/guild/GuildContext';
 import { useRealtime } from '@/features/realtime/RealtimeContext';
+import { useAudioOutput } from '@/features/user/audio/AudioOutputContext';
 import { useUser } from '@/features/user/UserContext';
 import type { MessageCreatedEvent } from '@/types/channel';
 import type { ConversationMessageCreatedEvent } from '@/types/conversation';
 import { showBrowserNotification } from '@/shared/notifications/browserNotification';
+import { playMessageNotificationSound } from '@/shared/notifications/messageNotificationSound';
 import { usePushNotifications } from '@/shared/notifications/PushNotificationContext';
 import { REALTIME_SERVER_EVENTS } from './constants';
 
@@ -173,6 +175,7 @@ const clearedActivityReducer = (
 export const MessageActivityProvider = ({ children }: { children: ReactNode }) => {
   const { connection } = useRealtime();
   const { status: pushNotificationStatus } = usePushNotifications();
+  const { applySinkId, muted: outputMuted } = useAudioOutput();
   const { user } = useUser();
   const { guilds } = useGuilds();
   const { channels } = useChannels();
@@ -241,6 +244,9 @@ export const MessageActivityProvider = ({ children }: { children: ReactNode }) =
 
     const handleMessageCreated = (event: MessageCreatedEvent) => {
       if (event.authorUserId === user?.userId) return;
+      if (event.channelId !== activeTextChannelId) {
+        playMessageNotificationSound(applySinkId, outputMuted);
+      }
 
       const targetUrl = `/guilds/${event.guildId}/channels/${event.channelId}`;
       const senderName =
@@ -290,7 +296,15 @@ export const MessageActivityProvider = ({ children }: { children: ReactNode }) =
 
     connection.on(REALTIME_SERVER_EVENTS.messageCreated, handleMessageCreated);
     return () => connection.off(REALTIME_SERVER_EVENTS.messageCreated, handleMessageCreated);
-  }, [connection, currentRouteGuildId, activeTextChannelId, user?.userId, pushNotificationStatus]);
+  }, [
+    connection,
+    currentRouteGuildId,
+    activeTextChannelId,
+    user?.userId,
+    pushNotificationStatus,
+    applySinkId,
+    outputMuted,
+  ]);
 
   // Conversation messages
   useEffect(() => {
@@ -298,6 +312,9 @@ export const MessageActivityProvider = ({ children }: { children: ReactNode }) =
 
     const handleConversationMessageCreated = (event: ConversationMessageCreatedEvent) => {
       if (event.authorUserId === user?.userId) return;
+      if (event.conversationId !== activeConversationId) {
+        playMessageNotificationSound(applySinkId, outputMuted);
+      }
 
       const targetUrl = `/conversations/${event.conversationId}`;
       const senderName =
@@ -344,7 +361,14 @@ export const MessageActivityProvider = ({ children }: { children: ReactNode }) =
         REALTIME_SERVER_EVENTS.conversationMessageCreated,
         handleConversationMessageCreated
       );
-  }, [connection, activeConversationId, user?.userId, pushNotificationStatus]);
+  }, [
+    connection,
+    activeConversationId,
+    user?.userId,
+    pushNotificationStatus,
+    applySinkId,
+    outputMuted,
+  ]);
 
   useEffect(() => {
     if (!activeTextChannelId) return;

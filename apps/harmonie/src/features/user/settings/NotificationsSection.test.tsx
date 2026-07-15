@@ -4,13 +4,27 @@ import { NotificationsSection } from './NotificationsSection';
 import type { PushNotificationStatus } from '@/shared/notifications/webPush';
 
 const mocks = vi.hoisted(() => ({
+  applySinkId: vi.fn(),
   disable: vi.fn(),
   enable: vi.fn(),
+  outputMuted: false,
+  playMessageNotificationSound: vi.fn(),
   status: 'prompt' as PushNotificationStatus,
 }));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
+}));
+
+vi.mock('@/features/user/audio/AudioOutputContext', () => ({
+  useAudioOutput: () => ({
+    applySinkId: mocks.applySinkId,
+    muted: mocks.outputMuted,
+  }),
+}));
+
+vi.mock('@/shared/notifications/messageNotificationSound', () => ({
+  playMessageNotificationSound: mocks.playMessageNotificationSound,
 }));
 
 vi.mock('@/shared/notifications/PushNotificationContext', () => ({
@@ -27,6 +41,9 @@ describe('NotificationsSection', () => {
     mocks.enable.mockReset();
     mocks.enable.mockResolvedValue(undefined);
     mocks.disable.mockResolvedValue(undefined);
+    mocks.applySinkId.mockReset();
+    mocks.outputMuted = false;
+    mocks.playMessageNotificationSound.mockReset();
     mocks.status = 'prompt';
   });
 
@@ -38,6 +55,14 @@ describe('NotificationsSection', () => {
 
     expect(mocks.enable).toHaveBeenCalledOnce();
     expect(mocks.disable).not.toHaveBeenCalled();
+  });
+
+  it('plays a preview through the configured audio output', () => {
+    render(<NotificationsSection />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'notifications.sound.preview' }));
+
+    expect(mocks.playMessageNotificationSound).toHaveBeenCalledWith(mocks.applySinkId, false);
   });
 
   it('disables push notifications from the enabled state', () => {
