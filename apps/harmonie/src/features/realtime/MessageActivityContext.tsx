@@ -244,7 +244,9 @@ export const MessageActivityProvider = ({ children }: { children: ReactNode }) =
 
     const handleMessageCreated = (event: MessageCreatedEvent) => {
       if (event.authorUserId === user?.userId) return;
-      playMessageNotificationSound(applySinkId, outputMuted);
+      if (event.channelId !== activeTextChannelId || !document.hasFocus()) {
+        playMessageNotificationSound(applySinkId, outputMuted);
+      }
 
       const targetUrl = `/guilds/${event.guildId}/channels/${event.channelId}`;
       const senderName =
@@ -310,7 +312,9 @@ export const MessageActivityProvider = ({ children }: { children: ReactNode }) =
 
     const handleConversationMessageCreated = (event: ConversationMessageCreatedEvent) => {
       if (event.authorUserId === user?.userId) return;
-      playMessageNotificationSound(applySinkId, outputMuted);
+      if (event.conversationId !== activeConversationId || !document.hasFocus()) {
+        playMessageNotificationSound(applySinkId, outputMuted);
+      }
 
       const targetUrl = `/conversations/${event.conversationId}`;
       const senderName =

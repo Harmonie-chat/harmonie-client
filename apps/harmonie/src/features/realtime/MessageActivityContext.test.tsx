@@ -327,6 +327,43 @@ describe('MessageActivityProvider', () => {
     hasFocus.mockRestore();
   });
 
+  it('keeps the sound silent for the active focused channel and conversation', async () => {
+    createConnection();
+    mocks.textChannelMatch = { params: { channelId: 'channel-1' } };
+    mocks.conversationMatch = { params: { conversationId: 'conversation-1' } };
+    const hasFocus = vi.spyOn(document, 'hasFocus').mockReturnValue(true);
+
+    renderProvider();
+
+    await waitFor(() =>
+      expect(mocks.handlers.has(REALTIME_SERVER_EVENTS.messageCreated)).toBe(true)
+    );
+    await waitFor(() =>
+      expect(mocks.handlers.has(REALTIME_SERVER_EVENTS.conversationMessageCreated)).toBe(true)
+    );
+
+    act(() => {
+      mocks.handlers.get(REALTIME_SERVER_EVENTS.messageCreated)?.(channelMessage());
+      mocks.handlers.get(REALTIME_SERVER_EVENTS.conversationMessageCreated)?.(
+        conversationMessage()
+      );
+    });
+
+    expect(mocks.playMessageNotificationSound).not.toHaveBeenCalled();
+
+    act(() => {
+      mocks.handlers.get(REALTIME_SERVER_EVENTS.messageCreated)?.(
+        channelMessage({ channelId: 'channel-2' })
+      );
+      mocks.handlers.get(REALTIME_SERVER_EVENTS.conversationMessageCreated)?.(
+        conversationMessage({ conversationId: 'conversation-2' })
+      );
+    });
+
+    expect(mocks.playMessageNotificationSound).toHaveBeenCalledTimes(2);
+    hasFocus.mockRestore();
+  });
+
   it('does not duplicate browser notifications when web push is enabled', async () => {
     createConnection();
     mocks.pushNotificationStatus = 'enabled';
