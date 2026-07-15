@@ -63,21 +63,14 @@ describe('auth api', () => {
     });
     await logout();
 
-    const emptyRefreshTokenBody = JSON.stringify({ refreshToken: '' });
     expect(fetchMock).toHaveBeenNthCalledWith(1, `${API_BASE}/auth/refresh`, {
       method: 'POST',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: emptyRefreshTokenBody,
     });
     expect(fetchMock).toHaveBeenNthCalledWith(2, `${API_BASE}/auth/logout`, {
       method: 'POST',
       credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer access-token',
-      },
-      body: emptyRefreshTokenBody,
+      headers: { Authorization: 'Bearer access-token' },
     });
   });
 

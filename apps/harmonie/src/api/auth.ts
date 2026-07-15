@@ -8,7 +8,6 @@ import type {
 } from '@/types/auth';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
-const EMPTY_REFRESH_TOKEN_BODY = JSON.stringify({ refreshToken: '' });
 
 export const login = async (body: LoginRequest): Promise<LoginResponse> => {
   const response = await fetch(`${API_BASE}/auth/login`, {
@@ -44,8 +43,6 @@ export const refreshTokens = async (): Promise<RefreshResponse> => {
   const response = await fetch(`${API_BASE}/auth/refresh`, {
     method: 'POST',
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: EMPTY_REFRESH_TOKEN_BODY,
   });
 
   if (!response.ok) {
@@ -60,10 +57,6 @@ export const logout = async (): Promise<void> => {
   await fetch(`${API_BASE}/auth/logout`, {
     method: 'POST',
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-    },
-    body: EMPTY_REFRESH_TOKEN_BODY,
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
   });
 };

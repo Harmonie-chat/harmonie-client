@@ -77,7 +77,7 @@ VITE_API_BASE_URL=http://localhost:5001/api   # .env
 | `register()`      | POST   | `/auth/register` |
 | `refreshTokens()` | POST   | `/auth/refresh`  |
 
-All authentication requests use `credentials: 'include'` so the browser can receive and send the refresh cookie. The refresh and logout request bodies contain no credential; an empty `refreshToken` field is temporarily sent for compatibility with the rollout endpoint contract. Functions throw the raw JSON body on non-2xx responses (cast to `ApiError` at the call site).
+All authentication requests use `credentials: 'include'` so the browser can receive and send the refresh cookie. Refresh and logout send no request body because the refresh credential is read exclusively from the HttpOnly cookie. Functions throw the raw JSON body on non-2xx responses (cast to `ApiError` at the call site).
 
 ### `src/api/errors.ts`
 
