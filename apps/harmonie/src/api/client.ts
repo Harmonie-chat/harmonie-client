@@ -1,10 +1,4 @@
-import {
-  clearTokens,
-  getAccessToken,
-  getRefreshToken,
-  isAccessTokenExpiring,
-  storeTokens,
-} from './authStorage';
+import { clearTokens, getAccessToken, isAccessTokenExpiring, storeTokens } from './authStorage';
 import { refreshTokens } from './auth';
 
 let onLogout: (() => void) | null = null;
@@ -23,15 +17,8 @@ const withBearer = (init?: RequestInit): RequestInit => ({
 });
 
 const doRefresh = async (): Promise<string> => {
-  const refreshToken = getRefreshToken();
-  if (!refreshToken) {
-    clearTokens();
-    onLogout?.();
-    throw new Error('No refresh token is available');
-  }
-
   try {
-    const response = await refreshTokens({ refreshToken });
+    const response = await refreshTokens();
     storeTokens(response);
     return response.accessToken;
   } catch (error) {

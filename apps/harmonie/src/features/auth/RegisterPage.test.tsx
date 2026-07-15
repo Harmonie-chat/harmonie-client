@@ -105,7 +105,7 @@ describe('RegisterPage', () => {
   it('registers, stores tokens, authenticates, and navigates home', async () => {
     mocks.register.mockResolvedValueOnce({
       accessToken: 'access-token',
-      refreshToken: 'refresh-token',
+      expiresAt: '2100-01-01T00:00:00.000Z',
     });
     renderPage();
 
@@ -127,7 +127,7 @@ describe('RegisterPage', () => {
     );
     expect(mocks.storeTokens).toHaveBeenCalledWith({
       accessToken: 'access-token',
-      refreshToken: 'refresh-token',
+      expiresAt: '2100-01-01T00:00:00.000Z',
     });
     expect(mocks.setIsAuthenticated).toHaveBeenCalledWith(true);
     expect(mocks.navigate).toHaveBeenCalledWith('/');

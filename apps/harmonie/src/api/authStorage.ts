@@ -1,6 +1,6 @@
 import type { TokensPayload } from '@/types/auth';
 
-const REFRESH_TOKEN_KEY = 'refreshToken';
+const LEGACY_REFRESH_TOKEN_KEY = 'refreshToken';
 const ACCESS_TOKEN_EXPIRATION_BUFFER_MS = 30_000;
 
 let _accessToken: string | null = null;
@@ -11,10 +11,14 @@ const notifyTokenChange = () => {
   tokenChangeListeners.forEach((listener) => listener(_accessToken));
 };
 
+// TODO(#203): Remove this migration after cookie-based auth has been in production for 30 days.
+export const discardLegacyRefreshToken = () => {
+  localStorage.removeItem(LEGACY_REFRESH_TOKEN_KEY);
+};
+
 export const storeTokens = (response: TokensPayload) => {
   _accessToken = response.accessToken;
   _accessTokenExpiresAt = Date.parse(response.expiresAt);
-  localStorage.setItem(REFRESH_TOKEN_KEY, response.refreshToken);
   notifyTokenChange();
 };
 
@@ -28,8 +32,6 @@ export const isAccessTokenExpiring = (
   !Number.isFinite(_accessTokenExpiresAt) ||
   _accessTokenExpiresAt <= now + expirationBufferMs;
 
-export const getRefreshToken = () => localStorage.getItem(REFRESH_TOKEN_KEY);
-
 export const subscribeToTokenChanges = (listener: (accessToken: string | null) => void) => {
   tokenChangeListeners.add(listener);
   return () => {
@@ -40,6 +42,6 @@ export const subscribeToTokenChanges = (listener: (accessToken: string | null) =
 export const clearTokens = () => {
   _accessToken = null;
   _accessTokenExpiresAt = null;
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  discardLegacyRefreshToken();
   notifyTokenChange();
 };

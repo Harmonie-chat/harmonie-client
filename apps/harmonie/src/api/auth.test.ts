@@ -1,22 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { clearTokens, storeTokens } from './authStorage';
 
 const API_BASE = 'https://localhost:5000/api';
+const FUTURE_EXPIRATION = '2100-01-01T00:00:00.000Z';
 
 describe('auth api', () => {
   beforeEach(() => {
+    clearTokens();
     vi.stubGlobal('fetch', vi.fn());
   });
 
-  it('logs in and registers with JSON bodies', async () => {
+  it('logs in and registers with credentialed JSON requests', async () => {
     const fetchMock = vi.mocked(fetch);
     fetchMock
-      .mockResolvedValueOnce(Response.json({ accessToken: 'a', refreshToken: 'r' }))
+      .mockResolvedValueOnce(Response.json({ accessToken: 'a', expiresAt: FUTURE_EXPIRATION }))
       .mockResolvedValueOnce(Response.json({ userId: 'user-1' }));
     const { login, register } = await import('./auth');
 
     await expect(login({ emailOrUsername: 'a@b.com', password: 'Password1!' })).resolves.toEqual({
       accessToken: 'a',
-      refreshToken: 'r',
+      expiresAt: FUTURE_EXPIRATION,
     });
     await register({
       avatar: { bg: null, color: null, icon: null },
@@ -28,11 +31,13 @@ describe('auth api', () => {
 
     expect(fetchMock).toHaveBeenNthCalledWith(1, `${API_BASE}/auth/login`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ emailOrUsername: 'a@b.com', password: 'Password1!' }),
     });
     expect(fetchMock).toHaveBeenNthCalledWith(2, `${API_BASE}/auth/register`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         avatar: { bg: null, color: null, icon: null },
@@ -44,28 +49,28 @@ describe('auth api', () => {
     });
   });
 
-  it('refreshes and logs out', async () => {
+  it('refreshes and logs out with the HttpOnly cookie', async () => {
     const fetchMock = vi.mocked(fetch);
     fetchMock
-      .mockResolvedValueOnce(Response.json({ accessToken: 'new', refreshToken: 'next' }))
+      .mockResolvedValueOnce(Response.json({ accessToken: 'new', expiresAt: FUTURE_EXPIRATION }))
       .mockResolvedValueOnce(new Response(null, { status: 204 }));
+    storeTokens({ accessToken: 'access-token', expiresAt: FUTURE_EXPIRATION });
     const { logout, refreshTokens } = await import('./auth');
 
-    await expect(refreshTokens({ refreshToken: 'refresh' })).resolves.toEqual({
+    await expect(refreshTokens()).resolves.toEqual({
       accessToken: 'new',
-      refreshToken: 'next',
+      expiresAt: FUTURE_EXPIRATION,
     });
-    await logout({ refreshToken: 'refresh' });
+    await logout();
 
     expect(fetchMock).toHaveBeenNthCalledWith(1, `${API_BASE}/auth/refresh`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: 'refresh' }),
+      credentials: 'include',
     });
     expect(fetchMock).toHaveBeenNthCalledWith(2, `${API_BASE}/auth/logout`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: 'refresh' }),
+      credentials: 'include',
+      headers: { Authorization: 'Bearer access-token' },
     });
   });
 

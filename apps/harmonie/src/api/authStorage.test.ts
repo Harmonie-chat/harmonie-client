@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   clearTokens,
+  discardLegacyRefreshToken,
   getAccessToken,
-  getRefreshToken,
   isAccessTokenExpiring,
   storeTokens,
   subscribeToTokenChanges,
@@ -15,23 +15,20 @@ describe('authStorage', () => {
     clearTokens();
   });
 
-  it('stores the access token and its expiration in memory and the refresh token in localStorage', () => {
+  it('stores the access token and its expiration in memory', () => {
     storeTokens({
       accessToken: 'access-token',
-      refreshToken: 'refresh-token',
       expiresAt: FUTURE_EXPIRATION,
     });
 
     expect(getAccessToken()).toBe('access-token');
     expect(isAccessTokenExpiring()).toBe(false);
-    expect(getRefreshToken()).toBe('refresh-token');
-    expect(localStorage.getItem('refreshToken')).toBe('refresh-token');
+    expect(localStorage.getItem('refreshToken')).toBeNull();
   });
 
-  it('clears both tokens and the access token expiration', () => {
+  it('clears the access token and its expiration', () => {
     storeTokens({
       accessToken: 'access-token',
-      refreshToken: 'refresh-token',
       expiresAt: FUTURE_EXPIRATION,
     });
 
@@ -39,13 +36,19 @@ describe('authStorage', () => {
 
     expect(getAccessToken()).toBeNull();
     expect(isAccessTokenExpiring()).toBe(true);
-    expect(getRefreshToken()).toBeNull();
+  });
+
+  it('removes refresh tokens left by older clients', () => {
+    localStorage.setItem('refreshToken', 'legacy-refresh-token');
+
+    discardLegacyRefreshToken();
+
+    expect(localStorage.getItem('refreshToken')).toBeNull();
   });
 
   it('detects access tokens that are expired or close to expiry', () => {
     storeTokens({
       accessToken: 'access-token',
-      refreshToken: 'refresh-token',
       expiresAt: '1970-01-01T00:02:10.000Z',
     });
 
@@ -58,7 +61,6 @@ describe('authStorage', () => {
 
     storeTokens({
       accessToken: 'access-token',
-      refreshToken: 'refresh-token',
       expiresAt: 'invalid-date',
     });
 
@@ -71,14 +73,12 @@ describe('authStorage', () => {
 
     storeTokens({
       accessToken: 'access-token',
-      refreshToken: 'refresh-token',
       expiresAt: FUTURE_EXPIRATION,
     });
     clearTokens();
     unsubscribe();
     storeTokens({
       accessToken: 'next-token',
-      refreshToken: 'next-refresh-token',
       expiresAt: FUTURE_EXPIRATION,
     });
 
