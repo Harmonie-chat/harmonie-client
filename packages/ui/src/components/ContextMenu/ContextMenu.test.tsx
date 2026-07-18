@@ -94,6 +94,43 @@ describe('ContextMenu', () => {
     expect(onClose).toHaveBeenCalledTimes(2);
   });
 
+  it('renders touch content and icons and resets a short drag', () => {
+    setTouchMenu(true);
+    const onClose = vi.fn();
+    const { container } = render(
+      <ContextMenu
+        position={{ x: 10, y: 10 }}
+        onClose={onClose}
+        items={[
+          { label: 'Volume', content: <input aria-label="Touch volume" /> },
+          { label: 'Edit', icon: <span>icon</span>, onClick: vi.fn() },
+        ]}
+      />
+    );
+
+    expect(screen.getByRole('group', { name: 'Volume' })).toContainElement(
+      screen.getByLabelText('Touch volume')
+    );
+    expect(screen.getByRole('menuitem', { name: 'icon Edit' })).toBeInTheDocument();
+
+    const dragHandle = container.querySelector('.touch-none') as HTMLElement;
+    const setPointerCapture = vi.fn();
+    const releasePointerCapture = vi.fn();
+    Object.assign(dragHandle, {
+      hasPointerCapture: () => true,
+      releasePointerCapture,
+      setPointerCapture,
+    });
+
+    firePointer(dragHandle, 'pointerdown', { clientY: 10, pointerId: 1 });
+    firePointer(dragHandle, 'pointermove', { clientY: 50, pointerId: 1 });
+    firePointer(dragHandle, 'pointerup', { clientY: 50, pointerId: 1 });
+
+    expect(setPointerCapture).toHaveBeenCalledWith(1);
+    expect(releasePointerCapture).toHaveBeenCalledWith(1);
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it('renders only the touch header when expanded', () => {
     setTouchMenu(true);
 

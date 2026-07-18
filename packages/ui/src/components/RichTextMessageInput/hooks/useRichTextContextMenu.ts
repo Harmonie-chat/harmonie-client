@@ -13,11 +13,9 @@ interface UseRichTextContextMenuParams {
   quillRef: RefObject<Quill | null>;
 }
 
-const getClipboard = () => (typeof navigator === 'undefined' ? undefined : navigator.clipboard);
-
 export const useRichTextContextMenu = ({ disabled, quillRef }: UseRichTextContextMenuParams) => {
   const [contextMenu, setContextMenu] = useState<RichTextContextMenuState | null>(null);
-  const clipboard = getClipboard();
+  const clipboard = navigator.clipboard;
   const canWriteToClipboard = typeof clipboard?.writeText === 'function';
   const canReadFromClipboard = typeof clipboard?.readText === 'function';
   const hasSelection = Boolean(contextMenu?.range.length);

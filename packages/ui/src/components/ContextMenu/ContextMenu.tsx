@@ -179,7 +179,6 @@ export const ContextMenu = ({
                 isTouchMenu ? 'px-4 py-4 text-base' : 'px-3 py-1.5 text-sm',
               ].join(' ')}
               onClick={() => {
-                if (item.disabled) return;
                 item.onClick?.();
                 onClose();
               }}
