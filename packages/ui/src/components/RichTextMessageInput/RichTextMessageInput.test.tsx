@@ -143,6 +143,23 @@ describe('RichTextMessageInput', () => {
     }));
   });
 
+  it('allows the native editor context menu without bubbling to parent menus', async () => {
+    const onParentContextMenu = vi.fn((event: React.MouseEvent) => event.preventDefault());
+    render(
+      <div onContextMenu={onParentContextMenu}>
+        <RichTextMessageInput value="Hello" onChange={vi.fn()} />
+      </div>
+    );
+
+    await waitFor(() => expect(quillState.latest).not.toBeNull());
+    const editor = document.querySelector('.ql-editor') as HTMLElement;
+    const contextMenuEvent = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+
+    expect(editor.dispatchEvent(contextMenuEvent)).toBe(true);
+    expect(contextMenuEvent.defaultPrevented).toBe(false);
+    expect(onParentContextMenu).not.toHaveBeenCalled();
+  });
+
   it('wires toolbar, emoji, attach, submit, paste, and imperative focus actions', async () => {
     const onAttachClick = vi.fn();
     const onChange = vi.fn();
