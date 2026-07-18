@@ -4,6 +4,7 @@ import type { QuillRange } from '../types';
 import { isDirectUrl } from '../utils/links.utils';
 
 interface RichTextContextMenuState {
+  hasContent: boolean;
   position: { x: number; y: number };
   range: Exclude<QuillRange, null>;
 }
@@ -19,7 +20,6 @@ export const useRichTextContextMenu = ({ disabled, quillRef }: UseRichTextContex
   const canWriteToClipboard = typeof clipboard?.writeText === 'function';
   const canReadFromClipboard = typeof clipboard?.readText === 'function';
   const hasSelection = Boolean(contextMenu?.range.length);
-  const hasContent = (quillRef.current?.getLength() ?? 1) > 1;
 
   const handleContextMenu = (event: MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -34,6 +34,7 @@ export const useRichTextContextMenu = ({ disabled, quillRef }: UseRichTextContex
     };
 
     setContextMenu({
+      hasContent: quill.getLength() > 1,
       position: { x: event.clientX, y: event.clientY },
       range,
     });
@@ -108,7 +109,7 @@ export const useRichTextContextMenu = ({ disabled, quillRef }: UseRichTextContex
 
   const selectAll = () => {
     const quill = quillRef.current;
-    if (!quill || !hasContent) return;
+    if (!quill || quill.getLength() <= 1) return;
 
     quill.focus();
     quill.setSelection(0, quill.getLength() - 1, 'user');
@@ -118,7 +119,7 @@ export const useRichTextContextMenu = ({ disabled, quillRef }: UseRichTextContex
     canCopy: hasSelection && canWriteToClipboard,
     canCut: !disabled && hasSelection && canWriteToClipboard,
     canPaste: !disabled && canReadFromClipboard,
-    canSelectAll: hasContent,
+    canSelectAll: contextMenu?.hasContent ?? false,
     closeContextMenu: () => setContextMenu(null),
     contextMenu,
     copy,

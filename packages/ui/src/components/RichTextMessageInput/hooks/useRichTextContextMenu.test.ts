@@ -52,6 +52,7 @@ describe('useRichTextContextMenu', () => {
     expect(event.preventDefault).toHaveBeenCalledOnce();
     expect(event.stopPropagation).toHaveBeenCalledOnce();
     expect(result.current.contextMenu).toEqual({
+      hasContent: true,
       position: { x: 24, y: 32 },
       range: { index: 1, length: 3 },
     });

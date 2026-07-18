@@ -1,4 +1,4 @@
-import { useImperativeHandle, type Ref } from 'react';
+import { useImperativeHandle, type Ref, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { EmojiPickerBase } from '../EmojiPickerBase/EmojiPickerBase';
 import { EmojiAutocomplete } from '../EmojiTextarea/EmojiAutocomplete';
@@ -14,6 +14,7 @@ import {
   TextSelect,
 } from 'lucide-react';
 import type { EmojiClickData, PickerProps } from 'emoji-picker-react';
+import type Quill from 'quill';
 import { useRichTextContextMenu } from './hooks/useRichTextContextMenu';
 import { useRichTextMessageInput } from './hooks/useRichTextMessageInput';
 import { PICKER_HEIGHT, PICKER_WIDTH } from './utils/constants';
@@ -51,6 +52,92 @@ export interface RichTextMessageInputProps {
 export interface RichTextMessageInputHandle {
   focus: (placement?: 'start' | 'end') => void;
 }
+
+interface RichTextEditorHostProps {
+  disabled: boolean;
+  editorHostRef: RefObject<HTMLDivElement | null>;
+  labels: RichTextMessageInputLabels;
+  quillRef: RefObject<Quill | null>;
+}
+
+const useRichTextInputHandle = (
+  ref: Ref<RichTextMessageInputHandle> | undefined,
+  quillRef: RefObject<Quill | null>
+) => {
+  useImperativeHandle(
+    ref,
+    () => ({
+      focus: (placement = 'end') => {
+        const quill = quillRef.current;
+        if (!quill) return;
+        const index = placement === 'end' ? Math.max(quill.getLength() - 1, 0) : 0;
+        quill.focus();
+        quill.setSelection(index, 0, 'silent');
+      },
+    }),
+    [quillRef]
+  );
+};
+
+const RichTextEditorHost = ({
+  disabled,
+  editorHostRef,
+  labels,
+  quillRef,
+}: RichTextEditorHostProps) => {
+  const {
+    canCopy,
+    canCut,
+    canPaste,
+    canSelectAll,
+    closeContextMenu,
+    contextMenu,
+    copy,
+    cut,
+    handleContextMenu,
+    paste,
+    selectAll,
+  } = useRichTextContextMenu({ disabled, quillRef });
+
+  return (
+    <>
+      <div ref={editorHostRef} onContextMenu={handleContextMenu} />
+      {contextMenu && (
+        <ContextMenu
+          closeLabel={labels.closeContextMenu}
+          position={contextMenu.position}
+          onClose={closeContextMenu}
+          items={[
+            {
+              label: labels.copy,
+              icon: <Copy size={16} />,
+              disabled: !canCopy,
+              onClick: copy,
+            },
+            {
+              label: labels.cut,
+              icon: <Scissors size={16} />,
+              disabled: !canCut,
+              onClick: cut,
+            },
+            {
+              label: labels.paste,
+              icon: <ClipboardPaste size={16} />,
+              disabled: !canPaste,
+              onClick: paste,
+            },
+            {
+              label: labels.selectAll,
+              icon: <TextSelect size={16} />,
+              disabled: !canSelectAll,
+              onClick: selectAll,
+            },
+          ]}
+        />
+      )}
+    </>
+  );
+};
 
 export const RichTextMessageInput = ({
   value,
@@ -130,33 +217,7 @@ export const RichTextMessageInput = ({
     onMentionSelected,
   });
 
-  const {
-    canCopy,
-    canCut,
-    canPaste,
-    canSelectAll,
-    closeContextMenu,
-    contextMenu,
-    copy,
-    cut,
-    handleContextMenu,
-    paste,
-    selectAll,
-  } = useRichTextContextMenu({ disabled, quillRef });
-
-  useImperativeHandle(
-    ref,
-    () => ({
-      focus: (placement = 'end') => {
-        const quill = quillRef.current;
-        if (!quill) return;
-        const index = placement === 'end' ? Math.max(quill.getLength() - 1, 0) : 0;
-        quill.focus();
-        quill.setSelection(index, 0, 'silent');
-      },
-    }),
-    [quillRef]
-  );
+  useRichTextInputHandle(ref, quillRef);
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -242,7 +303,12 @@ export const RichTextMessageInput = ({
                 onRemove={removeCurrentLink}
               />
             )}
-            <div ref={editorHostRef} onContextMenu={handleContextMenu} />
+            <RichTextEditorHost
+              disabled={disabled}
+              editorHostRef={editorHostRef}
+              labels={mergedLabels}
+              quillRef={quillRef}
+            />
           </div>
           <div className="flex shrink-0 items-center gap-1 py-1.5 pr-2 text-text-3 sm:justify-between sm:gap-3 sm:border-t sm:border-border-2 sm:px-3 sm:py-1.5">
             <div className="flex items-center gap-1">
@@ -307,40 +373,6 @@ export const RichTextMessageInput = ({
       </div>
 
       {error && <span className="font-body text-[11px] font-normal text-error-fg">{error}</span>}
-
-      {contextMenu && (
-        <ContextMenu
-          closeLabel={mergedLabels.closeContextMenu}
-          position={contextMenu.position}
-          onClose={closeContextMenu}
-          items={[
-            {
-              label: mergedLabels.copy,
-              icon: <Copy size={16} />,
-              disabled: !canCopy,
-              onClick: copy,
-            },
-            {
-              label: mergedLabels.cut,
-              icon: <Scissors size={16} />,
-              disabled: !canCut,
-              onClick: cut,
-            },
-            {
-              label: mergedLabels.paste,
-              icon: <ClipboardPaste size={16} />,
-              disabled: !canPaste,
-              onClick: paste,
-            },
-            {
-              label: mergedLabels.selectAll,
-              icon: <TextSelect size={16} />,
-              disabled: !canSelectAll,
-              onClick: selectAll,
-            },
-          ]}
-        />
-      )}
 
       {emojiAnchorRect &&
         pickerStyle &&
