@@ -48,7 +48,6 @@ export const WithMultipleItems: Story = {
       {
         label: 'Delete channel',
         icon: <Trash2 size={14} />,
-        disabled: true,
         onClick: () => {},
       },
     ],

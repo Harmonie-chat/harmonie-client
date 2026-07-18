@@ -3,11 +3,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { RichTextMessageInput, type RichTextMessageInputHandle } from './RichTextMessageInput';
 
-const clipboardMocks = vi.hoisted(() => ({
-  readText: vi.fn<() => Promise<string>>(),
-  writeText: vi.fn<(text: string) => Promise<void>>(),
-}));
-
 const quillState = vi.hoisted(() => ({
   latest: null as null | {
     emit: (eventName: string, ...args: unknown[]) => void;
@@ -18,7 +13,6 @@ const quillState = vi.hoisted(() => ({
     insertText: ReturnType<typeof vi.fn>;
     deleteText: ReturnType<typeof vi.fn>;
     selection: { index: number; length: number } | null;
-    setSelection: ReturnType<typeof vi.fn>;
     setText: ReturnType<typeof vi.fn>;
     text: string;
     formats: Record<string, unknown>;
@@ -137,12 +131,6 @@ vi.mock('../EmojiPickerBase/EmojiPickerBase', () => ({
 describe('RichTextMessageInput', () => {
   beforeEach(() => {
     quillState.latest = null;
-    clipboardMocks.readText.mockReset().mockResolvedValue('');
-    clipboardMocks.writeText.mockReset().mockResolvedValue();
-    Object.defineProperty(navigator, 'clipboard', {
-      configurable: true,
-      value: clipboardMocks,
-    });
     vi.mocked(window.matchMedia).mockImplementation((query: string) => ({
       matches: false,
       media: query,
@@ -153,6 +141,23 @@ describe('RichTextMessageInput', () => {
       removeListener: vi.fn(),
       dispatchEvent: vi.fn(),
     }));
+  });
+
+  it('allows the native editor context menu without bubbling to parent menus', async () => {
+    const onParentContextMenu = vi.fn((event: React.MouseEvent) => event.preventDefault());
+    render(
+      <div onContextMenu={onParentContextMenu}>
+        <RichTextMessageInput value="Hello" onChange={vi.fn()} />
+      </div>
+    );
+
+    await waitFor(() => expect(quillState.latest).not.toBeNull());
+    const editor = document.querySelector('.ql-editor') as HTMLElement;
+    const contextMenuEvent = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+
+    expect(editor.dispatchEvent(contextMenuEvent)).toBe(true);
+    expect(contextMenuEvent.defaultPrevented).toBe(false);
+    expect(onParentContextMenu).not.toHaveBeenCalled();
   });
 
   it('wires toolbar, emoji, attach, submit, paste, and imperative focus actions', async () => {
@@ -206,44 +211,6 @@ describe('RichTextMessageInput', () => {
     expect(quill.history.cutoff).toHaveBeenCalled();
     expect(quill.insertText).toHaveBeenCalledWith(0, '✨', 'user');
     expect(quill.focus).toHaveBeenCalled();
-  });
-
-  it('supports copy, cut, paste, and select all from the editor context menu', async () => {
-    render(<RichTextMessageInput value="Hello" onChange={vi.fn()} />);
-
-    await waitFor(() => expect(quillState.latest).not.toBeNull());
-    const quill = quillState.latest!;
-    const editor = document.querySelector('.ql-editor') as HTMLElement;
-
-    quill.selection = { index: 5, length: 0 };
-    fireEvent.contextMenu(editor, { clientX: 24, clientY: 32 });
-
-    expect(screen.getByRole('menuitem', { name: 'Copy' })).toBeDisabled();
-    expect(screen.getByRole('menuitem', { name: 'Cut' })).toBeDisabled();
-    expect(screen.getByRole('menuitem', { name: 'Paste' })).toBeEnabled();
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Select all' }));
-    expect(quill.setSelection).toHaveBeenLastCalledWith(0, 5, 'user');
-
-    fireEvent.contextMenu(editor, { clientX: 24, clientY: 32 });
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Copy' }));
-    await waitFor(() => expect(clipboardMocks.writeText).toHaveBeenCalledWith('Hello'));
-
-    quill.deleteText.mockClear();
-    fireEvent.contextMenu(editor, { clientX: 24, clientY: 32 });
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Cut' }));
-    await waitFor(() => expect(quill.deleteText).toHaveBeenCalledWith(0, 5, 'user'));
-
-    quill.text = 'Hello';
-    quill.selection = { index: 1, length: 2 };
-    quill.deleteText.mockClear();
-    quill.insertText.mockClear();
-    clipboardMocks.readText.mockResolvedValue('there');
-    fireEvent.contextMenu(editor, { clientX: 24, clientY: 32 });
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Paste' }));
-
-    await waitFor(() => expect(quill.deleteText).toHaveBeenCalledWith(1, 2, 'user'));
-    expect(quill.insertText).toHaveBeenCalledWith(1, 'there', 'user');
-    expect(quill.setSelection).toHaveBeenLastCalledWith(6, 0, 'silent');
   });
 
   it('handles keyboard shortcuts, mentions, emoji autocomplete, links, and errors', async () => {

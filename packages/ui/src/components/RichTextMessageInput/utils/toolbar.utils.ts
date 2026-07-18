@@ -42,11 +42,6 @@ export const DEFAULT_LABELS: RichTextMessageInputLabels = {
   save: 'Save',
   send: 'Send',
   attachFile: 'Attach a file',
-  copy: 'Copy',
-  cut: 'Cut',
-  paste: 'Paste',
-  selectAll: 'Select all',
-  closeContextMenu: 'Close menu',
 };
 
 export const createToolbarButtons = (

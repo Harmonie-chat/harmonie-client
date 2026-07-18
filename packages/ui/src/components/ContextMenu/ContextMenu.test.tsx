@@ -32,7 +32,6 @@ describe('ContextMenu', () => {
   it('renders desktop actions and content, closes on action, escape and outside click', () => {
     const onClose = vi.fn();
     const onRename = vi.fn();
-    const onDisabledAction = vi.fn();
 
     render(
       <ContextMenu
@@ -41,7 +40,6 @@ describe('ContextMenu', () => {
         onClose={onClose}
         items={[
           { label: 'Rename', icon: <span>icon</span>, onClick: onRename },
-          { label: 'Disabled', disabled: true, onClick: onDisabledAction },
           { label: 'Volume', content: <input aria-label="Volume slider" /> },
         ]}
       />
@@ -53,14 +51,10 @@ describe('ContextMenu', () => {
     );
 
     fireEvent.click(screen.getByRole('menuitem', { name: 'icon Rename' }));
-    const disabledAction = screen.getByRole('menuitem', { name: 'Disabled' });
-    expect(disabledAction).toBeDisabled();
-    fireEvent.click(disabledAction);
     fireEvent.keyDown(document, { key: 'Escape' });
     fireEvent.mouseDown(document.body);
 
     expect(onRename).toHaveBeenCalledTimes(1);
-    expect(onDisabledAction).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalledTimes(3);
   });
 
@@ -71,7 +65,6 @@ describe('ContextMenu', () => {
       <ContextMenu
         position={{ x: 10, y: 10 }}
         onClose={onClose}
-        closeLabel="Dismiss menu"
         touchHeader={<p>Touch header</p>}
         items={[
           { label: 'Hidden', hideOnTouch: true, onClick: vi.fn() },
@@ -84,7 +77,7 @@ describe('ContextMenu', () => {
     expect(screen.queryByRole('menuitem', { name: 'Hidden' })).not.toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Visible' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Dismiss menu' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close menu' }));
 
     const dragHandle = container.querySelector('.touch-none') as HTMLElement;
     firePointer(dragHandle, 'pointerdown', { clientY: 10, pointerId: 1 });
@@ -92,43 +85,6 @@ describe('ContextMenu', () => {
     firePointer(dragHandle, 'pointerup', { clientY: 140, pointerId: 1 });
 
     expect(onClose).toHaveBeenCalledTimes(2);
-  });
-
-  it('renders touch content and icons and resets a short drag', () => {
-    setTouchMenu(true);
-    const onClose = vi.fn();
-    const { container } = render(
-      <ContextMenu
-        position={{ x: 10, y: 10 }}
-        onClose={onClose}
-        items={[
-          { label: 'Volume', content: <input aria-label="Touch volume" /> },
-          { label: 'Edit', icon: <span>icon</span>, onClick: vi.fn() },
-        ]}
-      />
-    );
-
-    expect(screen.getByRole('group', { name: 'Volume' })).toContainElement(
-      screen.getByLabelText('Touch volume')
-    );
-    expect(screen.getByRole('menuitem', { name: 'icon Edit' })).toBeInTheDocument();
-
-    const dragHandle = container.querySelector('.touch-none') as HTMLElement;
-    const setPointerCapture = vi.fn();
-    const releasePointerCapture = vi.fn();
-    Object.assign(dragHandle, {
-      hasPointerCapture: () => true,
-      releasePointerCapture,
-      setPointerCapture,
-    });
-
-    firePointer(dragHandle, 'pointerdown', { clientY: 10, pointerId: 1 });
-    firePointer(dragHandle, 'pointermove', { clientY: 50, pointerId: 1 });
-    firePointer(dragHandle, 'pointerup', { clientY: 50, pointerId: 1 });
-
-    expect(setPointerCapture).toHaveBeenCalledWith(1);
-    expect(releasePointerCapture).toHaveBeenCalledWith(1);
-    expect(onClose).not.toHaveBeenCalled();
   });
 
   it('renders only the touch header when expanded', () => {

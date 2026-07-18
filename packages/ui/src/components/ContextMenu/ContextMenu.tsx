@@ -6,7 +6,6 @@ export interface ContextMenuItem {
   icon?: React.ReactNode;
   hideOnTouch?: boolean;
   content?: React.ReactNode;
-  disabled?: boolean;
 }
 
 export interface ContextMenuProps {
@@ -16,7 +15,6 @@ export interface ContextMenuProps {
   horizontalAnchor?: 'left' | 'right';
   touchHeader?: React.ReactNode;
   touchExpanded?: boolean;
-  closeLabel?: string;
 }
 
 const VIEWPORT_MARGIN = 8;
@@ -32,7 +30,6 @@ export const ContextMenu = ({
   horizontalAnchor = 'left',
   touchHeader,
   touchExpanded = false,
-  closeLabel = 'Close menu',
 }: ContextMenuProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const dragStartYRef = useRef<number | null>(null);
@@ -172,10 +169,8 @@ export const ContextMenu = ({
               type="button"
               key={`action-${item.label}`}
               role="menuitem"
-              disabled={item.disabled}
               className={[
-                'flex w-full items-center gap-2 rounded-sm font-body text-text-2 transition-colors text-left disabled:cursor-not-allowed disabled:opacity-45',
-                item.disabled ? '' : 'hover:bg-surface-2 hover:text-text-1 cursor-pointer',
+                'flex w-full items-center gap-2 rounded-sm font-body text-text-2 hover:bg-surface-2 hover:text-text-1 cursor-pointer transition-colors text-left',
                 isTouchMenu ? 'px-4 py-4 text-base' : 'px-3 py-1.5 text-sm',
               ].join(' ')}
               onClick={() => {
@@ -205,7 +200,7 @@ export const ContextMenu = ({
     <>
       <button
         type="button"
-        aria-label={closeLabel}
+        aria-label="Close menu"
         className="fixed inset-0 z-40 bg-black/35 backdrop-blur-[1px]"
         onClick={onClose}
       />
