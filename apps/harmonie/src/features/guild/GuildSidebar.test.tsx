@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Conversation } from '@/types/conversation';
 import type { Guild } from '@/types/guild';
 import { GuildSidebar } from './GuildSidebar';
 
@@ -14,7 +15,12 @@ const guildMocks = vi.hoisted(() => ({
   fetchGuilds: vi.fn(),
   guilds: [] as Guild[],
   hasAnyUnreadConversation: vi.fn(),
+  hasUnreadConversation: vi.fn(),
   hasUnreadGuild: vi.fn(),
+}));
+
+const conversationMocks = vi.hoisted(() => ({
+  conversations: [] as Conversation[],
 }));
 
 vi.mock('react-i18next', () => ({
@@ -93,8 +99,23 @@ vi.mock('@/shared/hooks/useFileBlobUrl', () => ({
 vi.mock('@/features/realtime/MessageActivityContext', () => ({
   useMessageActivity: () => ({
     hasAnyUnreadConversation: guildMocks.hasAnyUnreadConversation,
+    hasUnreadConversation: guildMocks.hasUnreadConversation,
     hasUnreadGuild: guildMocks.hasUnreadGuild,
   }),
+}));
+
+vi.mock('@/features/conversation/ConversationContext', () => ({
+  useConversations: () => ({ conversations: conversationMocks.conversations }),
+}));
+
+vi.mock('@/features/conversation/avatar/ConversationAvatar', () => ({
+  ConversationAvatar: ({ label }: { label: string }) => (
+    <span data-testid={`conversation-avatar-${label}`} />
+  ),
+}));
+
+vi.mock('@/features/user/UserContext', () => ({
+  useUser: () => ({ user: { userId: 'user-current' } }),
 }));
 
 vi.mock('./GuildContext', () => ({
@@ -163,6 +184,39 @@ vi.mock('@/features/guild/settings/GuildSettingsModal', () => ({
   ),
 }));
 
+const conversations: Conversation[] = [
+  {
+    conversationId: 'conversation-direct',
+    type: 'Direct',
+    name: null,
+    participants: [
+      { userId: 'user-current', username: 'Current user' },
+      { userId: 'user-alice', username: 'alice', displayName: 'Alice' },
+    ],
+    createdAtUtc: '2026-01-01T00:00:00Z',
+  },
+  {
+    conversationId: 'conversation-group',
+    type: 'Group',
+    name: 'Project group',
+    participants: [
+      { userId: 'user-current', username: 'Current user' },
+      { userId: 'user-bob', username: 'bob', displayName: 'Bob' },
+    ],
+    createdAtUtc: '2026-01-02T00:00:00Z',
+  },
+  {
+    conversationId: 'conversation-read',
+    type: 'Direct',
+    name: null,
+    participants: [
+      { userId: 'user-current', username: 'Current user' },
+      { userId: 'user-carol', username: 'carol', displayName: 'Carol' },
+    ],
+    createdAtUtc: '2026-01-03T00:00:00Z',
+  },
+];
+
 const guilds: Guild[] = [
   {
     guildId: 'guild-admin',
@@ -190,8 +244,34 @@ describe('GuildSidebar', () => {
     routerMocks.locationPathname = '/guilds/guild-admin';
     routerMocks.params = { guildId: 'guild-admin' };
     guildMocks.guilds = guilds;
+    conversationMocks.conversations = [];
     guildMocks.hasAnyUnreadConversation.mockReturnValue(true);
+    guildMocks.hasUnreadConversation.mockReturnValue(false);
     guildMocks.hasUnreadGuild.mockImplementation((guildId: string) => guildId === 'guild-owner');
+  });
+
+  it('renders unread conversation shortcuts and navigates directly to a conversation', () => {
+    conversationMocks.conversations = conversations;
+    guildMocks.hasUnreadConversation.mockImplementation(
+      (conversationId: string) => conversationId !== 'conversation-read'
+    );
+
+    const { rerender } = render(<GuildSidebar />);
+
+    expect(screen.getByTestId('conversation-avatar-Alice')).toBeInTheDocument();
+    expect(screen.getByTestId('conversation-avatar-Project group')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Carol' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Alice' }));
+    expect(routerMocks.navigate).toHaveBeenCalledWith('/conversations/conversation-direct');
+
+    guildMocks.hasUnreadConversation.mockImplementation(
+      (conversationId: string) => conversationId === 'conversation-group'
+    );
+    rerender(<GuildSidebar />);
+
+    expect(screen.queryByRole('button', { name: 'Alice' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Project group' })).toBeInTheDocument();
   });
 
   it('renders guild shortcuts and navigates to conversations or a guild', () => {

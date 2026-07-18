@@ -3,14 +3,54 @@ import { DoorOpen, House, Mailbox, Pencil, Plus, ShieldBan, Trash2 } from 'lucid
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ContextMenu, GuildAvatar, Tooltip } from '@harmonie/ui';
+import { useConversations } from '@/features/conversation/ConversationContext';
+import { ConversationAvatar } from '@/features/conversation/avatar/ConversationAvatar';
+import { getConversationLabel } from '@/features/conversation/conversationUtils';
 import { useMessageActivity } from '@/features/realtime/MessageActivityContext';
+import { useUser } from '@/features/user/UserContext';
 import { useFileBlobUrl } from '@/shared/hooks/useFileBlobUrl';
 import { useGuilds } from './GuildContext';
 import { GuildCreateOrJoinModal } from '@/features/guild/join/GuildCreateOrJoinModal';
 import { useGuildPermissions } from '@/features/guild/useGuildPermissions';
+import type { Conversation } from '@/types/conversation';
 import type { Guild } from '@/types/guild';
 import { GuildSettingsModal } from '@/features/guild/settings/GuildSettingsModal';
 import { AdminSectionMenu } from '@/features/guild/settings/adminSection';
+
+const UnreadConversationShortcut = ({
+  conversation,
+  currentUserId,
+  onClick,
+}: {
+  conversation: Conversation;
+  currentUserId?: string;
+  onClick: () => void;
+}) => {
+  const label = getConversationLabel(conversation, currentUserId);
+
+  return (
+    <div className="relative">
+      <Tooltip content={label} side="right">
+        <button
+          type="button"
+          onClick={onClick}
+          aria-label={label}
+          className="size-10 rounded-xl flex items-center justify-center shrink-0 bg-surface-2 cursor-pointer transform-gpu transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-surface-3 hover:scale-[1.1] active:scale-[0.97]"
+        >
+          <ConversationAvatar
+            conversation={conversation}
+            label={label}
+            currentUserId={currentUserId}
+          />
+        </button>
+      </Tooltip>
+      <span
+        aria-hidden="true"
+        className="absolute top-1 right-0 size-2.5 rounded-full bg-primary ring-2 ring-background"
+      />
+    </div>
+  );
+};
 
 const GuildSidebarItem = ({
   guild,
@@ -96,7 +136,12 @@ export const GuildSidebar = () => {
   const location = useLocation();
   const isConversationsRoute = location.pathname.startsWith('/conversations');
   const { guilds, fetchGuilds } = useGuilds();
-  const { hasUnreadGuild, hasAnyUnreadConversation } = useMessageActivity();
+  const { conversations } = useConversations();
+  const { user } = useUser();
+  const { hasUnreadGuild, hasUnreadConversation, hasAnyUnreadConversation } = useMessageActivity();
+  const unreadConversations =
+    conversations?.filter((conversation) => hasUnreadConversation(conversation.conversationId)) ??
+    [];
   const [state, dispatch] = useReducer(guildSidebarReducer, guildSidebarInitialState);
   const { addMenu, createOrJoinMode, contextMenu, editSection, editGuild } = state;
 
@@ -186,6 +231,14 @@ export const GuildSidebar = () => {
               <span className="absolute top-1 right-0 size-2.5 rounded-full bg-primary ring-2 ring-background" />
             )}
           </div>
+          {unreadConversations.map((conversation) => (
+            <UnreadConversationShortcut
+              key={conversation.conversationId}
+              conversation={conversation}
+              currentUserId={user?.userId}
+              onClick={() => navigate(`/conversations/${conversation.conversationId}`)}
+            />
+          ))}
           <hr className="w-8 border-t border-border-2 my-0" />
           {/* List of guilds */}
           {guilds.map((guild) => {
