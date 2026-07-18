@@ -30,4 +30,9 @@ export const getRichTextMessageInputLabels = (t: Translate): RichTextMessageInpu
   save: t('channel.input.save'),
   send: t('channel.input.send'),
   attachFile: t('channel.input.attachFile'),
+  copy: t('channel.input.copy'),
+  cut: t('channel.input.cut'),
+  paste: t('channel.input.paste'),
+  selectAll: t('channel.input.selectAll'),
+  closeContextMenu: t('channel.input.closeContextMenu'),
 });

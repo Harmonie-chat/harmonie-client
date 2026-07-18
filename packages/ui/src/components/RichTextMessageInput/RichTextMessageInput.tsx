@@ -2,9 +2,19 @@ import { useImperativeHandle, type Ref } from 'react';
 import { createPortal } from 'react-dom';
 import { EmojiPickerBase } from '../EmojiPickerBase/EmojiPickerBase';
 import { EmojiAutocomplete } from '../EmojiTextarea/EmojiAutocomplete';
+import { ContextMenu } from '../ContextMenu/ContextMenu';
 import { IconButton } from '../IconButton/IconButton';
-import { Paperclip, SendHorizonal, Smile } from 'lucide-react';
+import {
+  ClipboardPaste,
+  Copy,
+  Paperclip,
+  Scissors,
+  SendHorizonal,
+  Smile,
+  TextSelect,
+} from 'lucide-react';
 import type { EmojiClickData, PickerProps } from 'emoji-picker-react';
+import { useRichTextContextMenu } from './hooks/useRichTextContextMenu';
 import { useRichTextMessageInput } from './hooks/useRichTextMessageInput';
 import { PICKER_HEIGHT, PICKER_WIDTH } from './utils/constants';
 import { DEFAULT_LABELS } from './utils/toolbar.utils';
@@ -120,6 +130,20 @@ export const RichTextMessageInput = ({
     onMentionSelected,
   });
 
+  const {
+    canCopy,
+    canCut,
+    canPaste,
+    canSelectAll,
+    closeContextMenu,
+    contextMenu,
+    copy,
+    cut,
+    handleContextMenu,
+    paste,
+    selectAll,
+  } = useRichTextContextMenu({ disabled, quillRef });
+
   useImperativeHandle(
     ref,
     () => ({
@@ -218,7 +242,7 @@ export const RichTextMessageInput = ({
                 onRemove={removeCurrentLink}
               />
             )}
-            <div ref={editorHostRef} />
+            <div ref={editorHostRef} onContextMenu={handleContextMenu} />
           </div>
           <div className="flex shrink-0 items-center gap-1 py-1.5 pr-2 text-text-3 sm:justify-between sm:gap-3 sm:border-t sm:border-border-2 sm:px-3 sm:py-1.5">
             <div className="flex items-center gap-1">
@@ -283,6 +307,40 @@ export const RichTextMessageInput = ({
       </div>
 
       {error && <span className="font-body text-[11px] font-normal text-error-fg">{error}</span>}
+
+      {contextMenu && (
+        <ContextMenu
+          closeLabel={mergedLabels.closeContextMenu}
+          position={contextMenu.position}
+          onClose={closeContextMenu}
+          items={[
+            {
+              label: mergedLabels.copy,
+              icon: <Copy size={16} />,
+              disabled: !canCopy,
+              onClick: copy,
+            },
+            {
+              label: mergedLabels.cut,
+              icon: <Scissors size={16} />,
+              disabled: !canCut,
+              onClick: cut,
+            },
+            {
+              label: mergedLabels.paste,
+              icon: <ClipboardPaste size={16} />,
+              disabled: !canPaste,
+              onClick: paste,
+            },
+            {
+              label: mergedLabels.selectAll,
+              icon: <TextSelect size={16} />,
+              disabled: !canSelectAll,
+              onClick: selectAll,
+            },
+          ]}
+        />
+      )}
 
       {emojiAnchorRect &&
         pickerStyle &&

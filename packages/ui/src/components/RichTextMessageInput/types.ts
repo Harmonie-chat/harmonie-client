@@ -36,6 +36,11 @@ export interface RichTextMessageInputLabels {
   save: string;
   send: string;
   attachFile: string;
+  copy: string;
+  cut: string;
+  paste: string;
+  selectAll: string;
+  closeContextMenu: string;
 }
 
 export interface ToolbarButtonConfig {

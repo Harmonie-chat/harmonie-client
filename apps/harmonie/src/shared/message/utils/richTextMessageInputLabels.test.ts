@@ -31,6 +31,11 @@ describe('getRichTextMessageInputLabels', () => {
       save: 'translated:channel.input.save',
       send: 'translated:channel.input.send',
       attachFile: 'translated:channel.input.attachFile',
+      copy: 'translated:channel.input.copy',
+      cut: 'translated:channel.input.cut',
+      paste: 'translated:channel.input.paste',
+      selectAll: 'translated:channel.input.selectAll',
+      closeContextMenu: 'translated:channel.input.closeContextMenu',
     });
   });
 });
