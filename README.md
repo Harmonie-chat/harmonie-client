@@ -6,6 +6,9 @@
 
 Web client for Harmonie, a **text and voice chat** application.
 
+<img width="1918" height="935" alt="image" src="https://github.com/user-attachments/assets/22b40ad0-539d-4a10-98ac-b876e3118193" />
+<img width="1918" height="935" alt="image" src="https://github.com/user-attachments/assets/1df01312-6dea-4a09-b34a-570bc2ea876a" />
+
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) v20+
